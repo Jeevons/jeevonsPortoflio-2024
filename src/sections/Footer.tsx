@@ -27,8 +27,9 @@ export const Footer = () => {
         <div className="border-t border-white/15 py-6 text-sm flex flex-col md:flex-row md:justify-between items-center gap-8">
           <div className="text-white/40">&copy; 2024. Tous droits réservés</div>
           <nav className="flex flex-col md:flex-row items-center gap-8">
-            {footerLinks.map((link) => (
+            {footerLinks.map((link, index) => (
               <a
+                key={index} // Ajout de la clé ici
                 href={link.href}
                 target="_blanck"
                 className="inline-flex items-center gap-1.5 hover:text-emerald-300 hover:scale-110 transform transition duration-300 ease-in-out"

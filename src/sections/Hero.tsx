@@ -113,21 +113,22 @@ export const HeroSection = () => {
               <div className="bg-green-500 inset-0 rounded-full absolute animate-ping-large"></div>
             </div>
             <div className="text-sm font-medium text-center">
-              En recherche d'une alternance pour 2025
+              En recherche d&apos;une alternance pour 2025
             </div>
           </div>
         </div>
         <div className="md:max-w-xl lg:max-w-4xl mx-auto">
           <h1 className="font-serif text-3xl md:text-5xl lg:text-6xl text-center mt-8">
-            Imaginer et construire des expériences qui donnent envie d'être
+            Imaginer et construire des expériences qui donnent envie d&apos;être
             vécues !
           </h1>
           <p className="mt-4 text-white/60 text-center md:text-lg">
-            Le front-end est mon terrain de jeu, mais pour moi, c'est dans les
-            coulisses que la vraie magie opère. Avec des bases solides en
+            Le front-end est mon terrain de jeu, mais pour moi, c&apos;est dans
+            les coulisses que la vraie magie opère. Avec des bases solides en
             développement front, je veux explorer tout le spectre pour
-            véritablement devenir "tech-savvy". Et quand je ne code pas, je
-            m'amuse à donner vie à mes idées grâce à la suite Adobe.
+            véritablement devenir &quot;tech-savvy&quot;. Et quand je ne code
+            pas, je m&apos;amuse à donner vie à mes idées grâce à la suite
+            Adobe.
           </p>
         </div>
         <div className="flex flex-col md:flex-row justify-center items-center mt-8 gap-4 z-30">

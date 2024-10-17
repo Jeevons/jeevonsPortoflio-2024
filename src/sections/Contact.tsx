@@ -15,12 +15,13 @@ export const ContactSection = () => {
           <div className="flex flex-col md:flex-row gap-8 md:gap-16 items-center">
             <div className="">
               <h2 className="font-serif text-2xl md:text-3xl">
-                À la recherche d'une nouvelle aventure
+                À la recherche d&apos;une nouvelle aventure
               </h2>
               <p className="text-sm mt-2 md:text-base flex flex-col gap-4">
-                Je suis actuellement à la recherche d'un stage et je me projette
-                déjà vers l'année scolaire 2025-2026, que j'aimerais effectuer
-                en alternance. N'hésitez pas à me contacter !
+                Je suis actuellement à la recherche d&apos;un stage et je me
+                projette déjà vers l&apos;année scolaire 2025-2026, que
+                j&apos;aimerais effectuer en alternance. N&apos;hésitez pas à me
+                contacter !
                 <span className="flex flex-col md:flex-row gap-2">
                   <span className="text-sm font-bold">07.81.38.43.95</span>
                   <span className="text-sm font-bold">
