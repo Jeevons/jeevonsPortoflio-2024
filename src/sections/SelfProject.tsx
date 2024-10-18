@@ -1,6 +1,7 @@
 import ArrowUpRightIcon from "@/assets/icons/arrow-up-right.svg";
 import CheckCircleIcon from "@/assets/icons/check-circle.svg";
 import gallery from "@/assets/images/gallery-mockup.webp";
+import sunnysideAgency from "@/assets/images/sunnyside-landingPage.webp";
 import insureLandingPage from "@/assets/images/insureLanding-page.webp";
 import sleepingAppMockup from "@/assets/images/sleepingApp-mockup.webp";
 import { Card } from "@/components/Card";
@@ -9,9 +10,9 @@ import Image from "next/image";
 
 const portfolioProjects = [
   {
-    company: "Landing Page",
+    company: "Insure",
     year: "Octobre - 2024",
-    title: "Simple page d'accueil | Maquette de Frontend Mentor",
+    title: "Landing page.",
     results: [
       { title: "Html, CSs et Javascript" },
       {
@@ -23,18 +24,18 @@ const portfolioProjects = [
     image: insureLandingPage,
   },
   {
-    company: "Gallerie",
-    year: "Novembre - 2023",
-    title: "Une simple gallerie d'images pour m'entrainer avec Grid.",
+    company: "Sunnyside Agency ",
+    year: "Août - 2024",
+    title: "Landing Page.",
     results: [
       { title: "Html, Css, Javascript" },
       {
-        title: "Display grid, flexbox, responsive design",
+        title: "Masterisé le responsive",
       },
-      { title: "Composants réutilisable" },
+      { title: "Entraînement sur des dispositions d'interface plus complexes" },
     ],
-    link: "https://img-galery-psi.vercel.app/",
-    image: gallery,
+    link: "https://jeevons-sunnyside.vercel.app/index.html",
+    image: sunnysideAgency,
   },
   {
     company: "SleepingTime",
@@ -50,6 +51,21 @@ const portfolioProjects = [
     link: "https://sleeping-calculator.vercel.app/",
     image: sleepingAppMockup,
   },
+  {
+    company: "Gallerie",
+    year: "Novembre - 2023",
+    title: "Une simple gallerie d'images pour m'entrainer avec Grid.",
+    results: [
+      { title: "Html, Css, Javascript" },
+      {
+        title: "Display grid, flexbox, responsive design",
+      },
+      { title: "Composants réutilisable" },
+    ],
+    link: "https://img-galery-psi.vercel.app/",
+    image: gallery,
+  },
+  
 ];
 
 export const SelfProjectsSection = () => {
