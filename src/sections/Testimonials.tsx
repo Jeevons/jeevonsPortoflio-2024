@@ -5,12 +5,12 @@ import schoolIcon4 from "@/assets/images/jeevons-avatar-coding.webp";
 import schoolIcon5 from "@/assets/images/jeevons-avatar-lynx.webp";
 import schoolIcon3 from "@/assets/images/mmi-icon.webp";
 import schoolIcon2 from "@/assets/images/university-icon.webp";
-import { Card } from "@/components/Card"; // Assure-toi que 'Card' est correctement importé
-import { SectionHeader } from "@/components/SectionHeader"; // Assure-toi que 'SectionHeader' est correctement importé
+import { Card } from "@/components/Card";
+import { SectionHeader } from "@/components/SectionHeader";
 import Image from "next/image";
-import { Fragment, useRef } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 
-// Témoignages
+
 const testimonials = [
   {
     name: "Baccalauréat Économique et Social (option Mathématiques appliquées)",
@@ -44,9 +44,61 @@ const testimonials = [
   },
 ];
 
-// Section des témoignages
 export const TestimonialsSection = () => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [isHovered, setIsHovered] = useState(false);
+  const [isClicked, setIsClicked] = useState(false);
+
+  // Auto-scroll functio
+  const autoScroll = () => {
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer) return;
+
+    let scrollStep = 2; // Scroll speed
+
+    const step = () => {
+      if (!isHovered && !isClicked) {
+        scrollContainer.scrollLeft += scrollStep;
+
+        // If you reach the end, reposition without returning to the visible beginning.
+        if (scrollContainer.scrollLeft >= scrollContainer.scrollWidth - scrollContainer.clientWidth) {
+          scrollContainer.scrollLeft = 0; // Return to the beginning to complete
+        }
+      }
+    };
+
+    const intervalId = setInterval(step, 30); // Speed adjustment
+
+    return () => clearInterval(intervalId);
+  };
+
+  useEffect(() => {
+    const cleanup = autoScroll();
+    return cleanup;
+  }, [isHovered, isClicked]);
+
+  // When the user hovers over a map, stop auto-scrolling
+  const handleMouseEnter = () => setIsHovered(true);
+  const handleMouseLeave = () => setIsHovered(false);
+
+  // When the user clicks on a card, stop auto-scrolling, and when he clicks away, resume auto-scrolling.
+  const handleClick = () => setIsClicked(true);
+
+  const handleDocumentClick = (event: MouseEvent) => {
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer) return;
+
+    if (!scrollContainer.contains(event.target as Node)) {
+      setIsClicked(false); // Resumes auto-scroll if clicked outside
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener("click", handleDocumentClick);
+    return () => {
+      document.removeEventListener("click", handleDocumentClick);
+    };
+  }, []);
 
   return (
     <section className="py-16 lg:py-24">
@@ -59,16 +111,19 @@ export const TestimonialsSection = () => {
         />
 
         <div
-          className="scroll mt-12 lg:mt-20 flex overflow-x-auto [mask-image:linear-gradient(to_right,transparent,black_1%,black_98%,transparent)] py-4 -my-4"
+          className="scroll mt-12 lg:mt-20 flex overflow-x-auto [mask-image:linear-gradient(to_right,transparent,black_10%,black_95%,transparent)] py-4 -my-4"
           ref={scrollContainerRef}
         >
-          {/* Affichage des cartes avec défilement horizontal simple */}
+          {/* Card duplication to create the infinite scrolling effect */}
           <div className="flex gap-8 pr-8 flex-none">
-            {testimonials.map((testimonial, index) => (
+            {[...testimonials, ...testimonials].map((testimonial, index) => (
               <Fragment key={index}>
                 <Card
                   key={testimonial.name}
                   className="testimonial-card max-w-xs md:max-w-md p-6 md:p-8 hover:-rotate-3 transition duration-300"
+                  onMouseEnter={handleMouseEnter}
+                  onMouseLeave={handleMouseLeave}
+                  onClick={handleClick}
                 >
                   <div className="flex gap-4 items-start">
                     <div className="size-14 bg-gray-700 inline-flex rounded-full items-center justify-center flex-shrink-0">
