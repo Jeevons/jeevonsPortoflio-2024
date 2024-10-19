@@ -24,7 +24,7 @@ const portfolioProjects = [
     image: insureLandingPage,
   },
   {
-    company: "Sunnyside Agency ",
+    company: "Sunnyside",
     year: "Août - 2024",
     title: "Landing Page.",
     results: [
@@ -89,10 +89,10 @@ export const SelfProjectsSection = () => {
             >
               <div className="lg:grid lg:grid-cols-2 lg:gap-16">
                 <div className="lg:pb-16">
-                  <div className="inline-flex items-center gap-2 font-bold uppercase tracking-widest text-sm bg-gradient-to-r from-emerald-300 to-sky-400 text-transparent bg-clip-text">
+                  <div className="inline-flex items-baseline gap-2 font-bold uppercase tracking-widest text-sm bg-gradient-to-r from-emerald-300 to-sky-400 text-transparent bg-clip-text">
                     <span>{project.company}</span>
                     <span>&bull;</span>
-                    <span className="text-xs md:text-sm">{project.year}</span>
+                    <span className="text-3xs md:text-sm">{project.year}</span>
                   </div>
 
                   <h3 className="font-serif text-2xl mt-2 md:text-4xl md:mt-5">

@@ -47,3 +47,11 @@ html {
 ::-webkit-scrollbar-thumb:hover {
   background-color: #6ee7b7;
 }
+
+:root {
+  --text-3xs: .675rem;
+}
+
+.text-3xs {
+  font-size: var(--text-3xs);
+}
