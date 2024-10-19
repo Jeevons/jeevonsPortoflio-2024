@@ -55,7 +55,7 @@ export const TestimonialsSection = () => {
           eyebrow="Mon parcours"
           title="Découvrez d'où je viens"
           description="Et où j'aimerai aller !"
-          indication="********* Faites défiler les cartes ***********"
+          indication="(Faites défiler les cartes)"
         />
 
         <div
