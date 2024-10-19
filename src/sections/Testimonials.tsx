@@ -5,12 +5,12 @@ import schoolIcon4 from "@/assets/images/jeevons-avatar-coding.webp";
 import schoolIcon5 from "@/assets/images/jeevons-avatar-lynx.webp";
 import schoolIcon3 from "@/assets/images/mmi-icon.webp";
 import schoolIcon2 from "@/assets/images/university-icon.webp";
-import { Card } from "@/components/Card"; // Assure-toi que 'Card' est correctement importé
-import { SectionHeader } from "@/components/SectionHeader"; // Assure-toi que 'SectionHeader' est correctement importé
+import { Card } from "@/components/Card"; 
+import { SectionHeader } from "@/components/SectionHeader"; 
 import Image from "next/image";
 import { Fragment, useRef } from "react";
 
-// Témoignages
+
 const testimonials = [
   {
     name: "Baccalauréat Économique et Social (option Mathématiques appliquées)",
@@ -44,7 +44,7 @@ const testimonials = [
   },
 ];
 
-// Section des témoignages
+
 export const TestimonialsSection = () => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -55,14 +55,14 @@ export const TestimonialsSection = () => {
           eyebrow="Mon parcours"
           title="Découvrez d'où je viens"
           description="Et où j'aimerai aller !"
-          indication="Survolez / Cliquez sur une carte pour l'arrêter"
+          indication="*** Faites défiler les cartes ***"
         />
 
         <div
           className="scroll mt-12 lg:mt-20 flex overflow-x-auto [mask-image:linear-gradient(to_right,transparent,black_1%,black_98%,transparent)] py-4 -my-4"
           ref={scrollContainerRef}
         >
-          {/* Affichage des cartes avec défilement horizontal simple */}
+          {/* Card duplication to create the infinite scrolling effect */}
           <div className="flex gap-8 pr-8 flex-none">
             {testimonials.map((testimonial, index) => (
               <Fragment key={index}>
