@@ -5,11 +5,12 @@ import schoolIcon4 from "@/assets/images/jeevons-avatar-coding.webp";
 import schoolIcon5 from "@/assets/images/jeevons-avatar-lynx.webp";
 import schoolIcon3 from "@/assets/images/mmi-icon.webp";
 import schoolIcon2 from "@/assets/images/university-icon.webp";
-import { Card } from "@/components/Card";
-import { SectionHeader } from "@/components/SectionHeader";
+import { Card } from "@/components/Card"; // Assure-toi que 'Card' est correctement importé
+import { SectionHeader } from "@/components/SectionHeader"; // Assure-toi que 'SectionHeader' est correctement importé
 import Image from "next/image";
-import { Fragment, useEffect, useRef } from "react";
+import { Fragment, useRef } from "react";
 
+// Témoignages
 const testimonials = [
   {
     name: "Baccalauréat Économique et Social (option Mathématiques appliquées)",
@@ -43,52 +44,9 @@ const testimonials = [
   },
 ];
 
+// Section des témoignages
 export const TestimonialsSection = () => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-
-  // Fonction pour repositionner un tableau derrière l'autre
-  const handleScroll = () => {
-    const scrollContainer = scrollContainerRef.current;
-    if (!scrollContainer) return;
-
-    const firstGroup = scrollContainer.querySelector(".group-1");
-    const secondGroup = scrollContainer.querySelector(".group-2");
-
-    const firstGroupPosition = firstGroup?.getBoundingClientRect();
-    const containerPosition = scrollContainer.getBoundingClientRect();
-
-    // Si la première série de cartes (group-1) est complètement hors de vue
-    if (
-      firstGroupPosition &&
-      firstGroupPosition.right < containerPosition.left
-    ) {
-      // On remet la première série après la deuxième
-      scrollContainer.scrollLeft -= firstGroupPosition.width;
-    }
-
-    const secondGroupPosition = secondGroup?.getBoundingClientRect();
-
-    // Si la deuxième série de cartes (group-2) est complètement hors de vue
-    if (
-      secondGroupPosition &&
-      secondGroupPosition.right < containerPosition.left
-    ) {
-      // On remet la deuxième série après la première
-      scrollContainer.scrollLeft -= secondGroupPosition.width;
-    }
-  };
-
-  useEffect(() => {
-    const scrollContainer = scrollContainerRef.current;
-
-    if (!scrollContainer) return;
-
-    scrollContainer.addEventListener("scroll", handleScroll);
-
-    return () => {
-      scrollContainer.removeEventListener("scroll", handleScroll);
-    };
-  }, []);
 
   return (
     <section className="py-16 lg:py-24">
@@ -101,50 +59,16 @@ export const TestimonialsSection = () => {
         />
 
         <div
-          className="scroll mt-12 lg:mt-20 flex overflow-x-auto [mask-image:linear-gradient(to_right,transparent,black_10%,black_95%,transparent)] py-4 -my-4 "
+          className="scroll mt-12 lg:mt-20 flex overflow-x-auto [mask-image:linear-gradient(to_right,transparent,black_1%,black_98%,transparent)] py-4 -my-4"
           ref={scrollContainerRef}
         >
-          {/* Première duplication du tableau */}
-          <div className="flex gap-8 pr-8 flex-none group-1 animate-move-left [animation-duration:90s] hover:[animation-play-state:paused]">
+          {/* Affichage des cartes avec défilement horizontal simple */}
+          <div className="flex gap-8 pr-8 flex-none">
             {testimonials.map((testimonial, index) => (
-              <Fragment key={`group-1-${index}`}>
+              <Fragment key={index}>
                 <Card
                   key={testimonial.name}
-                  className="max-w-xs md:max-w-md p-6 md:p-8 hover:-rotate-3 transition duration-300"
-                >
-                  <div className="flex gap-4 items-start">
-                    <div className="size-14 bg-gray-700 inline-flex rounded-full items-center justify-center flex-shrink-0">
-                      <Image
-                        src={testimonial.avatar}
-                        alt={testimonial.name}
-                        className="max-h-full"
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                      <div className="font-semibold text-sm md:text-base">
-                        {testimonial.name}
-                      </div>
-                      <div className="text-sm text-white/40">
-                        {testimonial.position}
-                      </div>
-                    </div>
-                  </div>
-                  <p className="mt-4 md:mt-6 font-extralight text-xs md:text-base">
-                    {testimonial.text}
-                  </p>
-                </Card>
-              </Fragment>
-            ))}
-          </div>
-
-          {/* Deuxième duplication du tableau */}
-          <div className="flex gap-8 pr-8 flex-none group-2 animate-move-left [animation-duration:90s] hover:[animation-play-state:paused]">
-            {testimonials.map((testimonial, index) => (
-              <Fragment key={`group-2-${index}`}>
-                <Card
-                  key={testimonial.name}
-                  className="max-w-xs md:max-w-md p-6 md:p-8 hover:-rotate-3 transition duration-300"
+                  className="testimonial-card max-w-xs md:max-w-md p-6 md:p-8 hover:-rotate-3 transition duration-300"
                 >
                   <div className="flex gap-4 items-start">
                     <div className="size-14 bg-gray-700 inline-flex rounded-full items-center justify-center flex-shrink-0">
