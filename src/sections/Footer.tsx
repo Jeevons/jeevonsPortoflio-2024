@@ -11,7 +11,7 @@ const footerLinks = [
   },
   {
     title: "LinkedIn",
-    href: "https://www.linkedin.com/in/jeevons-eya-jr-iq-3660a7297/",
+    href: "https://www.linkedin.com/in/jeevons-eya-3660a7297/?locale=fr_FR",
   },
   {
     title: "Github",
