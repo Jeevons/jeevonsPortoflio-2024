@@ -1,11 +1,12 @@
 "use client";
+
+import jeevonsCv from "@/assets/images/jeevons-cv-2024-1.1_resultat.webp";
 import ChromeIcon from "@/assets/icons/chrome.svg";
 import CssIcon from "@/assets/icons/css3.svg";
 import GithubIcon from "@/assets/icons/github.svg";
 import HtmlIcon from "@/assets/icons/html5.svg";
 import ReactIcon from "@/assets/icons/react.svg";
 import JavascripIcon from "@/assets/icons/square-js.svg";
-import bookImage from "@/assets/images/book-cover.png";
 import smileMemoji from "@/assets/images/jeevons-avatar-smiling.webp";
 import mapImage from "@/assets/images/map-tours.webp";
 import { Card } from "@/components/Card";
@@ -104,12 +105,13 @@ export const AboutSection = () => {
           <div className="grid grid-cols-1 gap-8 md:grid-cols-5 lg:grid-cols-3">
             <Card className="h-[380px] md:col-span-2 lg:col-span-1">
               <CardHeader
-                title="Lectures"
-                description="Explorez les livres qui façonnet ma vision du monde"
+                title="CV"
+                description="Découvrez mon parcours, mes compétences et mes expériences."
+                indication="(Cliquez sur le cv pour l'ouvrir)"
               />
-              <div className="w-40 mx-auto mt-2 md:mt-0">
-                <Image src={bookImage} alt="Book Cover" />
-              </div>
+              <a href="/assets/docs/jeevons-cv-2024-1.1.pdf" target="_blank" rel="noopener noreferrer" className="flex w-40 mx-auto mt-2 md:mt-0">
+                <Image src={jeevonsCv} alt="CV image" />
+              </a>
             </Card>
             <Card className="h-[380px] md:col-span-3 lg:col-span-2">
               <CardHeader
