@@ -1,6 +1,6 @@
 "use client";
 
-import jeevonsCv from "@/assets/images/jeevons-cv-2024-1.5_resultat.webp";
+import jeevonsCv from "@/assets/images/jeevons-cv-2024-1.6_resultat.webp";
 import ChromeIcon from "@/assets/icons/chrome.svg";
 import CssIcon from "@/assets/icons/css3.svg";
 import GithubIcon from "@/assets/icons/github.svg";
@@ -109,7 +109,7 @@ export const AboutSection = () => {
                 description="Découvrez mon parcours, mes compétences et mes expériences."
                 indication="(Cliquez sur le cv pour l'ouvrir)"
               />
-              <a href="/assets/docs/jeevons-cv-2024-1.5.pdf" target="_blank" rel="noopener noreferrer" className="flex w-40 mx-auto mt-2 md:mt-0">
+              <a href="/assets/docs/jeevons-cv-2024-1.6.pdf" target="_blank" rel="noopener noreferrer" className="flex w-40 mx-auto mt-2 md:mt-0">
                 <Image src={jeevonsCv} alt="CV image" />
               </a>
             </Card>
