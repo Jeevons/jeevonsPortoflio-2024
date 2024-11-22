@@ -6,10 +6,10 @@ export const Header = () => {
           Home
         </a>
         <a href="#projects" className="nav-item font-light">
-          Projects
+          Projets
         </a>
         <a href="#about" className="nav-item font-light">
-          About
+          À propos
         </a>
         <a
           href="#contact"
