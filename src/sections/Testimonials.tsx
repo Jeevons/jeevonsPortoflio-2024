@@ -101,7 +101,7 @@ export const TestimonialsSection = () => {
   }, []);
 
   return (
-    <section className="py-16 lg:py-24">
+    <section className="py-16 lg:py-24" id="parcours">
       <div className="container">
         <SectionHeader
           eyebrow="Mon parcours"
