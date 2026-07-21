@@ -49,7 +49,7 @@ story_location: _bmad-output/implementation-artifacts
 
 development_status:
   epic-1: in-progress
-  1-1-cibler-la-bonne-section-depuis-la-navigation: review
+  1-1-cibler-la-bonne-section-depuis-la-navigation: done
   1-2-rendre-la-section-temoignages-atteignable: backlog
   1-3-ouvrir-les-liens-externes-sans-risque: backlog
   1-4-reparer-le-bouton-visiter-le-site: backlog

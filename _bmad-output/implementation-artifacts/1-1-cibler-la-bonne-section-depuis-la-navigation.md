@@ -4,7 +4,7 @@ baseline_commit: c3956b891d5352777cd3ac932a35624e277e1a07
 
 # Story 1.1: Cibler la bonne section depuis la navigation
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -41,7 +41,7 @@ so that **je puisse consulter le travail de Jeevons sans avoir à faire défiler
   - [x] Laisser `src/sections/Projects.tsx:44` **inchangé** — il conserve `id="projects"`.
 - [x] **Tâche 2 — Vérifier qu'aucun `id` n'est dupliqué dans la page** (AC: 1)
   - [x] `grep -rn 'id="' src/sections/ src/app/` : attendu exactement `hero`, `projects`, `side-projects`, `contact`, `about` — cinq valeurs distinctes. ✅ confirmé
-  - [x] Confirmer qu'aucune autre occurrence de `#projects` ne pointe vers la mauvaise cible : `grep -rn 'href="#' src/`. ✅ 2 occurrences (Header, Hero), toutes deux légitimes
+  - [x] Confirmer qu'aucune autre occurrence de `#projects` ne pointe vers la mauvaise cible : `grep -rn 'href="#projects"' src/` → ✅ 2 occurrences (Header, Hero). (Note : `grep 'href="#'` sans filtre renvoie 6 ancres au total — hero/projects/about/contact × Header+Hero.)
 - [x] **Tâche 3 — Confirmer la navigation inchangée** (AC: 3)
   - [x] `src/sections/Header.tsx` **n'est pas modifié** dans cette story : il conserve ses quatre liens `#hero` / `#projects` / `#about` / `#contact`. Aucun lien « Projets perso » ajouté.
   - [x] `src/sections/Hero.tsx:136` (`href="#projects"`) reste inchangé et cible désormais sans ambiguïté les projets professionnels.
@@ -55,6 +55,16 @@ so that **je puisse consulter le travail de Jeevons sans avoir à faire défiler
   - [x] `npx tsc --noEmit` → 0 erreur
   - [x] `npm run build` → succès (5/5 pages statiques générées)
   - [x] `git diff develop` relu : **un seul fichier source modifié**, une seule ligne.
+
+### Review Findings
+
+- [x] [Review][Decision] Confirmation visuelle navigateur avant `done` — résolu : preuve HTML de build acceptée (choix 1).
+- [x] [Review][Decision] Livraison hors process git AGENTS.md — résolu : documenter l’écart dans la story sans toucher à l’historique (choix 3) → devient patch.
+- [x] [Review][Patch] Documenter l’écart process git dans Completion Notes — appliqué.
+- [x] [Review][Patch] Affirmation `grep href="#"` inexacte — appliqué (commande clarifiée `#projects`).
+- [x] [Review][Patch] Contradiction « Commit — Non effectué » — appliqué.
+- [x] [Review][Defer] Warning lint `Testimonials.tsx:78` (`react-hooks/exhaustive-deps`) — deferred, pre-existing
+- [x] [Review][Defer] Header `fixed` sans `scroll-margin-top` sur les sections [`src/sections/Header.tsx:3`] — deferred, pre-existing (Epic 6 / stories 6.3–6.5)
 
 ## Dev Notes
 
@@ -192,7 +202,7 @@ claude-opus-4-8 (Claude Code, workflow `dev-story`)
 - **AC2 ✅** — Sur le HTML de production, `id="projects"` n'apparaît plus qu'une fois. Les deux consommateurs de l'ancre (Header, Hero) résolvent donc désormais vers la section des projets professionnels. Le défilement fluide et la mise à jour de l'URL sont le comportement natif du navigateur, inchangé.
 - **AC3 ✅** — 4 entrées de navigation dans le HTML rendu, aucun lien « Projets perso ». Ordre du document : `hero` → `projects` → `side-projects` → `about` → `contact`, donc `#side-projects` reste atteignable en poursuivant le défilement.
 
-**Méthode de vérification (transparence)** — La Tâche 4 prévoyait un parcours manuel dans un navigateur (clics, lecture de l'URL). Cette vérification interactive n'a pas été réalisée par l'agent, qui n'a pas de navigateur. Elle a été remplacée par une inspection du HTML de production généré, qui établit la même propriété de façon plus robuste : la cible d'ancre est unique et correctement ordonnée. **Une confirmation visuelle par Jeevons reste recommandée** avant merge, notamment pour le ressenti du défilement.
+**Méthode de vérification (transparence)** — La Tâche 4 prévoyait un parcours manuel dans un navigateur (clics, lecture de l'URL). Cette vérification interactive n'a pas été réalisée par l'agent. Elle a été remplacée par une inspection du HTML de production généré. **En code review, Jeevons a accepté la preuve HTML** (décision 1).
 
 **Écart au DoD (à signaler)** — Le critère « `npm run lint` → 0 warning » n'est **pas** atteint au sens littéral : 1 warning subsiste (`Testimonials.tsx:78`, `react-hooks/exhaustive-deps`). Il est **préexistant à cette story** (prouvé par comparaison sur la baseline) et sa correction est hors du périmètre verrouillé. Aucune régression de lint n'a été introduite.
 
@@ -200,7 +210,9 @@ claude-opus-4-8 (Claude Code, workflow `dev-story`)
 
 **Convention d'`id` retenue — à reprendre pour la story 1.2** : kebab-case, en anglais, descriptif, un `id` par `<section>` de premier niveau, posé sur l'élément `<section>` lui-même (pas sur un conteneur interne). Valeurs en place : `hero`, `projects`, `side-projects`, `about`, `contact`. Pour `Testimonials.tsx`, `id="testimonials"` s'aligne naturellement sur cette convention.
 
-**Commit** — Non effectué : conformément aux Dev Notes, le commit final et le `git push` sont déclenchés par Jeevons. Message suggéré : `fix(sections): rendre unique l'identifiant de la section projets personnels`.
+**Commit** — Effectué sur `develop` : `ea33747` (« Story 1.1 terminée »).
+
+**Écart process git (accepté en code review)** — Contrairement à AGENTS.md §4, la story n’a pas été livrée via une branche `alpha/feat/1-1-cibler-la-bonne-section-depuis-la-navigation` ni avec un message Conventional Commits. Décision review : **documenter l’écart sans remédier à l’historique**. Message attendu aurait été : `fix(sections): rendre unique l'identifiant de la section projets personnels`.
 
 ### File List
 
@@ -214,3 +226,4 @@ claude-opus-4-8 (Claude Code, workflow `dev-story`)
 | Date | Version | Description |
 |---|---|---|
 | 2026-07-21 | 1.0 | `SelfProject.tsx` : `id="projects"` → `id="side-projects"`. Résout le défaut D1 (ancre `#projects` dupliquée). AC1/AC2/AC3 vérifiés sur le HTML de production. |
+| 2026-07-21 | 1.1 | Code review : patches doc (grep `#projects`, commit réel, écart process git documenté). Status → `done`. |
