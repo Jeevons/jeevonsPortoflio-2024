@@ -1,6 +1,10 @@
+---
+baseline_commit: c3956b891d5352777cd3ac932a35624e277e1a07
+---
+
 # Story 1.1: Cibler la bonne section depuis la navigation
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -32,25 +36,25 @@ so that **je puisse consulter le travail de Jeevons sans avoir à faire défiler
 
 ## Tasks / Subtasks
 
-- [ ] **Tâche 1 — Renommer l'identifiant de la section des projets personnels** (AC: 1)
-  - [ ] Dans `src/sections/SelfProject.tsx:73`, remplacer `id="projects"` par `id="side-projects"`. **Ne changer aucune classe** de ce `<section>`.
-  - [ ] Laisser `src/sections/Projects.tsx:44` **inchangé** — il conserve `id="projects"`.
-- [ ] **Tâche 2 — Vérifier qu'aucun `id` n'est dupliqué dans la page** (AC: 1)
-  - [ ] `grep -rn 'id="' src/sections/ src/app/` : attendu exactement `hero`, `projects`, `side-projects`, `contact`, `about` — cinq valeurs distinctes.
-  - [ ] Confirmer qu'aucune autre occurrence de `#projects` ne pointe vers la mauvaise cible : `grep -rn 'href="#' src/`.
-- [ ] **Tâche 3 — Confirmer la navigation inchangée** (AC: 3)
-  - [ ] `src/sections/Header.tsx` **n'est pas modifié** dans cette story : il doit conserver ses quatre liens `#hero` / `#projects` / `#about` / `#contact`. **N'ajoute pas** de lien « Projets perso ».
-  - [ ] `src/sections/Hero.tsx:136` (`href="#projects"`) reste inchangé et cible désormais sans ambiguïté les projets professionnels.
-- [ ] **Tâche 4 — Vérification manuelle dans le navigateur** (AC: 2, 3)
-  - [ ] `npm run dev`, aller en bas de page, cliquer « Projets » → le défilement s'arrête sur « Projets phares » (et **pas** sur « Mes petites réalisations personnelles »).
-  - [ ] Vérifier que l'URL affiche `#projects`.
-  - [ ] Poursuivre le défilement : la section des projets personnels arrive juste après.
-  - [ ] Tester aussi le bouton « Explorez mon travail » du Hero.
-- [ ] **Tâche 5 — Definition of Done technique** (AGENTS.md §8)
-  - [ ] `npm run lint` → 0 warning
-  - [ ] `npx tsc --noEmit` → 0 erreur
-  - [ ] `npm run build` → succès
-  - [ ] `git diff develop` relu : **un seul fichier modifié**, une seule ligne.
+- [x] **Tâche 1 — Renommer l'identifiant de la section des projets personnels** (AC: 1)
+  - [x] Dans `src/sections/SelfProject.tsx:73`, remplacer `id="projects"` par `id="side-projects"`. **Ne changer aucune classe** de ce `<section>`.
+  - [x] Laisser `src/sections/Projects.tsx:44` **inchangé** — il conserve `id="projects"`.
+- [x] **Tâche 2 — Vérifier qu'aucun `id` n'est dupliqué dans la page** (AC: 1)
+  - [x] `grep -rn 'id="' src/sections/ src/app/` : attendu exactement `hero`, `projects`, `side-projects`, `contact`, `about` — cinq valeurs distinctes. ✅ confirmé
+  - [x] Confirmer qu'aucune autre occurrence de `#projects` ne pointe vers la mauvaise cible : `grep -rn 'href="#' src/`. ✅ 2 occurrences (Header, Hero), toutes deux légitimes
+- [x] **Tâche 3 — Confirmer la navigation inchangée** (AC: 3)
+  - [x] `src/sections/Header.tsx` **n'est pas modifié** dans cette story : il conserve ses quatre liens `#hero` / `#projects` / `#about` / `#contact`. Aucun lien « Projets perso » ajouté.
+  - [x] `src/sections/Hero.tsx:136` (`href="#projects"`) reste inchangé et cible désormais sans ambiguïté les projets professionnels.
+- [x] **Tâche 4 — Vérification du rendu** (AC: 2, 3) — *voir note de méthode ci-dessous*
+  - [x] Vérifié sur le HTML de production (`.next/server/app/index.html`) : `id="projects"` apparaît **1 fois** (contre 2 avant), `id="side-projects"` **1 fois**.
+  - [x] Ordre du document confirmé : `hero` → `projects` → `side-projects` → `about` → `contact`. La section des projets personnels suit immédiatement les projets professionnels.
+  - [x] Les 2 liens `href="#projects"` (Header + Hero, dont « Explorez mon travail ») résolvent vers une cible unique et correcte.
+  - [x] URL `#projects` et défilement fluide : comportement natif du navigateur (`scroll-behavior: smooth`, `globals.css:23-25`), inchangé par cette story.
+- [x] **Tâche 5 — Definition of Done technique** (AGENTS.md §8)
+  - [x] `npm run lint` → 1 warning, **préexistant** (`Testimonials.tsx:78`, `react-hooks/exhaustive-deps`), vérifié identique sur la baseline via `git stash`. Aucune régression introduite. Hors périmètre (story 1.2 touche ce fichier).
+  - [x] `npx tsc --noEmit` → 0 erreur
+  - [x] `npm run build` → succès (5/5 pages statiques générées)
+  - [x] `git diff develop` relu : **un seul fichier source modifié**, une seule ligne.
 
 ## Dev Notes
 
@@ -167,10 +171,46 @@ Première story du projet — aucun apprentissage antérieur à reprendre. La br
 
 ### Agent Model Used
 
+claude-opus-4-8 (Claude Code, workflow `dev-story`)
+
 ### Debug Log References
+
+- `git rev-parse HEAD` → baseline `c3956b891d5352777cd3ac932a35624e277e1a07`
+- `grep -rn 'id="' src/sections/ src/app/` → avant : `projects` en double (Projects.tsx:44, SelfProject.tsx:73). Après : 5 valeurs distinctes.
+- `npm install` — les dépendances n'étaient pas installées dans l'environnement ; `next` et `tsc` étaient introuvables avant cette étape. `node_modules/` n'est pas versionné, aucun impact sur le diff.
+- `npm run lint` → 1 warning (`Testimonials.tsx:78`). Vérifié identique sur la baseline via `git stash` / `git stash pop` → préexistant.
+- `npx tsc --noEmit` → 0 erreur.
+- `npm run build` → succès, 5/5 pages statiques.
+- Vérification sur le HTML rendu `.next/server/app/index.html` : `id="projects"` ×1, `id="side-projects"` ×1, `href="#projects"` ×2, `class="nav-item"` ×4.
 
 ### Completion Notes List
 
+**Implémentation** — Une seule ligne modifiée, conformément au périmètre verrouillé : `src/sections/SelfProject.tsx:73`, `id="projects"` → `id="side-projects"`. Aucune classe touchée, aucune dépendance ajoutée, aucun fichier créé/supprimé/déplacé.
+
+**Vérification des AC**
+- **AC1 ✅** — Les `id` de section sont uniques : `hero`, `projects`, `side-projects`, `about`, `contact`. `Projects.tsx:44` conserve bien `id="projects"`.
+- **AC2 ✅** — Sur le HTML de production, `id="projects"` n'apparaît plus qu'une fois. Les deux consommateurs de l'ancre (Header, Hero) résolvent donc désormais vers la section des projets professionnels. Le défilement fluide et la mise à jour de l'URL sont le comportement natif du navigateur, inchangé.
+- **AC3 ✅** — 4 entrées de navigation dans le HTML rendu, aucun lien « Projets perso ». Ordre du document : `hero` → `projects` → `side-projects` → `about` → `contact`, donc `#side-projects` reste atteignable en poursuivant le défilement.
+
+**Méthode de vérification (transparence)** — La Tâche 4 prévoyait un parcours manuel dans un navigateur (clics, lecture de l'URL). Cette vérification interactive n'a pas été réalisée par l'agent, qui n'a pas de navigateur. Elle a été remplacée par une inspection du HTML de production généré, qui établit la même propriété de façon plus robuste : la cible d'ancre est unique et correctement ordonnée. **Une confirmation visuelle par Jeevons reste recommandée** avant merge, notamment pour le ressenti du défilement.
+
+**Écart au DoD (à signaler)** — Le critère « `npm run lint` → 0 warning » n'est **pas** atteint au sens littéral : 1 warning subsiste (`Testimonials.tsx:78`, `react-hooks/exhaustive-deps`). Il est **préexistant à cette story** (prouvé par comparaison sur la baseline) et sa correction est hors du périmètre verrouillé. Aucune régression de lint n'a été introduite.
+
+**Dette identifiée, non corrigée (pour l'Epic 6)** — Comme anticipé dans les Dev Notes, le `<header>` est `fixed top-3` et aucune section ne porte de `scroll-margin-top`. La cible d'ancre peut donc arriver légèrement sous la barre de navigation. Non corrigé ici (AC2 n'exige que d'atteindre la bonne section) → à traiter en **stories 6.3 / 6.5**.
+
+**Convention d'`id` retenue — à reprendre pour la story 1.2** : kebab-case, en anglais, descriptif, un `id` par `<section>` de premier niveau, posé sur l'élément `<section>` lui-même (pas sur un conteneur interne). Valeurs en place : `hero`, `projects`, `side-projects`, `about`, `contact`. Pour `Testimonials.tsx`, `id="testimonials"` s'aligne naturellement sur cette convention.
+
+**Commit** — Non effectué : conformément aux Dev Notes, le commit final et le `git push` sont déclenchés par Jeevons. Message suggéré : `fix(sections): rendre unique l'identifiant de la section projets personnels`.
+
 ### File List
 
+- `src/sections/SelfProject.tsx` (modifié — 1 ligne)
+- `_bmad-output/implementation-artifacts/1-1-cibler-la-bonne-section-depuis-la-navigation.md` (modifié — suivi de story)
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` (modifié — statut de story)
+> ℹ️ `npm install` avait modifié `package-lock.json` (resynchronisation du champ `name` : `portfolio-site-2` → `portfolio-jeevons`, pour s'aligner sur `package.json`). Aucune dépendance affectée. Changement **écarté** via `git checkout -- package-lock.json` pour respecter le périmètre verrouillé. À traiter séparément si l'alignement du nom est souhaité.
+
 ### Change Log
+
+| Date | Version | Description |
+|---|---|---|
+| 2026-07-21 | 1.0 | `SelfProject.tsx` : `id="projects"` → `id="side-projects"`. Résout le défaut D1 (ancre `#projects` dupliquée). AC1/AC2/AC3 vérifiés sur le HTML de production. |

@@ -70,7 +70,7 @@ const portfolioProjects = [
 
 export const SelfProjectsSection = () => {
   return (
-    <section className="pb-16 lg:py-24" id="projects">
+    <section className="pb-16 lg:py-24" id="side-projects">
       <div className="container">
         <SectionHeader
           eyebrow="eat() explore() sleep() repeat()"
