@@ -20,9 +20,9 @@ export const SectionHeader = ({
       <h2 className="font-serif text-3xl md:text-5xl text-center mt-6">
         {title}
       </h2>
-      <p className="text-center flex flex-col md:flex-row md:items-baseline md:justify-center gap-1 md:text-lg text-white/60 mt-4 max-w-md mx-auto">
+      <p className="text-center flex flex-col gap-2 md:flex-row md:items-baseline md:justify-center md:text-lg text-white/60 mt-4 max-w-md mx-auto">
         {description}
-        <span className="text-white/60 text-xs ">{indication}</span>
+        <span className="text-white/60 text-sm ">{indication}</span>
       </p>
     </>
   );

@@ -1,30 +1,30 @@
-######################## 🚀 Une Vision tournée vers l'Avenir ########################
+######################## 🚀 A Vision for the Future ########################
 
-Mon Parcours :
-Depuis toujours, j’ai les yeux tournés vers les étoiles, mais mon ancrage reste ici, sur Terre 🌍. Je crois profondément que les technologies que nous créons aujourd'hui façonneront et révolutionneront le monde de demain. Mon parcours dans le développement web et mobile est ma porte d'entrée dans l'univers du digital, mais ce n'est qu'une étape sur le chemin que je souhaite parcourir.
+My Journey:  
+I've always had my eyes on the stars, yet my grounding remains here on Earth 🌍. I deeply believe that the technologies we create today will shape and revolutionize the world of tomorrow. My journey into web and mobile development serves as my gateway into the digital universe, but it is merely a stepping stone on the path I aim to walk.
 
-Mon ambition, au-delà du développement, est de plonger dans le domaine de la Big Data et de l’intelligence artificielle. Une fois mon diplôme de concepteur développeur d'applications en poche, mon objectif est clair : devenir ingénieur en IA et contribuer à la recherche pour concevoir des solutions qui vont au-delà du simple code et participent activement à l'évolution technologique.
+Beyond development, my ambition lies in delving into the fields of Big Data and Artificial Intelligence. Once I earn my application developer diploma, my goal is clear: to become an AI engineer and contribute to research, designing solutions that go beyond mere code and actively propel technological evolution.
 
-🌐 Exploration Technologique
-Le développement front-end est mon point de départ, et bien que j'y trouve beaucoup de valeur, c'est dans les infrastructures et les données que je perçois mon avenir. L'accessibilité, l'ergonomie, et l'efficacité sont des principes fondamentaux que je veux appliquer dans tous mes futurs projets.
+🌐 Technological Exploration  
+Front-end development is my starting point, and while I find great value in it, I see my future within infrastructures and data. Accessibility, ergonomics, and efficiency are fundamental principles I aim to integrate into all my future projects.
 
-En développant mes compétences en programmation, alliées à ma polyvalence et à ma curiosité, je m'efforce d'explorer tous les domaines du web. Que ce soit avec des outils comme After Effects, Illustrator, Blender, ou encore Unity, je cherche à allier performance et intuition dans mes créations.
+By developing my programming skills, combined with my versatility and curiosity, I strive to explore every facet of the web. Whether using tools like After Effects, Illustrator, Blender, or Unity, I seek to merge performance and intuition in my creations.
 
-🌍 Rendre l'Innovation Accessible à Tous
-Nous vivons à une époque où l'innovation progresse rapidement, mais elle n'est pas encore accessible à tous. Mon rêve ultime est de changer cela. Et cela commence par mon engagement envers l'accessibilité. Je veux consacrer ma vie à rendre l'innovation, notamment dans le domaine de l'intelligence artificielle et de l'informatique en général, accessible à un plus grand nombre.
+🌍 Making Innovation Accessible to Everyone  
+We live in an era where innovation is advancing rapidly, yet it remains out of reach for many. My ultimate dream is to change this reality. It begins with my commitment to accessibility. I aspire to dedicate my life to making innovation, especially in AI and computer science, available to a broader audience.
 
-💡 En combinant mes compétences en programmation avec une vision toujours plus futuriste, je vise à créer des outils et des solutions qui démocratisent ces technologies, afin qu'elles soient à la portée de tous.
+💡 By combining my programming expertise with an ever-forward-looking vision, I aim to create tools and solutions that democratize these technologies, making them accessible to all.  
 
-Je ne me contente pas de suivre le mouvement ; je veux contribuer à le rendre plus inclusif, plus ouvert, et plus bénéfique pour l'ensemble de la société.
+I am not content to merely follow the current; I want to make it more inclusive, more open, and more beneficial to society as a whole.
 
-Le futur fait déjà partie de notre quotidien, et je veux être de ceux qui le façonnent !
+The future is already part of our daily lives, and I want to be one of those who shape it!
 
-######################## 🎈 Centres d'Intérêts ########################
+######################## 🎈 Interests ########################
 
-#Programming
-#QuantumComputing
-#Astronomy
-#DataScience
-#AccessibleIA
-#TechForGood
-#ExplorationTechnologique
+#Programming  
+#QuantumComputing  
+#Astronomy  
+#DataScience  
+#AccessibleAI  
+#TechForGood  
+#TechnologicalExploration  

@@ -37,7 +37,7 @@ const testimonials = [
     avatar: schoolIcon4,
   },
   {
-    name: "Après le CDA",
+    name: "Après le CDA...",
     position: "À venir",
     text: "Si il y a une chose qui me fascine encore plus que les autres dans l'univers de l'informatique et du digital, ce sont les IA et la perspective de l'informatique quantique. J'aimerais donc me spécialiser dans ce domaine. Obtenir un diplôme d'ingénieur et travailler dans la recherche et le développement de nouvelles technologies. C'est mon objectif à long terme.",
     avatar: schoolIcon5,
