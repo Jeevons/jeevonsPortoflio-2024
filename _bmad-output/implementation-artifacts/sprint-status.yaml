@@ -51,14 +51,14 @@ development_status:
   epic-1: in-progress
   1-1-cibler-la-bonne-section-depuis-la-navigation: done
   1-2-rendre-la-section-temoignages-atteignable: review
-  1-3-ouvrir-les-liens-externes-sans-risque: backlog
-  1-4-reparer-le-bouton-visiter-le-site: backlog
-  1-5-afficher-des-informations-a-jour: backlog
-  1-6-proteger-les-coordonnees-personnelles-de-la-moisson: backlog
-  1-7-respecter-le-choix-de-mouvement-reduit: backlog
-  1-8-corriger-le-lisere-des-cartes: backlog
-  1-9-alleger-le-depot-de-ses-assets-morts: backlog
-  1-10-apparaitre-correctement-au-partage-et-a-l-indexation: backlog
+  1-3-ouvrir-les-liens-externes-sans-risque: review
+  1-4-reparer-le-bouton-visiter-le-site: review
+  1-5-afficher-des-informations-a-jour: review
+  1-6-proteger-les-coordonnees-personnelles-de-la-moisson: review
+  1-7-respecter-le-choix-de-mouvement-reduit: review
+  1-8-corriger-le-lisere-des-cartes: review
+  1-9-alleger-le-depot-de-ses-assets-morts: review
+  1-10-apparaitre-correctement-au-partage-et-a-l-indexation: review
   epic-1-retrospective: optional
   epic-2: backlog
   2-1-savoir-si-l-application-est-en-bonne-sante: backlog

@@ -7,6 +7,7 @@ import schoolIcon3 from "@/assets/images/mmi-icon.webp";
 import schoolIcon2 from "@/assets/images/university-icon.webp";
 import { Card } from "@/components/Card";
 import { SectionHeader } from "@/components/SectionHeader";
+import { useReducedMotion } from "framer-motion";
 import Image from "next/image";
 import { Fragment, useEffect, useRef, useState } from "react";
 
@@ -48,6 +49,7 @@ export const TestimonialsSection = () => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
   const [isClicked, setIsClicked] = useState(false);
+  const shouldReduceMotion = useReducedMotion();
 
   // Auto-scroll functio
   const autoScroll = () => {
@@ -73,9 +75,12 @@ export const TestimonialsSection = () => {
   };
 
   useEffect(() => {
+    // Mouvement réduit demandé : pas de défilement automatique. Les cartes
+    // restent toutes atteignables par défilement manuel (overflow-x-auto).
+    if (shouldReduceMotion) return;
     const cleanup = autoScroll();
     return cleanup;
-  }, [isHovered, isClicked]);
+  }, [isHovered, isClicked, shouldReduceMotion]);
 
   // When the user hovers over a map, stop auto-scrolling
   const handleMouseEnter = () => setIsHovered(true);

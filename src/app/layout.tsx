@@ -10,9 +10,30 @@ const calistoga = Calistoga({
   weight: ["400"],
 });
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://portfolio.doshwork.com";
+
+const siteTitle = "Jeevons Eya — Développeur web";
+const siteDescription =
+  "Portfolio de Jeevons Eya, développeur web. Découvrez mes projets, mon parcours et mes compétences.";
+
 export const metadata: Metadata = {
-  title: "Jeevons Eya | Portfolio 2024",
-  description: "Portfolio React et Next js avec Tailwindcss et Framer-motion",
+  metadataBase: new URL(siteUrl),
+  title: siteTitle,
+  description: siteDescription,
+  openGraph: {
+    title: siteTitle,
+    description: siteDescription,
+    type: "website",
+    locale: "fr_FR",
+    siteName: "Jeevons Eya",
+    url: siteUrl,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: siteTitle,
+    description: siteDescription,
+  },
 };
 
 export default function RootLayout({

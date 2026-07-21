@@ -57,3 +57,23 @@ html {
 .text-3xs {
   font-size: var(--text-3xs);
 }
+
+/* Respect du réglage système « réduire les animations » (UX-DR20, règle D11).
+   Placée hors de tout @layer pour primer sur les utilitaires Tailwind.
+   0.01ms plutôt que `none` : l'animation saute à son état FINAL au lieu de
+   revenir à son état initial, et les événements animationend/transitionend
+   continuent de se déclencher. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  html {
+    scroll-behavior: auto !important;
+  }
+}

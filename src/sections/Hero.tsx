@@ -113,7 +113,7 @@ export const HeroSection = () => {
               <div className="bg-green-500 inset-0 rounded-full absolute animate-ping-large"></div>
             </div>
             <div className="text-sm font-medium text-center">
-              En recherche d&apos;une alternance pour 2025
+              En recherche d&apos;une alternance pour 2026-2027
             </div>
           </div>
         </div>

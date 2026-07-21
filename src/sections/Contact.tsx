@@ -1,5 +1,17 @@
+"use client";
+
 import ArrowUpRightIcon from "@/assets/icons/arrow-up-right.svg";
 import grainImage from "@/assets/images/grain.jpg";
+
+// Coordonnées stockées en fragments : la chaîne complète n'existe jamais
+// dans le balisage servi, elle n'est recomposée qu'au clic.
+const MAIL_USER = ["jeevons", "eya", "jr"];
+const MAIL_HOST = ["gmail", "com"];
+
+const buildMail = () => `${MAIL_USER.join(".")}@${MAIL_HOST.join(".")}`;
+
+const LINKEDIN_URL =
+  "https://www.linkedin.com/in/jeevons-eya-3660a7297/?locale=fr_FR";
 
 export const ContactSection = () => {
   return (
@@ -18,26 +30,39 @@ export const ContactSection = () => {
                 À la recherche d&apos;une nouvelle aventure
               </h2>
               <p className="text-sm mt-2 md:text-base flex flex-col gap-4">
-                Je suis actuellement à la recherche d&apos;un stage et je me
-                projette déjà vers l&apos;année scolaire 2025-2026, que
-                j&apos;aimerais effectuer en alternance. N&apos;hésitez pas à me
+                Je suis actuellement à la recherche d&apos;une alternance pour
+                l&apos;année scolaire 2026-2027. N&apos;hésitez pas à me
                 contacter !
                 <span className="flex flex-col md:flex-row gap-2">
-                  <span className="text-sm font-bold">07.81.38.43.95</span>
-                  <span className="text-sm font-bold">
-                    jeevons.eya.jr@gmail.com
-                  </span>
+                  <a
+                    href={LINKEDIN_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm font-bold underline"
+                  >
+                    Me retrouver sur LinkedIn
+                  </a>
                 </span>
               </p>
+              <noscript>
+                <p className="text-sm mt-4">
+                  Le bouton de contact direct nécessite JavaScript. Vous pouvez
+                  me joindre via le lien LinkedIn ci-dessus.
+                </p>
+              </noscript>
             </div>
             <div>
-              <a
-                href="mailto:jeevons.eya.jr@gmail.com"
+              <button
+                type="button"
+                aria-label="Envoyer un e-mail à Jeevons"
+                onClick={() => {
+                  window.location.href = `mailto:${buildMail()}`;
+                }}
                 className="text-white bg-gray-900 items-center px-6 h-12 rounded-xl gap-2 inline-flex w-max border border-gray-900 hover:scale-110 transform transition duration-300 ease-in-out"
               >
                 <span className="font-semibold">Me Contacter</span>
                 <ArrowUpRightIcon aria-hidden="true" className="size-4" />
-              </a>
+              </button>
             </div>
           </div>
         </div>

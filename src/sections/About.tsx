@@ -13,7 +13,7 @@ import { Card } from "@/components/Card";
 import { CardHeader } from "@/components/CardHeader";
 import { SectionHeader } from "@/components/SectionHeader";
 import { ToolboxItems } from "@/components/ToolboxItems";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { useRef } from "react";
 
 import Image from "next/image";
@@ -93,6 +93,7 @@ const hobbies = [
 
 export const AboutSection = () => {
   const constraintRef = useRef(null);
+  const shouldReduceMotion = useReducedMotion();
   return (
     <section className="py-20 lg:py-28" id="about">
       <div className="container">
@@ -146,8 +147,11 @@ export const AboutSection = () => {
                     key={hobby.title}
                     className="inline-flex items-center gap-3 bg-gradient-to-r from-emerald-300 to-sky-400 rounded-full py-1.5 px-6 absolute"
                     style={{ left: hobby.left, top: hobby.top }}
-                    drag
+                    drag={!shouldReduceMotion}
                     dragConstraints={constraintRef}
+                    transition={
+                      shouldReduceMotion ? { duration: 0 } : undefined
+                    }
                   >
                     <span className="font-medium text-gray-950">
                       {hobby.title}
