@@ -1,0 +1,138 @@
+# generated: 2026-07-21
+# last_updated: 2026-07-21
+# project: jeevonsPortoflio-2024
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: _bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog -> in-progress: Automatically when first story is created (via create-story)
+#   - in-progress -> done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# Action Item Status:
+#   - open: Committed during a retrospective, not yet addressed
+#   - in-progress: Actively being worked on
+#   - done: Completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - Developer typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+# - Retrospective appends its action items to action_items; sprint-status surfaces open ones
+
+generated: 2026-07-21
+last_updated: 2026-07-21
+project: jeevonsPortoflio-2024
+project_key: NOKEY
+tracking_system: file-system
+story_location: _bmad-output/implementation-artifacts
+
+development_status:
+  epic-1: in-progress
+  1-1-cibler-la-bonne-section-depuis-la-navigation: ready-for-dev
+  1-2-rendre-la-section-temoignages-atteignable: backlog
+  1-3-ouvrir-les-liens-externes-sans-risque: backlog
+  1-4-reparer-le-bouton-visiter-le-site: backlog
+  1-5-afficher-des-informations-a-jour: backlog
+  1-6-proteger-les-coordonnees-personnelles-de-la-moisson: backlog
+  1-7-respecter-le-choix-de-mouvement-reduit: backlog
+  1-8-corriger-le-lisere-des-cartes: backlog
+  1-9-alleger-le-depot-de-ses-assets-morts: backlog
+  1-10-apparaitre-correctement-au-partage-et-a-l-indexation: backlog
+  epic-1-retrospective: optional
+  epic-2: backlog
+  2-1-savoir-si-l-application-est-en-bonne-sante: backlog
+  2-2-construire-une-image-de-production-minimale: backlog
+  2-3-developper-en-local-dans-les-memes-conditions-qu-en-production: backlog
+  2-4-heberger-les-donnees-du-portfolio-sur-le-postgres-mutualise: backlog
+  2-5-decrire-le-deploiement-de-production: backlog
+  2-6-rendre-le-portfolio-joignable-sur-son-sous-domaine: backlog
+  2-7-couper-vercel-sans-risque: backlog
+  epic-2-retrospective: optional
+  epic-3: backlog
+  3-1-reorganiser-le-projet-en-monorepo: backlog
+  3-2-passer-a-bun-comme-gestionnaire-de-paquets: backlog
+  3-3-monter-le-socle-a-next-16-et-react-19: backlog
+  3-4-empecher-qu-un-code-mal-forme-entre-dans-le-depot: backlog
+  3-5-aligner-les-branches-sur-la-convention-doshwork: backlog
+  3-6-verifier-automatiquement-chaque-contribution: backlog
+  3-7-eliminer-la-duplication-entre-les-deux-sections-de-projets: backlog
+  epic-3-retrospective: optional
+  epic-4: backlog
+  4-1-servir-les-projets-depuis-la-base: backlog
+  4-2-servir-le-parcours-et-les-centres-d-interet-depuis-la-base: backlog
+  4-3-piloter-les-textes-du-site-sans-redeployer: backlog
+  4-4-garder-le-site-rapide-malgre-la-base: backlog
+  4-5-ne-jamais-tomber-en-panne-si-la-base-est-injoignable: backlog
+  4-6-appliquer-les-migrations-automatiquement-au-deploiement: backlog
+  epic-4-retrospective: optional
+  epic-5: backlog
+  5-1-me-connecter-au-back-office: backlog
+  5-2-verrouiller-l-acces-a-l-administration: backlog
+  5-3-activer-la-double-authentification-a-ma-premiere-connexion: backlog
+  5-4-conserver-un-moyen-d-entrer-si-je-perds-mon-telephone: backlog
+  5-5-me-connecter-en-deux-temps: backlog
+  5-6-debloquer-mon-acces-depuis-le-serveur: backlog
+  5-7-voir-l-etat-de-mon-portfolio-d-un-coup-d-il: backlog
+  5-8-gerer-mes-projets: backlog
+  5-9-decrire-finement-un-projet: backlog
+  5-10-choisir-l-ordre-d-affichage-de-mes-projets: backlog
+  5-11-preparer-un-projet-avant-de-le-publier: backlog
+  5-12-illustrer-mes-projets: backlog
+  5-13-gerer-ma-bibliotheque-d-images: backlog
+  5-14-gerer-mon-parcours: backlog
+  5-15-gerer-mes-technologies: backlog
+  5-16-modifier-les-textes-de-mon-site: backlog
+  5-17-mettre-a-jour-mon-cv: backlog
+  5-18-lire-les-messages-qu-on-m-envoie: backlog
+  5-19-retrouver-ce-que-j-ai-modifie: backlog
+  5-20-utiliser-l-administration-au-clavier-sans-a-coups: backlog
+  epic-5-retrospective: optional
+  epic-6: backlog
+  6-1-systematiser-l-identite-visuelle-existante: backlog
+  6-2-neutraliser-le-mouvement-d-un-seul-geste: backlog
+  6-3-rendre-les-titres-et-les-textes-agreables-a-lire: backlog
+  6-4-decouvrir-le-contenu-a-mesure-que-je-defile: backlog
+  6-5-situer-ma-progression-dans-la-page: backlog
+  6-6-rendre-les-elements-interactifs-vivants: backlog
+  6-7-etre-accueilli-par-une-page-d-accueil-marquante: backlog
+  6-8-explorer-les-cartes-de-projet: backlog
+  6-9-suivre-le-parcours-de-jeevons: backlog
+  6-10-consulter-un-projet-en-detail: backlog
+  6-11-consulter-et-telecharger-le-cv: backlog
+  6-12-prendre-contact-directement-depuis-le-site: backlog
+  6-13-comprendre-les-competences-de-jeevons: backlog
+  6-14-saisir-l-experience-de-jeevons-en-quelques-chiffres: backlog
+  6-15-decouvrir-la-personnalite-de-jeevons: backlog
+  6-16-percevoir-un-site-vivant-jusque-dans-les-details: backlog
+  6-17-recompenser-les-curieux: backlog
+  6-18-charger-les-images-sans-attente-ni-saut: backlog
+  epic-6-retrospective: optional
+  epic-7: backlog
+  7-1-verifier-automatiquement-les-parcours-essentiels: backlog
+  7-2-empecher-toute-regression-d-accessibilite: backlog
+  7-3-bloquer-toute-contribution-qui-degrade-le-site: backlog
+  7-4-savoir-combien-de-personnes-visitent-mon-portfolio: backlog
+  7-5-savoir-ce-que-les-recruteurs-regardent-vraiment: backlog
+  7-6-pouvoir-reprendre-mon-projet-dans-six-mois: backlog
+  epic-7-retrospective: optional
