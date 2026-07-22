@@ -60,14 +60,14 @@ development_status:
   1-9-alleger-le-depot-de-ses-assets-morts: review
   1-10-apparaitre-correctement-au-partage-et-a-l-indexation: review
   epic-1-retrospective: optional
-  epic-2: backlog
-  2-1-savoir-si-l-application-est-en-bonne-sante: backlog
-  2-2-construire-une-image-de-production-minimale: backlog
-  2-3-developper-en-local-dans-les-memes-conditions-qu-en-production: backlog
-  2-4-heberger-les-donnees-du-portfolio-sur-le-postgres-mutualise: backlog
-  2-5-decrire-le-deploiement-de-production: backlog
-  2-6-rendre-le-portfolio-joignable-sur-son-sous-domaine: backlog
-  2-7-couper-vercel-sans-risque: backlog
+  epic-2: in-progress
+  2-1-savoir-si-l-application-est-en-bonne-sante: review
+  2-2-construire-une-image-de-production-minimale: review
+  2-3-developper-en-local-dans-les-memes-conditions-qu-en-production: review
+  2-4-heberger-les-donnees-du-portfolio-sur-le-postgres-mutualise: review
+  2-5-decrire-le-deploiement-de-production: review
+  2-6-rendre-le-portfolio-joignable-sur-son-sous-domaine: ready-for-dev
+  2-7-couper-vercel-sans-risque: ready-for-dev
   epic-2-retrospective: optional
   epic-3: backlog
   3-1-reorganiser-le-projet-en-monorepo: backlog
