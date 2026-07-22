@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: portfolio
+      POSTGRES_PASSWORD: portfolio
+      POSTGRES_DB: portfolio_dev
+    # Jamais 0.0.0.0 : la base ne doit pas être joignable depuis le réseau local.
+    ports: ["127.0.0.1:5432:5432"]
+    volumes: [portfolio_db_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U portfolio -d portfolio_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build:
+      context: .
+      target: development
+    ports: ["3000:3000"]
+    volumes:
+      - .:/app
+      # Volumes anonymes : préservent node_modules et .next du conteneur,
+      # compilés pour Alpine/Linux, du montage de l'hôte (macOS/arm64).
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://portfolio:portfolio@db:5432/portfolio_dev?schema=public
+
+volumes:
+  portfolio_db_data:
