@@ -1,0 +1,33 @@
+services:
+  web:
+    container_name: portfolio_web
+    build:
+      # Pas ./apps/web : le monorepo arrive en story 3.1.
+      context: .
+      target: production
+      args:
+        # Next inline les NEXT_PUBLIC_* au moment du build : les passer en
+        # environment n'aurait aucun effet. Changer de domaine impose un rebuild.
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+    volumes:
+      - portfolio_uploads:/app/uploads
+    networks: [coolify]
+    healthcheck:
+      # wget et non curl : node:22-alpine embarque BusyBox, sans curl.
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  portfolio_uploads:
+
+networks:
+  coolify:
+    # Créé par Coolify sur le VPS : un `up` local échouera, c'est attendu.
+    external: true

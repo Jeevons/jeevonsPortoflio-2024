@@ -1,3 +1,17 @@
+## 🚀 Démarrage
+
+Prérequis : Docker Desktop.
+
+```bash
+docker compose up
+```
+
+Le site est disponible sur http://localhost:3000 et la base Postgres sur `127.0.0.1:5432`.
+
+Le code source est monté dans le conteneur : toute modification dans `src/` est prise en compte immédiatement, sans redémarrage.
+
+---
+
 ######################## 🚀 A Vision for the Future ########################
 
 My Journey:  
