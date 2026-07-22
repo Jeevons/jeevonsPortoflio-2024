@@ -66,7 +66,7 @@ development_status:
   2-3-developper-en-local-dans-les-memes-conditions-qu-en-production: review
   2-4-heberger-les-donnees-du-portfolio-sur-le-postgres-mutualise: review
   2-5-decrire-le-deploiement-de-production: review
-  2-6-rendre-le-portfolio-joignable-sur-son-sous-domaine: review
+  2-6-rendre-le-portfolio-joignable-sur-son-sous-domaine: done
   2-7-couper-vercel-sans-risque: ready-for-dev
   epic-2-retrospective: optional
   epic-3: backlog

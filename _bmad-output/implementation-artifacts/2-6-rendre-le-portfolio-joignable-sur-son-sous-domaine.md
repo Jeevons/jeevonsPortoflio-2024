@@ -4,7 +4,7 @@ baseline_commit: 43e1e458b22cdbaaab761e933ce4021bd15301ad
 
 # Story 2.6: Rendre le portfolio joignable sur son sous-domaine
 
-Status: review
+Status: done
 
 ## Story
 
@@ -353,6 +353,15 @@ sans interruption pendant et après l'échec (`uptime` continu de 864 s au contr
 **À faire à la prochaine occurrence** — relever, **immédiatement après l'échec** et avant tout redéploiement :
 `sudo dmesg -T | tail -50`, `free -h`, `df -h /var/lib/docker`. Un second point de données avec le log à
 chaud permettra de conclure ; un seul ne le permet pas.
+
+**Contrôle visuel navigateur — tâche 6, effectué par Jeevons.** Rendu conforme : polices serif, dégradé de
+fond, animations, emoji, navigation et boutons tous chargés — aucune ressource manquante. Chrome affiche
+« La connexion est sécurisée », donc **aucun contenu mixte** (il signalerait une ressource `http://`).
+Ancre `#projects` fonctionnelle en production : le clic sur « Projets » positionne bien sur « Projets
+phares » — l'acquis de la story 1.1 est confirmé sur l'infrastructure cible.
+
+**Story close.** Les 6 AC sont vérifiés, le déploiement automatique est opérationnel et le rendu validé
+côté navigateur. Statut `review` → `done`.
 
 **Dette** — branche `Production` (le renommage en `PROD` est la story 3.5).
 
