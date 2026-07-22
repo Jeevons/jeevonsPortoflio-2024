@@ -4,7 +4,7 @@ baseline_commit: 43e1e458b22cdbaaab761e933ce4021bd15301ad
 
 # Story 2.6: Rendre le portfolio joignable sur son sous-domaine
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -243,10 +243,41 @@ Aucun test automatisé. Vérification par **`dig`** (propagation), **`curl`** (c
 
 ### Agent Model Used
 
+Claude Opus 4.8 (guidage pas à pas ; registrar / Coolify / VPS opérés par Jeevons).
+
 ### Debug Log References
+
+- `dig +short portfolio.doshwork.com A` — concordance sur les 3 résolveurs (local, `@1.1.1.1`, `@8.8.8.8`).
+- Deployment Log Coolify — commit `e8cbf90`, build 2 min 12 s, `Running (healthy)` au premier essai.
+- `openssl s_client` sur les 3 FQDN (portfolio + les 2 Doshwork).
 
 ### Completion Notes List
 
+**Mise en ligne — 2026-07-22 19:22 UTC** (⏱️ début de la fenêtre d'observation de 48 h exigée par la story 2.7 → échéance **2026-07-24 19:22 UTC**).
+
+| AC | Vérification | Résultat |
+|---|---|---|
+| AC1 | DNS `A` / `portfolio` → `89.167.90.7`, TTL 5 min (Namecheap) | ✅ 3 résolveurs concordants |
+| AC2 | FQDN posé après propagation | ✅ aucune tentative Let's Encrypt gaspillée |
+| AC3 | racine `200` · `/api/health` `200` | ✅ |
+| AC3 | Certificat `CN=portfolio.doshwork.com`, Let's Encrypt | ✅ 22 juil. → 20 oct. 2026 (90 j) |
+| AC4 | HTTP → HTTPS | ✅ `307` → `https://portfolio.doshwork.com/` |
+| AC5 | `doshwork.com` / `api.doshwork.com` | ✅ `200` / `200` |
+| AC5 | Certificats Doshwork inchangés | ✅ toujours émis le 1er juil. — non réémis |
+| AC6 | `NEXT_PUBLIC_SITE_URL` inlinée au build | ✅ `robots.txt`, `sitemap.xml`, `og:url` portent le domaine |
+
+**Prérequis non anticipé par la story** — tout l'Epic 2 était non commité sur `develop`, et la branche `Production` ne contenait ni `Dockerfile`, ni `docker-compose.prod.yml`, ni `src/app/api/`. Déployer en l'état aurait échoué au build **et** brûlé des tentatives Let's Encrypt. Résolu avant l'étape DNS : 6 commits atomiques, `develop` → `Production`, push (13 commits d'écart au total, Epic 1 inclus).
+
+**Écart Coolify — Deploy Key vs GitHub App.** L'écran `+ New Resource` classe les choix par *source*, pas par type de build : la carte `Docker Compose` visible côté « Docker Based » déploie **sans Git**. Le bon chemin est `Private Repository (with GitHub App)`, puis Build Pack = `Docker Compose`. Une première tentative via `Private Repository (with Deploy Key)` a produit `Failed to read Git source` — la clé proposée (`github-app-doshwork`) n'est qu'une clé SSH autorisée sur le dépôt Doshwork, sans accès à celui du portfolio et **sans webhooks**. Application recréée via la GitHub App pour retrouver le redéploiement automatique sur push.
+
+**Dette** — branche `Production` (le renommage en `PROD` est la story 3.5).
+
+**Hors périmètre, à traiter plus tard** : le VPS signale `*** System restart required ***` et 26 mises à jour en attente (dont 2 de sécurité) ; GitHub signale 74 vulnérabilités de dépendances (2 critiques) — l'Epic 3 (Next 16 / React 19) en absorbera l'essentiel.
+
 ### File List
 
+Aucun fichier applicatif modifié par cette story (story d'exploitation).
+
 ### Change Log
+
+- 2026-07-22 — Portfolio en ligne sur `https://portfolio.doshwork.com`, TLS Let's Encrypt actif, Doshwork non impacté.
