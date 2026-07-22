@@ -268,9 +268,72 @@ Claude Opus 4.8 (guidage pas à pas ; registrar / Coolify / VPS opérés par Jee
 
 **Prérequis non anticipé par la story** — tout l'Epic 2 était non commité sur `develop`, et la branche `Production` ne contenait ni `Dockerfile`, ni `docker-compose.prod.yml`, ni `src/app/api/`. Déployer en l'état aurait échoué au build **et** brûlé des tentatives Let's Encrypt. Résolu avant l'étape DNS : 6 commits atomiques, `develop` → `Production`, push (13 commits d'écart au total, Epic 1 inclus).
 
-**Écart Coolify — Deploy Key vs GitHub App.** L'écran `+ New Resource` classe les choix par *source*, pas par type de build : la carte `Docker Compose` visible côté « Docker Based » déploie **sans Git**. Le bon chemin est `Private Repository (with GitHub App)`, puis Build Pack = `Docker Compose`. Une première tentative via `Private Repository (with Deploy Key)` a produit `Failed to read Git source` — la clé proposée (`github-app-doshwork`) n'est qu'une clé SSH autorisée sur le dépôt Doshwork, sans accès à celui du portfolio et **sans webhooks**. Application recréée via la GitHub App pour retrouver le redéploiement automatique sur push.
+**Écart Coolify — Deploy Key vs GitHub App.** L'écran `+ New Resource` classe les choix par *source*, pas par type de build : la carte `Docker Compose` visible côté « Docker Based » déploie **sans Git**. Le bon chemin est `Private Repository (with GitHub App)`, puis Build Pack = `Docker Compose`. Une première tentative via `Private Repository (with Deploy Key)` a produit `Failed to read Git source` — la clé proposée (`github-app-doshwork`) n'est qu'une clé SSH autorisée sur le dépôt Doshwork, sans accès à celui du portfolio et **sans webhooks**. L'application a d'abord été mise en ligne avec une Deploy Key (clé `Doshops`), puis **recréée via la GitHub App** — voir ci-dessous.
+
+**Migration Deploy Key → GitHub App — 2026-07-22 20:39 UTC.**
+
+Symptôme : un push sur `Production` (merge de la PR #1, commit `6cabe57`) n'a déclenché **aucun** redéploiement. Les deux déploiements existants portaient l'étiquette `Manual`.
+
+Diagnostic, dans l'ordre des hypothèses écartées :
+
+| Hypothèse | Constat | Verdict |
+|---|---|---|
+| Webhook GitHub absent | `Settings → Webhooks` du dépôt : liste vide | ❌ non concluant — une GitHub App n'y figure jamais |
+| `Auto Deploy` désactivé | `Configuration → Advanced` : coché | ❌ |
+| Mauvaise branche surveillée | `Git Source` : `Production`, casse exacte | ❌ |
+| **Source = Deploy Key** | `Git Source` affichait `Deploy Key — Doshops` | ✅ **cause réelle** |
+
+Une Deploy Key est une clé SSH en lecture seule : elle permet à Coolify de **cloner**, mais ne crée aucun webhook. GitHub n'a personne à notifier ; Coolify attend un signal qui n'arrive jamais.
+
+⚠️ **Piège d'interface** — la section `Git Source` d'une app Deploy Key propose de changer de clé privée, et l'une d'elles se nomme `github-app-doshwork`. La sélectionner **ne convertit pas** l'application : le type de source est figé à la création. Le mot « github-app » est dans l'étiquette de la clé, pas dans sa nature. Seule la recréation de l'application permet de changer de type.
+
+Résolution :
+
+1. `Sources` (menu principal, ≠ `Keys & Tokens`) → la GitHub App `doshwork` existait déjà — App Id `3574731`, Installation Id `128845183`, `Webhook Secret` renseigné. Sa table `Resources` ne listait que `Doshwork / production / doshwork`.
+2. Côté GitHub, `Repository access` était déjà en `Only select repositories` avec `jeevonsPortoflio-2024` **et** `Jeevons/Doshwork` — aucune extension nécessaire.
+3. Ancienne app arrêtée (`Stop`, sans suppression) pour libérer le FQDN et éviter un conflit Traefik.
+4. Nouvelle app créée via `+ New Resource → Private Repository (with GitHub App)`, source `doshwork`, branche `Production`, Build Pack `Docker Compose`, `Docker Compose Location` `/docker-compose.prod.yml`.
+5. Variables d'environnement ressaisies (une nouvelle app est créée vierge), puis FQDN reposé.
+6. Ancienne app supprimée après vérification complète de la nouvelle.
+
+Confirmation dans l'onglet `Webhooks` de la nouvelle app : *« You are using an official Git App. You do not need manual webhooks. »*
+
+**Écart Coolify — résolution des variables au moment du `build`.** Le premier déploiement de la nouvelle app a échoué :
+
+```
+level=warning msg="The \"DATABASE_URL\" variable is not set. Defaulting to a blank string."
+Command execution failed (exit code 255): docker compose ... build
+```
+
+Cause : `docker-compose.prod.yml` référence `${DATABASE_URL}` dans le bloc `environment:` du service `web`. Docker Compose résout **l'intégralité** du fichier au moment du `build`, y compris les variables purement runtime. Sans `Available at Buildtime`, la substitution échoue et fait tomber la commande.
+
+Correctif : cocher `Available at Buildtime` sur `DATABASE_URL`. Sans effet sur la sécurité de l'image ici — la variable n'est jamais déclarée en `build.args`, elle sert uniquement au parsing du compose. À distinguer de `NEXT_PUBLIC_SITE_URL`, qui doit être un build arg pour une raison différente (inlining Next.js).
+
+**Vérifications après recréation** — toutes reconduites, aucune régression :
+
+| Vérification | Résultat |
+|---|---|
+| racine · `/api/health` | `200` · `{"status":"ok","uptime":273}` |
+| HTTP → HTTPS | `302` → `https://portfolio.doshwork.com/` |
+| Certificat | `CN=portfolio.doshwork.com`, Let's Encrypt `YR2`, 22 juil. → 20 oct. 2026 |
+| `NEXT_PUBLIC_SITE_URL` inlinée | ✅ `robots.txt`, `sitemap.xml`, `og:url` |
+| `doshwork.com` · `api.doshwork.com` | `200` · `200` |
+
+À noter : le certificat porte toujours l'horodatage `18:38:49`, antérieur à la recréation. Traefik l'a **réutilisé** depuis son magasin plutôt que d'en solliciter un nouveau — aucune tentative Let's Encrypt consommée malgré la recréation de l'application.
 
 **Dette** — branche `Production` (le renommage en `PROD` est la story 3.5).
+
+🛑 **Dette bloquante pour l'Epic 4 — `DATABASE_URL` porte une valeur factice.** Le Secret Coolify contient
+littéralement `postgresql://portfolio_user:TON_MDP@HOST:5432/portfolio_prod?schema=public` : ni le mot de
+passe, ni le hostname ne sont réels. Sans conséquence aujourd'hui — aucun code du portfolio n'ouvre de
+connexion Postgres avant l'Epic 4, d'où un conteneur `healthy` malgré tout. **La première story de l'Epic 4
+qui lancera `prisma migrate deploy` échouera** sur une erreur de résolution de nom sans rapport apparent
+avec cette configuration.
+
+À corriger avant la première story Epic 4 :
+- mot de passe réel de `portfolio_user` (gestionnaire de mots de passe, généré à la story 2.4) ;
+- hostname réel = nom du service Postgres **dans le réseau Docker `coolify`**, jamais `localhost` — Coolify
+  expose une « Reference Resource » pour cela (cf. runbook 2.4 étape 7).
 
 **Hors périmètre, à traiter plus tard** : le VPS signale `*** System restart required ***` et 26 mises à jour en attente (dont 2 de sécurité) ; GitHub signale 74 vulnérabilités de dépendances (2 critiques) — l'Epic 3 (Next 16 / React 19) en absorbera l'essentiel.
 
