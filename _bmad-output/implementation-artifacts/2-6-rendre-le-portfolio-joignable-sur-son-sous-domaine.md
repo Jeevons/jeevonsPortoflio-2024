@@ -321,6 +321,39 @@ Correctif : cocher `Available at Buildtime` sur `DATABASE_URL`. Sans effet sur l
 
 À noter : le certificat porte toujours l'horodatage `18:38:49`, antérieur à la recréation. Traefik l'a **réutilisé** depuis son magasin plutôt que d'en solliciter un nouveau — aucune tentative Let's Encrypt consommée malgré la recréation de l'application.
 
+**Validation du déclenchement automatique — 2026-07-22 20:50 UTC.** Merge de la PR #2 (`develop` → `Production`,
+commit `79be386`). Coolify a démarré un déploiement **seul, dans les secondes suivant le push**, étiqueté
+**`Webhook`** et non `Manual`. ✅ Objectif de la migration atteint.
+
+⚠️ **Incident non élucidé — le build de ce déploiement webhook a échoué.** Conservé ici parce qu'il n'a pas
+été expliqué, et qu'une seconde occurrence permettra de trancher.
+
+Symptôme : sortie interrompue net après `Linting and checking validity of types ...`, sans message d'erreur,
+`exit code 255`. Le commit ne contenait **que des fichiers Markdown** — aucun changement de code.
+
+Hypothèses formulées puis **écartées par la mesure** :
+
+| Hypothèse | Réfutation |
+|---|---|
+| Erreur de compilation / typage | `npx next build` en local sur le même commit : ✅ succès complet, 8 pages générées |
+| Divergence des build args entre chemins webhook et manuel | Les deux logs affichent `Added 20 ARG declarations` — identiques |
+| OOM killer pendant `next build` | `dmesg -T \| grep -iE 'out of memory\|killed process'` : **vide**. `free -h` : 5.6 Gi disponibles, aucun swap mais aucun besoin |
+
+Un `Redeploy` manuel du **même commit** a réussi immédiatement (53 s contre 1 min 39 pour l'échec). L'écart
+s'explique par le cache Docker : le déploiement manuel a réutilisé les couches `apk add vips-dev` et
+`npm ci`, que le build webhook avait reconstruites à froid. Piste non confirmée pour ce démarrage sans
+cache : `Shallow Clone` combiné à un répertoire d'artefacts neuf à chaque déploiement.
+
+Log complet irrécupérable : Coolify supprime le conteneur de build en fin de cycle
+(`Gracefully shutting down build container`) et n'en conserve pas la sortie au-delà de l'affichage tronqué.
+
+**Aucune indisponibilité.** Coolify n'avait pas détruit le conteneur précédent : `/api/health` répondait
+sans interruption pendant et après l'échec (`uptime` continu de 864 s au contrôle suivant).
+
+**À faire à la prochaine occurrence** — relever, **immédiatement après l'échec** et avant tout redéploiement :
+`sudo dmesg -T | tail -50`, `free -h`, `df -h /var/lib/docker`. Un second point de données avec le log à
+chaud permettra de conclure ; un seul ne le permet pas.
+
 **Dette** — branche `Production` (le renommage en `PROD` est la story 3.5).
 
 🛑 **Dette bloquante pour l'Epic 4 — `DATABASE_URL` porte une valeur factice.** Le Secret Coolify contient
