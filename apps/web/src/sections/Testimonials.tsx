@@ -11,7 +11,6 @@ import { useReducedMotion } from "motion/react";
 import Image from "next/image";
 import { Fragment, useEffect, useRef, useState } from "react";
 
-
 const testimonials = [
   {
     name: "Baccalauréat Économique et Social (option Mathématiques appliquées)",
@@ -63,7 +62,10 @@ export const TestimonialsSection = () => {
         scrollContainer.scrollLeft += scrollStep;
 
         // If you reach the end, reposition without returning to the visible beginning.
-        if (scrollContainer.scrollLeft >= scrollContainer.scrollWidth - scrollContainer.clientWidth) {
+        if (
+          scrollContainer.scrollLeft >=
+          scrollContainer.scrollWidth - scrollContainer.clientWidth
+        ) {
           scrollContainer.scrollLeft = 0; // Return to the beginning to complete
         }
       }

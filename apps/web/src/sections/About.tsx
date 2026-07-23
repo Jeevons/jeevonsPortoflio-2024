@@ -110,7 +110,12 @@ export const AboutSection = () => {
                 description="Découvrez mon parcours, mes compétences et mes expériences."
                 indication="(Cliquez sur le cv pour l'ouvrir)"
               />
-              <a href="/assets/docs/jeevons-cv-2024-1.6.pdf" target="_blank" rel="noopener noreferrer" className="flex w-40 mx-auto mt-2 md:mt-0">
+              <a
+                href="/assets/docs/jeevons-cv-2024-1.6.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex w-40 mx-auto mt-2 md:mt-0"
+              >
                 <Image src={jeevonsCv} alt="CV image" />
               </a>
             </Card>

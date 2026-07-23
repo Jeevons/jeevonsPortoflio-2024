@@ -65,7 +65,6 @@ const portfolioProjects = [
     link: "https://img-galery-psi.vercel.app/",
     image: gallery,
   },
-  
 ];
 
 export const SelfProjectsSection = () => {
