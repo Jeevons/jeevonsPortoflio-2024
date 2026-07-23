@@ -1,0 +1,16 @@
+{
+  "name": "jeevons-portfolio-monorepo",
+  "private": true,
+  "description": "Racine du monorepo — n'héberge que l'outillage qualité (husky, commitlint, lint-staged, prettier). Le code applicatif vit dans apps/web/.",
+  "scripts": {
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^21.2.1",
+    "@commitlint/config-conventional": "^21.2.0",
+    "eslint-config-prettier": "^10.1.8",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.2.0",
+    "prettier": "^3.9.6"
+  }
+}

@@ -1,0 +1,24 @@
+# Dépendances et artefacts de build
+node_modules
+apps/web/node_modules
+.next
+apps/web/.next
+apps/web/out
+
+# Lockfiles (générés)
+bun.lock
+apps/web/bun.lock
+package-lock.json
+
+# Artefacts BMAD (documentation générée, ne pas reformater)
+_bmad-output
+_bmad
+
+# Assets binaires
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.ico
+*.pdf
+*.svg
