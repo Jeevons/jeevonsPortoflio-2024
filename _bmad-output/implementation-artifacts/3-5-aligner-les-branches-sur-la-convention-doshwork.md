@@ -4,7 +4,7 @@ baseline_commit: a270747a2c1a628c60ee36e4697aede4f6558474
 
 # Story 3.5: Aligner les branches sur la convention Doshwork
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -127,28 +127,28 @@ L'AC3 exige le flux `alpha/feat/*` → `DEV` → `PROD` **documenté dans le REA
 
 ## Tasks / Subtasks
 
-- [ ] **Tâche 1 — Préparer et exécuter le renommage local** (AC: 1, piège n°1)
-  - [ ] `git branch -m develop DEV`, `git branch -m Production PROD`.
-  - [ ] Pousser `DEV` et `PROD` avec `-u` sur origin.
-- [ ] **Tâche 2 — [HUMAIN] Basculer le défaut GitHub puis nettoyer** (AC: 1, pièges n°2)
-  - [ ] Jeevons : branche par défaut du dépôt → **`PROD`** (Settings GitHub).
-  - [ ] Supprimer les distantes `develop` et `Production` (après bascule du défaut).
-- [ ] **Tâche 3 — Supprimer la branche morte `fix`** (AC: 2, piège n°3)
-  - [ ] `git branch -d fix` (vérifier qu'elle est bien fusionnée) puis `git push origin --delete fix`.
-- [ ] **Tâche 4 — [HUMAIN] Protection de branche `PROD`** (AC: 3, piège n°4)
-  - [ ] Jeevons : « PR obligatoire » sur `PROD` ; « CI verte obligatoire » (checks 3.6 si dispo, sinon noté pour plus tard).
-  - [ ] L'agent fournit les commandes `gh api` prêtes à l'emploi.
-- [ ] **Tâche 5 — Documenter le flux Git** (AC: 3, piège n°6)
-  - [ ] README : section « Flux Git » `alpha/feat/*` → `DEV` → `PROD`.
-  - [ ] Proposer la mise à jour des mentions `develop`/`Production` dans AGENTS.md → **valider avec Jeevons**.
-- [ ] **Tâche 6 — [HUMAIN] Basculer Coolify + déploiement de vérification** (AC: 4, piège n°5) — 🛑 **cœur de la story**
-  - [ ] Jeevons : branche source de l'app portfolio Coolify → **`PROD`**.
-  - [ ] Déclencher un déploiement de vérification → site joignable, `/api/health` 200.
-  - [ ] ❌ Ne pas toucher aux ressources Doshwork.
-- [ ] **Tâche 7 — Definition of Done** (AGENTS.md §8)
-  - [ ] `git branch -a` : `DEV`, `PROD` présentes ; `develop`, `Production`, `fix` **absentes** (local + distant).
-  - [ ] Branche par défaut distante = `PROD` ; protection active ; Coolify sur `PROD` ; déploiement vert.
-  - [ ] `File List` + `Completion Notes` + `Change Log` remplis · `sprint-status.yaml` mis à jour.
+- [x] **Tâche 1 — Préparer et exécuter le renommage local** (AC: 1, piège n°1)
+  - [x] `git branch -m develop DEV`, `git branch -m Production PROD`.
+  - [x] Poussé `DEV` (avec les 7 commits Epic 3) et `PROD` avec `-u` sur origin.
+- [x] **Tâche 2 — [HUMAIN] Basculer le défaut GitHub puis nettoyer** (AC: 1, pièges n°2)
+  - [x] Jeevons : branche par défaut du dépôt → **`PROD`** (vérifié via `gh`).
+  - [x] Distantes `develop` et `Production` supprimées (après bascule du défaut).
+- [x] **Tâche 3 — Supprimer la branche morte `fix`** (AC: 2, piège n°3)
+  - [x] `fix` absente en local ; vérifiée fusionnée (0 commit d'avance sur `Production`) ; `git push origin --delete fix`.
+- [x] **Tâche 4 — [HUMAIN] Protection de branche `PROD`** (AC: 3, piège n°4)
+  - [x] Protection activée via `gh api` : **PR obligatoire**, force-push interdit, suppression interdite. **CI verte : reportée à 3.6** (`required_status_checks: null`).
+  - [x] ⚠️ La protection a d'abord échoué en 403 (repo privé sur plan gratuit) → Jeevons a **rendu le dépôt public**, ce qui l'a débloquée. Audit de sécurité de l'historique préalable : **aucun secret/.env réel exposé**.
+- [x] **Tâche 5 — Documenter le flux Git** (AC: 3, piège n°6)
+  - [x] README : section « 🌿 Flux Git » `alpha/feat/*` → `DEV` → `PROD` (+ correction npm→bun au passage).
+  - [x] AGENTS.md : instructions git alignées sur `DEV`/`PROD` (validé avec Jeevons).
+- [x] **Tâche 6 — [HUMAIN] Basculer Coolify + déploiement de vérification** (AC: 4, piège n°5) — 🛑 **cœur de la story**
+  - [x] Jeevons : branche source de l'app portfolio Coolify → **`PROD`**.
+  - [x] Déploiement de vérification **abouti** (Coolify « Finished », commit `e8cbf90` = état de `PROD`). Site joignable, `/api/health` **200**, accueil **200**.
+  - [x] ✅ Ressources Doshwork non touchées.
+- [x] **Tâche 7 — Definition of Done** (AGENTS.md §8)
+  - [x] `git branch -a` : `DEV`, `PROD` présentes ; `develop`, `Production`, `fix` **absentes** (local + distant).
+  - [x] Défaut distant = `PROD` ; protection active ; Coolify sur `PROD` ; déploiement vert.
+  - [x] `File List` + `Completion Notes` + `Change Log` remplis · `sprint-status.yaml` mis à jour.
 
 ## Dev Notes
 
@@ -187,16 +187,42 @@ Pas de test automatisé. Vérification par **inspection Git** (`git branch -a`, 
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+claude-opus-4-8
 
 ### Debug Log References
 
+- Protection de branche `gh api` : premier 403 « Upgrade to GitHub Pro or make this repository public » (la protection est indisponible sur repo privé en plan gratuit). Débloqué en rendant le dépôt **public**.
+- Deuxième essai : 422 « `"0"` is not an integer » — les flags `-f` de `gh` envoient des strings. Corrigé via un payload JSON (`--input`) où `required_approving_review_count` est un vrai entier.
+- Coolify a importé `PROD` au commit `e8cbf90` (état de l'ancien `Production`, **sans** l'Epic 3) — attendu : `PROD` = ex-`Production`. La mise en prod de l'Epic 3 se fera plus tard via PR `DEV`→`PROD`.
+
 ### Completion Notes List
 
+- **Partie automatisable (agent)** : renommage local `develop`→`DEV` / `Production`→`PROD`, push `-u` des deux (DEV embarque les 7 commits Epic 3), suppression distante de `fix`, docs README + AGENTS.md.
+- **Partie [HUMAIN] (Jeevons)** : bascule du défaut GitHub → `PROD`, suppression des distantes `develop`/`Production`, passage du dépôt en public, déclenchement du déploiement Coolify. L'agent a fourni chaque commande prête à l'emploi.
+- **⚠️ Décision structurelle : dépôt rendu PUBLIC.** Nécessaire pour débloquer la protection de branche (indisponible en privé sur plan gratuit). Audit préalable de l'historique complet : **aucun `.env` réel, aucun secret, aucun token** — passage en public sans fuite. `.env.production.example` (template sans valeur) est le seul `.env` versionné.
+- **AC3 — protection `PROD`** : PR obligatoire + force-push interdit + suppression interdite. Le check « CI verte obligatoire » est **volontairement reporté** à la story 3.6 (le job CI n'existe pas encore) — `required_status_checks: null`. À recocher quand `ci.yml` existera.
+- **AC4 — Coolify** : bascule sur `PROD` + déploiement de vérification « Finished ». `/api/health` 200, accueil 200. Ressources Doshwork intactes.
+- **Note historique / dette de doc** : la table « Aujourd'hui vs Après Epic 3 » d'AGENTS.md (ligne ~31) reste inchangée (elle documente la migration, pas une instruction). Seules les instructions opérationnelles git ont été alignées.
+- **Rappel flux** : `PROD` étant désormais protégée, le prochain déploiement de l'Epic 3 en prod passera par une **PR `DEV` → `PROD`** (à faire hors de cette story).
+
 ### File List
+
+**Modifiés :**
+- `README.md` — section « 🌿 Flux Git » ajoutée (livrable AC3) ; commandes npm→bun corrigées
+- `AGENTS.md` — instructions git alignées sur `DEV`/`PROD`
+
+**Opérations Git/GitHub/Coolify (pas de fichier) :**
+- Branches renommées : `develop`→`DEV`, `Production`→`PROD` (local + distant)
+- Branche `fix` supprimée (distant)
+- Défaut distant → `PROD` ; protection de branche `PROD` activée
+- Dépôt passé en **public**
+- Coolify : app portfolio → branche `PROD`, déploiement vérifié
 
 ### Change Log
 
 | Date | Description |
 |------|-------------|
 | 2026-07-23 | Story 3.5 créée — renommage branches `PROD`/`DEV`, suppression `fix`, protection + Coolify. |
+| 2026-07-23 | Renommage `develop`→`DEV` / `Production`→`PROD` (local + push). `fix` supprimée. Défaut distant → `PROD`. |
+| 2026-07-23 | Dépôt rendu public (audit historique : aucun secret). Protection `PROD` activée (PR obligatoire ; CI reportée à 3.6). |
+| 2026-07-23 | README + AGENTS.md documentent le flux `DEV`/`PROD`. Coolify basculé sur `PROD`, déploiement vérifié (health 200). Story → review. |
