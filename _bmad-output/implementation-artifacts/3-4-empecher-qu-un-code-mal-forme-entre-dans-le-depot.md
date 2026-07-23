@@ -4,7 +4,7 @@ baseline_commit: a270747a2c1a628c60ee36e4697aede4f6558474
 
 # Story 3.4: Empêcher qu'un code mal formé entre dans le dépôt
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -109,29 +109,29 @@ ESLint (`next/core-web-vitals`) et Prettier peuvent se marcher dessus sur les r�
 
 ## Tasks / Subtasks
 
-- [ ] **Tâche 1 — Vérifier prérequis + structure racine** (3.1, 3.2 `done`)
-  - [ ] Code sous `apps/web/`, Bun actif. Vérifier/créer le `package.json` racine minimal (signaler à Jeevons si création).
-- [ ] **Tâche 2 — Installer et configurer les outils** (AC: 1, 2 ; pièges n°2, 4, 5) → **commit 1**
-  - [ ] `bun add -d prettier husky lint-staged @commitlint/cli @commitlint/config-conventional eslint-config-prettier` (à la racine).
-  - [ ] `.prettierrc` + `.prettierignore` (piège n°5).
-  - [ ] `commitlint.config.js` (piège n°4).
-  - [ ] Script `prepare: "husky"` + `bun install` pour installer les hooks.
-  - [ ] `.husky/pre-commit` → `bunx lint-staged` ; `.husky/commit-msg` → `bunx commitlint --edit "$1"` ; `chmod +x` (piège n°2).
-  - [ ] Config lint-staged ciblant `apps/web/**` (piège n°3).
-  - [ ] **Commit isolé** : `chore(tooling): ...` — **sans** le formatage de masse.
-- [ ] **Tâche 3 — Formatage initial** (AC: 3, piège n°1) → **commit 2 isolé**
-  - [ ] `bunx prettier --write "apps/web/**/*.{ts,tsx,js,jsx,json,css,md}"` (+ fichiers racine pertinents).
-  - [ ] Vérifier que le diff ne contient **que** du style (aucun changement de logique).
-  - [ ] **Commit séparé** : `style: formatage initial Prettier`.
-- [ ] **Tâche 4 — Vérifier les crochets** (AC: 1, 2) — 🛑 **cœur de la story**
-  - [ ] Modifier un fichier en y ajoutant du désordre de style, `git commit` → lint-staged **reformate** avant le commit (AC1).
-  - [ ] Vérifier que seuls les fichiers **modifiés** sont touchés (AC1, piège n°3).
-  - [ ] `git commit -m "message invalide"` → **rejeté** par commitlint (AC2).
-  - [ ] `git commit -m "test(tooling): message conforme"` → **accepté** (AC2).
-- [ ] **Tâche 5 — Definition of Done technique** (AGENTS.md §8)
-  - [ ] `bun run lint` · `bunx tsc --noEmit` · `bun run build` → verts (le formatage ne doit rien casser).
-  - [ ] `git log --oneline -3` : le commit de config et le commit de formatage sont **bien séparés** (AC3).
-  - [ ] `File List` + `Completion Notes` + `Change Log` remplis · `sprint-status.yaml` mis à jour.
+- [x] **Tâche 1 — Vérifier prérequis + structure racine** (3.1, 3.2 `done`)
+  - [x] Code sous `apps/web/`, Bun actif. `package.json` racine **créé** (aucun n'existait) — signalé à Jeevons comme ajout de structure.
+- [x] **Tâche 2 — Installer et configurer les outils** (AC: 1, 2 ; pièges n°2, 4, 5) → **commit 1**
+  - [x] `bun add -d prettier husky lint-staged @commitlint/cli @commitlint/config-conventional eslint-config-prettier` (à la racine).
+  - [x] `.prettierrc` + `.prettierignore` (piège n°5).
+  - [x] `commitlint.config.mjs` (piège n°4 — `.mjs` car `package.json` racine n'est pas `type:module`).
+  - [x] Script `prepare: "husky"` + `bun install` pour installer les hooks.
+  - [x] `.husky/pre-commit` → `bunx lint-staged` ; `.husky/commit-msg` → `bunx commitlint --edit "$1"` ; `chmod +x` (piège n°2).
+  - [x] Config lint-staged ciblant `apps/web/**` (`lint-staged.config.mjs`, piège n°3).
+  - [x] **Commit isolé** `83af3b1` : `chore(tooling): ...` — **sans** le formatage de masse.
+- [x] **Tâche 3 — Formatage initial** (AC: 3, piège n°1) → **commit 2 isolé**
+  - [x] `bunx prettier --write "apps/web/**/*.{ts,tsx,js,jsx,json,css,md}"` — 9 fichiers reformatés.
+  - [x] Diff prouvé **100 % style** par idempotence (prettier(HEAD) == version actuelle, fichier par fichier).
+  - [x] **Commit séparé** `29bcff2` : `style: formatage initial Prettier`.
+- [x] **Tâche 4 — Vérifier les crochets** (AC: 1, 2) — 🛑 **cœur de la story**
+  - [x] Fichier au style désordonné + `git commit` → lint-staged **a reformaté** avant le commit (AC1).
+  - [x] Seuls les fichiers **stagés** touchés (lint-staged passe la liste ; vérifié dans la sortie du hook, AC1/piège n°3).
+  - [x] `git commit -m "ajoute fichier de test bidon"` → **rejeté** par commitlint (`commit-msg failed code 1`, AC2).
+  - [x] `git commit -m "test(tooling): message conforme"` → **accepté** (AC2). Fichier de test ensuite retiré, commits de test supprimés de l'historique (`reset --soft`).
+- [x] **Tâche 5 — Definition of Done technique** (AGENTS.md §8)
+  - [x] `bun run lint` (0 erreur, 1 warning pré-existant `autoScroll`) · `bunx tsc --noEmit` (0) · `bun run build` (vert) → le formatage n'a rien cassé.
+  - [x] `git log --oneline -3` : `chore(tooling)` et `style` **bien séparés** (AC3).
+  - [x] `File List` + `Completion Notes` + `Change Log` remplis · `sprint-status.yaml` mis à jour.
 
 ## Dev Notes
 
@@ -170,16 +170,49 @@ Pas de test automatisé. Vérification par **manipulation réelle de commits** :
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+claude-opus-4-8
 
 ### Debug Log References
 
+- `lint-staged.config.mjs` : premier commit tooling ne matchait pas `eslint.config.mjs` car `.mjs` absent des patterns → patterns étendus à `mjs,cjs` (amendé dans le commit tooling).
+- `commitlint.config` et `lint-staged.config` en `.mjs` (et non `.js`) : le `package.json` racine n'a pas `"type": "module"`, donc `export default` en `.js` serait lu en CommonJS et échouerait.
+- Vérification « diff = pur style » : test `tr -d [:space:]` inadéquat (Prettier ajoute virgules/guillemets = caractères non-espaces). Remplacé par test d'**idempotence** : `prettier(HEAD:fichier) == fichier actuel` pour chacun des 9 fichiers → preuve fiable de l'absence de logique.
+
 ### Completion Notes List
 
+- **`package.json` racine créé** (aucun n'existait) : héberge husky/commitlint/lint-staged/prettier et le hook `prepare`, **aucune dépendance applicative**. Ajout de structure signalé à Jeevons et validé.
+- **Monorepo** : husky (`.husky/`) et commitlint vivent à la **racine** (près de `.git/`). Config Prettier à la racine couvrant tout le dépôt.
+- **lint-staged (piège n°3, option a retenue)** : `eslint` lancé directement (pas `next lint`) sur la liste des fichiers stagés, via `cd apps/web && bunx eslint <fichiers>`. En pratique lint-staged passe des chemins **absolus** — eslint les résout correctement même après le `cd`. Seuls les fichiers modifiés sont traités (AC1).
+- **eslint-config-prettier (piège n°5)** : branché en **dernier** dans `apps/web/eslint.config.mjs` (flat config ESLint 9 — l'ancien `.eslintrc.json` référencé par la story n'existe plus depuis 3.3). Package installé à la racine, résolu depuis `apps/web` par remontée d'arbre Node.
+- **Vérification réelle des crochets** (Tâche 4) : reformatage auto confirmé, message non conventionnel rejeté (`code 1`), message conforme accepté. Les commits de test ont été retirés de l'historique (`reset --soft`) : ils s'annulaient (ajout puis suppression d'un fichier jetable).
+- **AC3** : `chore(tooling)` (`83af3b1`, config seule) puis `style: formatage initial Prettier` (`29bcff2`, 9 fichiers de style seulement) — strictement séparés.
+- **Dette technique reportée** : warning ESLint `autoScroll` (Testimonials.tsx:85) pré-existant (3.3), hors périmètre. Dette `new URL()` (layout.tsx) toujours ouverte, contournée au build par `NEXT_PUBLIC_SITE_URL`.
+- **Note commits 3.1→3.3** : committés juste avant l'installation du tooling, donc **non validés** par les crochets (qui n'existaient pas encore) — normal.
+
 ### File List
+
+**Créés (racine du monorepo) :**
+- `package.json` — outillage qualité + hook `prepare` (ajout de structure)
+- `bun.lock` — lockfile racine (devDeps tooling)
+- `.prettierrc`, `.prettierignore`
+- `commitlint.config.mjs`
+- `lint-staged.config.mjs`
+- `.husky/pre-commit`, `.husky/commit-msg` (exécutables)
+
+**Modifiés :**
+- `apps/web/eslint.config.mjs` — ajout `eslint-config-prettier` en dernier
+
+**Reformatés (commit style isolé) :**
+- `apps/web/src/app/globals.css`, `layout.tsx`, `opengraph-image.tsx`
+- `apps/web/src/components/Card.tsx`, `ToolboxItems.tsx`
+- `apps/web/src/sections/About.tsx`, `SelfProject.tsx`, `Testimonials.tsx`
+- `apps/web/tsconfig.json`
 
 ### Change Log
 
 | Date | Description |
 |------|-------------|
 | 2026-07-23 | Story 3.4 créée — Prettier + husky + lint-staged + commitlint, formatage initial isolé. |
+| 2026-07-23 | Tooling qualité installé à la racine du monorepo (commit `83af3b1`). `package.json` racine créé (signalé). Hooks husky 9 (pre-commit → lint-staged, commit-msg → commitlint), `eslint-config-prettier` branché dans la flat config. |
+| 2026-07-23 | Formatage initial Prettier isolé (commit `29bcff2`, 9 fichiers, diff prouvé 100 % style). |
+| 2026-07-23 | Crochets vérifiés en réel (reformatage auto, rejet/acceptation commitlint). lint · tsc · build verts. Story → review. |

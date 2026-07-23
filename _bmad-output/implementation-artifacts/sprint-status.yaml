@@ -73,7 +73,7 @@ development_status:
   3-1-reorganiser-le-projet-en-monorepo: review
   3-2-passer-a-bun-comme-gestionnaire-de-paquets: review
   3-3-monter-le-socle-a-next-16-et-react-19: review
-  3-4-empecher-qu-un-code-mal-forme-entre-dans-le-depot: ready-for-dev
+  3-4-empecher-qu-un-code-mal-forme-entre-dans-le-depot: review
   3-5-aligner-les-branches-sur-la-convention-doshwork: ready-for-dev
   3-6-verifier-automatiquement-chaque-contribution: ready-for-dev
   3-7-eliminer-la-duplication-entre-les-deux-sections-de-projets: ready-for-dev
