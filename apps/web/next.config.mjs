@@ -1,4 +1,7 @@
 /** @type {import('next').NextConfig} */
+// Next 16 active Turbopack par défaut. On reste sur webpack (flag `--webpack`
+// dans les scripts dev/build) car le loader @svgr/webpack ci-dessous en dépend :
+// migrer le SVG vers Turbopack est un chantier hors périmètre (story 3.3).
 const nextConfig = {
   output: "standalone",
   webpack(config) {
