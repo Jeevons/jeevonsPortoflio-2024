@@ -6,9 +6,21 @@ Prérequis : Docker Desktop.
 docker compose up
 ```
 
+`docker compose up` se lance depuis la **racine du dépôt** (les fichiers de composition y vivent).
+
 Le site est disponible sur http://localhost:3000 et la base Postgres sur `127.0.0.1:5432`.
 
-Le code source est monté dans le conteneur : toute modification dans `src/` est prise en compte immédiatement, sans redémarrage.
+Le code applicatif vit sous **`apps/web/`** (monorepo). Il est monté dans le conteneur : toute modification dans `apps/web/src/` est prise en compte immédiatement, sans redémarrage.
+
+Pour les commandes Node en local (hors Docker), se placer dans `apps/web/` :
+
+```bash
+cd apps/web
+npm install
+npm run dev    # http://localhost:3000
+npm run build
+npm run lint
+```
 
 ---
 
