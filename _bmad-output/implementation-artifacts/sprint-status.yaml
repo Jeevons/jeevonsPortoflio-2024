@@ -67,7 +67,7 @@ development_status:
   2-4-heberger-les-donnees-du-portfolio-sur-le-postgres-mutualise: review
   2-5-decrire-le-deploiement-de-production: review
   2-6-rendre-le-portfolio-joignable-sur-son-sous-domaine: done
-  2-7-couper-vercel-sans-risque: ready-for-dev
+  2-7-couper-vercel-sans-risque: in-progress
   epic-2-retrospective: optional
   epic-3: in-progress
   3-1-reorganiser-le-projet-en-monorepo: review

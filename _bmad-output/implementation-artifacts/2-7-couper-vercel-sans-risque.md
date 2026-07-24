@@ -102,24 +102,24 @@ L'AC3 exige une procédure « rejouable lors du passage au domaine définitif »
 
 ## Tasks / Subtasks
 
-- [ ] **Tâche 0 — Préparation** — 🛑 **BLOQUANT**
-  - [ ] Récupérer l'**horodatage de mise en ligne** en Completion Notes de la story 2.6 → calculer la fin de la fenêtre de 48 h.
-  - [ ] Vérifier avec Jeevons si un **domaine personnalisé** est configuré côté Vercel (cf. précision AC2).
-  - [ ] Trancher le lieu de consignation : `docs/runbook-migration-vercel-vps.md` (recommandé) ou Completion Notes.
-  - [ ] Identifier **où se trouve le lien de CV** dans le code, et vers quel fichier il pointe.
-- [ ] **Tâche 1 — Vérifications de mise en service** (AC: 1) — 🛑 **cœur de la story**
-  - [ ] **Page d'accueil** : s'affiche sur `https://portfolio.doshwork.com`, **avec images, CSS et polices**.
-  - [ ] **Navigation** : chaque entrée du Header mène à la bonne section — `#projects` (story 1.1), **Témoignages** (story 1.2), À propos, Contact.
-  - [ ] **Liens externes** : ouverture en nouvel onglet, `rel="noopener noreferrer"` (story 1.3), bouton « Visiter le site » fonctionnel (story 1.4).
-  - [ ] **Téléchargement du CV** : suivre le lien → **le fichier se télécharge réellement**. ⚠️ S'il est cassé, **signaler à Jeevons** sans corriger (cf. contexte).
-  - [ ] **Comparaison Vercel ↔ VPS** : les deux sites côte à côte dans le navigateur → **comportement identique** (AC1).
-  - [ ] **Mobile** : vérifier sur téléphone réel. ⚠️ Le défaut de Header en 375 px est **connu et différé** (`deferred-work.md`, Epic 6) — ne pas le compter comme régression de migration.
-  - [ ] **Mouvement réduit** : activer « Réduire les animations » → le site reste correct (story 1.7).
-- [ ] **Tâche 2 — Ouvrir la fenêtre d'observation** (AC: 2)
-  - [ ] Consigner la date et l'heure de début (= mise en ligne, story 2.6).
-  - [ ] Confirmer que le **projet Vercel reste en ligne** pendant toute la fenêtre (AC2).
-  - [ ] ❌ **Ne rien supprimer** avant l'échéance.
-- [ ] **Tâche 3 — Surveiller pendant 48 h** (AC: 2)
+- [x] **Tâche 0 — Préparation** — 🛑 **BLOQUANT**
+  - [x] Horodatage de mise en ligne récupéré (story 2.6) : **2026-07-22 19:22 UTC** → fin de fenêtre 48 h = **2026-07-24 19:22 UTC** (21:22 Paris).
+  - [x] Domaine personnalisé côté Vercel : **NON** — servi uniquement en `*.vercel.app` (confirmé par Jeevons). Aucun DNS à conserver/retirer.
+  - [x] Lieu de consignation tranché : **`docs/runbook-migration-vercel-vps.md`** (créé).
+  - [x] Lien de CV identifié : `About.tsx:113` → `/assets/docs/jeevons-cv-2024-1.6.pdf` (PDF présent, servi en prod).
+- [~] **Tâche 1 — Vérifications de mise en service** (AC: 1) — 🛑 **cœur de la story**
+  - [x] **Page d'accueil** : HTTP 200 sur `https://portfolio.doshwork.com`, `text/html`, ~0,42 s.
+  - [~] **Navigation** : ancres `#projects`/`#side-projects`/`#about`/`#contact` présentes dans le HTML. Clic réel = **vérif visuelle à faire par Jeevons** (pas d'outil navigateur cette session).
+  - [~] **Liens externes** : `rel="noopener noreferrer"` confirmé côté code (story 3.7). Clic « Visiter le site » = **vérif visuelle Jeevons**.
+  - [x] **Téléchargement du CV** : HTTP 200, `application/pdf`, **454 269 octets** → se télécharge réellement. **Aucune régression** (point sensible story 1.9 levé).
+  - [~] **Comparaison Vercel ↔ VPS** : à faire par Jeevons (URL Vercel du portfolio non présente dans le repo — à fournir).
+  - [~] **Mobile** : à vérifier par Jeevons sur téléphone réel (défaut Header 375 px connu/différé Epic 6).
+  - [~] **Mouvement réduit** : à vérifier par Jeevons.
+- [x] **Tâche 2 — Ouvrir la fenêtre d'observation** (AC: 2)
+  - [x] Début consigné : 2026-07-22 19:22 UTC (runbook §2).
+  - [x] Projet Vercel maintenu en ligne pendant la fenêtre (confirmé : check Vercel encore actif sur la PR #4).
+  - [x] ❌ Rien supprimé avant l'échéance.
+- [~] **Tâche 3 — Surveiller pendant 48 h** (AC: 2)
   - [ ] Contrôles répartis (≥ 3, dont un le lendemain matin) : `curl /api/health` → **200**.
   - [ ] Coolify : `portfolio_web` **n'a pas redémarré** — 🛑 sinon **la fenêtre repart de zéro**, et diagnostiquer la cause.
   - [ ] Certificat TLS toujours valide.
@@ -146,6 +146,8 @@ L'AC3 exige une procédure « rejouable lors du passage au domaine définitif »
   - [ ] Signaler à Jeevons que la **validation des aperçus sociaux** (story 1.10, reportée faute d'URL publique) est désormais possible : LinkedIn Post Inspector, Twitter Card Validator.
   - [ ] Reporter dans `deferred-work.md` ce qui aurait été constaté et différé.
   - [ ] `sprint-status.yaml` mis à jour · proposer le passage d'`epic-2` à `done` si toutes ses stories sont terminées.
+
+> **⏸️ Tâches 4 à 8 : à exécuter CE SOIR après l'échéance (2026-07-24 19:22 UTC), par Jeevons.** Voir la checklist du runbook §5.
 
 ## Dev Notes
 
@@ -200,18 +202,29 @@ claude-opus-4-8
 
 ### Completion Notes List
 
-⏸️ **Story NON terminée — bloquée par construction.** Elle démarre à la clôture de la story 2.6 (mise en ligne) et exige **48 h pleines** d'observation avant l'action irréversible. Elle ne peut pas être bouclée en une session, et la 2.6 n'est pas encore exécutée.
+⏸️ **Story EN COURS — bloquée par construction jusqu'à ce soir.** La fenêtre de 48 h ouverte à la mise en ligne (2026-07-22 19:22 UTC) se clôt le **2026-07-24 19:22 UTC (21:22 Paris)**. L'action irréversible (suppression Vercel) et la clôture ne peuvent avoir lieu qu'après. Session du 2026-07-24 : préparation complète effectuée.
 
-**Travail préparatoire réalisé (partie de la tâche 0 réalisable sans VPS) :**
+**Réalisé cette session (2026-07-24 matin) :**
 
-- **Lien de CV identifié et vérifié — aucune régression à craindre (AC1).** Le point de vigilance soulevé par la story était que la story 1.9 avait purgé 15 Mo d'assets dont **7 fichiers WebP de CV**. Vérification faite : le lien de `About.tsx:113` pointe vers le **PDF** `/assets/docs/jeevons-cv-2024-1.6.pdf`, qui **n'a pas été purgé** et est bien présent dans `public/`. Mieux : il est **effectivement servi par l'image de production** (200, `application/pdf`, 454 ko). Le téléchargement du CV exigé par l'AC1 fonctionnera donc depuis l'adresse publique. ⚠️ Seule l'image d'aperçu `jeevons-cv-2024-1.6_resultat.webp` (importée depuis `src/assets/`) est distincte du PDF — elle est présente elle aussi, le build passe.
+- **Tâche 0 tranchée** : horodatage de mise en ligne = 2026-07-22 19:22 UTC (fin fenêtre = 24/07 19:22 UTC) ; **pas de domaine personnalisé** sur Vercel (confirmé par Jeevons → aucun DNS à conserver/retirer) ; consignation dans **`docs/runbook-migration-vercel-vps.md`** ; lien CV localisé (`About.tsx:113`).
+- **Vérifications de mise en service automatisables (AC1) — toutes vertes** : page d'accueil HTTP 200 ; healthcheck `status:ok` (conteneur stable) ; **téléchargement du CV HTTP 200 `application/pdf` 454 269 octets → aucune régression** (point sensible story 1.9 levé) ; ancres de navigation présentes ; certificat TLS valide → 2026-10-20.
+- **Runbook créé** (`docs/runbook-migration-vercel-vps.md`) : contexte, chronologie réelle, relevés du jour, checklist pas-à-pas pour ce soir, procédure de rejeu pour le domaine définitif (§8.6, rebuild `NEXT_PUBLIC_SITE_URL`).
+- **Vercel maintenu en ligne** pendant la fenêtre (confirmé : check Vercel encore présent sur la PR #4).
 
-**Reste à faire, dans l'ordre, par Jeevons :**
-1. Exécuter la story **2.6** et **noter l'horodatage exact de mise en ligne** — c'est lui qui ouvre la fenêtre de 48 h (tâche 0).
-2. Vérifier si un **domaine personnalisé** est configuré côté Vercel (détermine s'il y a des enregistrements DNS à conserver puis retirer, cf. précision AC2).
-3. Trancher le lieu de consignation : `docs/runbook-migration-vercel-vps.md` (recommandé, cohérent avec AGENTS.md §3 et l'objectif « reprendre mon projet dans six mois » de la story 7.6) ou Completion Notes.
-4. Tâches 1 à 8 : vérifications de mise en service, surveillance répartie sur 48 h, accord explicite avant suppression, remontée du TTL à 3600 s **après** la suppression, rédaction du runbook.
+**Reste à faire par Jeevons — CE SOIR après 19:22 UTC (checklist runbook §5) :**
+1. Vérif visuelle navigateur (nav, « Visiter le site », mouvement réduit, mobile) + comparaison côte à côte avec Vercel (fournir l'URL Vercel du portfolio).
+2. Dernière passe de vérification (tâche 4) + confirmer 48 h pleines sans incident.
+3. **Supprimer le projet Vercel** (Settings → Delete Project) — ⚠️ irréversible.
+4. Vérifier que `portfolio.doshwork.com` répond toujours (200).
+5. Remonter le **TTL DNS à 3600 s** chez le registrar (enregistrement A `portfolio`), **après** la suppression.
+6. Clôturer : Completion Notes finales, valider aperçus sociaux (story 1.10), proposer `epic-2 → done`.
 
 ### File List
 
+- `docs/runbook-migration-vercel-vps.md` — **créé** (runbook de migration + checklist).
+
 ### Change Log
+
+| Date | Description |
+|------|-------------|
+| 2026-07-24 | Tâche 0 tranchée, vérifications AC1 automatisables OK, runbook créé. Tâches 4–8 (suppression Vercel + TTL) en attente de l'échéance 48 h (ce soir 19:22 UTC). |
