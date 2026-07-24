@@ -1,5 +1,5 @@
 # generated: 2026-07-21
-# last_updated: 2026-07-23
+# last_updated: 2026-07-24
 # project: jeevonsPortoflio-2024
 # project_key: NOKEY
 # tracking_system: file-system
@@ -41,7 +41,7 @@
 # - Retrospective appends its action items to action_items; sprint-status surfaces open ones
 
 generated: 2026-07-21
-last_updated: 2026-07-23
+last_updated: 2026-07-24
 project: jeevonsPortoflio-2024
 project_key: NOKEY
 tracking_system: file-system
@@ -76,7 +76,7 @@ development_status:
   3-4-empecher-qu-un-code-mal-forme-entre-dans-le-depot: review
   3-5-aligner-les-branches-sur-la-convention-doshwork: review
   3-6-verifier-automatiquement-chaque-contribution: review
-  3-7-eliminer-la-duplication-entre-les-deux-sections-de-projets: ready-for-dev
+  3-7-eliminer-la-duplication-entre-les-deux-sections-de-projets: review
   epic-3-retrospective: optional
   epic-4: backlog
   4-1-servir-les-projets-depuis-la-base: backlog
