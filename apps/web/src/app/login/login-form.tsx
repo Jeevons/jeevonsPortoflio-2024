@@ -10,7 +10,10 @@ import { loginAction, type LoginState } from "./actions";
 
 const initialState: LoginState = { error: null };
 
-export function LoginForm() {
+// Story 5.2 — `callbackUrl` (chemin interne déjà assaini côté serveur) transmis
+// en champ caché : le formulaire ne fait que le relayer à la server action, qui
+// le ré-assainit avant usage. Vue « bête », aucune logique ici.
+export function LoginForm({ callbackUrl }: { callbackUrl: string }) {
   const [state, formAction, pending] = useActionState(
     loginAction,
     initialState,
@@ -18,6 +21,7 @@ export function LoginForm() {
 
   return (
     <form action={formAction} className="flex w-full max-w-sm flex-col gap-4">
+      <input type="hidden" name="callbackUrl" value={callbackUrl} />
       <label className="flex flex-col gap-1 text-sm">
         <span>E-mail</span>
         <input
