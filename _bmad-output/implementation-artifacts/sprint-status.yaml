@@ -1,5 +1,5 @@
 # generated: 2026-07-21
-# last_updated: 2026-07-24
+# last_updated: 2026-07-24 (4.6 review)
 # project: jeevonsPortoflio-2024
 # project_key: NOKEY
 # tracking_system: file-system
@@ -78,13 +78,13 @@ development_status:
   3-6-verifier-automatiquement-chaque-contribution: review
   3-7-eliminer-la-duplication-entre-les-deux-sections-de-projets: review
   epic-3-retrospective: optional
-  epic-4: backlog
-  4-1-servir-les-projets-depuis-la-base: backlog
-  4-2-servir-le-parcours-et-les-centres-d-interet-depuis-la-base: backlog
-  4-3-piloter-les-textes-du-site-sans-redeployer: backlog
-  4-4-garder-le-site-rapide-malgre-la-base: backlog
-  4-5-ne-jamais-tomber-en-panne-si-la-base-est-injoignable: backlog
-  4-6-appliquer-les-migrations-automatiquement-au-deploiement: backlog
+  epic-4: in-progress
+  4-1-servir-les-projets-depuis-la-base: review
+  4-2-servir-le-parcours-et-les-centres-d-interet-depuis-la-base: review
+  4-3-piloter-les-textes-du-site-sans-redeployer: review
+  4-4-garder-le-site-rapide-malgre-la-base: review
+  4-5-ne-jamais-tomber-en-panne-si-la-base-est-injoignable: review
+  4-6-appliquer-les-migrations-automatiquement-au-deploiement: review
   epic-4-retrospective: optional
   epic-5: backlog
   5-1-me-connecter-au-back-office: backlog
