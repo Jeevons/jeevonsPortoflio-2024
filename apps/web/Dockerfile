@@ -80,6 +80,13 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 # depuis le node_modules du standalone.
 COPY --from=migrator --chown=nextjs:nodejs /opt/prisma-tools ./prisma-tools
 COPY --from=migrator --chown=nextjs:nodejs /opt/prisma-tools/prisma/seed.mjs ./prisma/seed.mjs
+# Story 5.1 — argon2 est un module natif (node-gyp-build charge un .node depuis
+# ses `prebuilds/`). On le garde EXTERNE au bundle du seed (build:seed) : inliné,
+# Bun fige le chemin absolu de la machine de build → introuvable en prod. Externe,
+# il faut donc le fournir à côté du seed. On copie le paquet complet (avec ses
+# prebuilds multi-plateformes, dont linux-musl du conteneur) là où le standalone
+# place déjà `pg`, pour que `node prisma/seed.mjs` le résolve comme pg.
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/argon2 ./node_modules/argon2
 COPY --chown=nextjs:nodejs docker-entrypoint.sh ./docker-entrypoint.sh
 RUN chmod +x docker-entrypoint.sh
 USER nextjs

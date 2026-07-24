@@ -18,6 +18,13 @@ datasource db {
   provider = "postgresql"
 }
 
+// Story 5.1 — Rôle du compte admin. Volontairement mono-valeur (surface
+// d'attaque minimale : un seul compte seedé, zéro inscription). D'autres rôles
+// pourront s'ajouter par migration additive si le besoin apparaît.
+enum Role {
+  ADMIN
+}
+
 enum ProjectCategory {
   FLAGSHIP
   PERSONAL
@@ -49,6 +56,19 @@ model Project {
   updatedAt   DateTime        @updatedAt
 
   @@index([category, sortOrder])
+}
+
+// Story 5.1 — Compte administrateur du back-office. UNIQUE et seedé (aucune
+// inscription : PLAN §3.1, REGISTRATION_OPEN=false). `passwordHash` = argon2id,
+// jamais réversible ni stocké en clair (AC1). Volontairement MINIMAL : les
+// champs 2FA (totpSecret, totpEnabledAt, recoveryCodes) arrivent en 5.3 par une
+// migration additive.
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(ADMIN)
+  createdAt    DateTime @default(now())
 }
 
 model Highlight {

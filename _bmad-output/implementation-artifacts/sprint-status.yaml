@@ -1,5 +1,5 @@
 # generated: 2026-07-21
-# last_updated: 2026-07-24 (4.6 review)
+# last_updated: 2026-07-24 (Epic 5 stories 5.1-5.20 created → ready-for-dev)
 # project: jeevonsPortoflio-2024
 # project_key: NOKEY
 # tracking_system: file-system
@@ -41,7 +41,7 @@
 # - Retrospective appends its action items to action_items; sprint-status surfaces open ones
 
 generated: 2026-07-21
-last_updated: 2026-07-24
+last_updated: 2026-07-24 (Story 5.1 → review)
 project: jeevonsPortoflio-2024
 project_key: NOKEY
 tracking_system: file-system
@@ -86,27 +86,27 @@ development_status:
   4-5-ne-jamais-tomber-en-panne-si-la-base-est-injoignable: review
   4-6-appliquer-les-migrations-automatiquement-au-deploiement: review
   epic-4-retrospective: optional
-  epic-5: backlog
-  5-1-me-connecter-au-back-office: backlog
-  5-2-verrouiller-l-acces-a-l-administration: backlog
-  5-3-activer-la-double-authentification-a-ma-premiere-connexion: backlog
-  5-4-conserver-un-moyen-d-entrer-si-je-perds-mon-telephone: backlog
-  5-5-me-connecter-en-deux-temps: backlog
-  5-6-debloquer-mon-acces-depuis-le-serveur: backlog
-  5-7-voir-l-etat-de-mon-portfolio-d-un-coup-d-il: backlog
-  5-8-gerer-mes-projets: backlog
-  5-9-decrire-finement-un-projet: backlog
-  5-10-choisir-l-ordre-d-affichage-de-mes-projets: backlog
-  5-11-preparer-un-projet-avant-de-le-publier: backlog
-  5-12-illustrer-mes-projets: backlog
-  5-13-gerer-ma-bibliotheque-d-images: backlog
-  5-14-gerer-mon-parcours: backlog
-  5-15-gerer-mes-technologies: backlog
-  5-16-modifier-les-textes-de-mon-site: backlog
-  5-17-mettre-a-jour-mon-cv: backlog
-  5-18-lire-les-messages-qu-on-m-envoie: backlog
-  5-19-retrouver-ce-que-j-ai-modifie: backlog
-  5-20-utiliser-l-administration-au-clavier-sans-a-coups: backlog
+  epic-5: in-progress
+  5-1-me-connecter-au-back-office: review
+  5-2-verrouiller-l-acces-a-l-administration: ready-for-dev
+  5-3-activer-la-double-authentification-a-ma-premiere-connexion: ready-for-dev
+  5-4-conserver-un-moyen-d-entrer-si-je-perds-mon-telephone: ready-for-dev
+  5-5-me-connecter-en-deux-temps: ready-for-dev
+  5-6-debloquer-mon-acces-depuis-le-serveur: ready-for-dev
+  5-7-voir-l-etat-de-mon-portfolio-d-un-coup-d-il: ready-for-dev
+  5-8-gerer-mes-projets: ready-for-dev
+  5-9-decrire-finement-un-projet: ready-for-dev
+  5-10-choisir-l-ordre-d-affichage-de-mes-projets: ready-for-dev
+  5-11-preparer-un-projet-avant-de-le-publier: ready-for-dev
+  5-12-illustrer-mes-projets: ready-for-dev
+  5-13-gerer-ma-bibliotheque-d-images: ready-for-dev
+  5-14-gerer-mon-parcours: ready-for-dev
+  5-15-gerer-mes-technologies: ready-for-dev
+  5-16-modifier-les-textes-de-mon-site: ready-for-dev
+  5-17-mettre-a-jour-mon-cv: ready-for-dev
+  5-18-lire-les-messages-qu-on-m-envoie: ready-for-dev
+  5-19-retrouver-ce-que-j-ai-modifie: ready-for-dev
+  5-20-utiliser-l-administration-au-clavier-sans-a-coups: ready-for-dev
   epic-5-retrospective: optional
   epic-6: backlog
   6-1-systematiser-l-identite-visuelle-existante: backlog

@@ -1,3 +1,4 @@
+import * as argon2 from "argon2";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient, type Prisma } from "../src/generated/prisma/client";
 import { projectsContent } from "../src/content/projects";
@@ -140,6 +141,28 @@ async function main() {
     });
   }
 
+  // Compte admin (Story 5.1, AC2) : UNIQUE et seedé — aucune inscription.
+  // Upsert par `email` (clé naturelle) → idempotent, jamais dupliqué.
+  // Le mot de passe est haché en argon2id ; on RÉAPPLIQUE le hash en `update`
+  // pour qu'un changement de ADMIN_PASSWORD se propage. On ne stocke JAMAIS le
+  // mot de passe en clair. `email`/`role`/`createdAt` ne sont pas retouchés en
+  // update (role reste ADMIN par défaut, createdAt figé à la première création).
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminPassword = process.env.ADMIN_PASSWORD;
+  if (!adminEmail || !adminPassword) {
+    throw new Error(
+      "ADMIN_EMAIL / ADMIN_PASSWORD sont absents : impossible de seeder le compte admin.",
+    );
+  }
+  const passwordHash = await argon2.hash(adminPassword, {
+    type: argon2.argon2id,
+  });
+  await prisma.user.upsert({
+    where: { email: adminEmail },
+    create: { email: adminEmail, passwordHash },
+    update: { passwordHash },
+  });
+
   const [
     projectCount,
     highlightCount,
@@ -147,6 +170,7 @@ async function main() {
     timelineCount,
     hobbyCount,
     settingCount,
+    userCount,
   ] = await Promise.all([
     prisma.project.count(),
     prisma.highlight.count(),
@@ -154,9 +178,10 @@ async function main() {
     prisma.timelineEntry.count(),
     prisma.hobby.count(),
     prisma.siteSetting.count(),
+    prisma.user.count(),
   ]);
   console.log(
-    `Seed OK — Project: ${projectCount}, Highlight: ${highlightCount}, Stack: ${stackCount}, TimelineEntry: ${timelineCount}, Hobby: ${hobbyCount}, SiteSetting: ${settingCount}`,
+    `Seed OK — Project: ${projectCount}, Highlight: ${highlightCount}, Stack: ${stackCount}, TimelineEntry: ${timelineCount}, Hobby: ${hobbyCount}, SiteSetting: ${settingCount}, User: ${userCount}`,
   );
 }
 

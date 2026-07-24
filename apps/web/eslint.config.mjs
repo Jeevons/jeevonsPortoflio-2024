@@ -7,7 +7,13 @@ import eslintConfigPrettier from "eslint-config-prettier";
 const config = [
   {
     // src/generated/** : client Prisma généré (gitignoré, non maintenu à la main).
-    ignores: [".next/**", "node_modules/**", "src/generated/**"],
+    // prisma/seed.mjs : bundle du seed transpilé par build:seed (généré, gitignoré).
+    ignores: [
+      ".next/**",
+      "node_modules/**",
+      "src/generated/**",
+      "prisma/seed.mjs",
+    ],
   },
   ...nextCoreWebVitals,
   // En DERNIER : désactive les règles de style d'ESLint que Prettier gère,
