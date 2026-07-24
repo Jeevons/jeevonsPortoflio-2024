@@ -1,0 +1,7 @@
+# Client Prisma 7 généré (generator "prisma-client", output custom).
+# Régénéré par `prisma generate` — ne jamais committer.
+/src/generated/
+
+# Seed transpilé pour node (story 4.6) : bundle produit par `bun run build:seed`
+# au build du conteneur. Artefact régénérable — jamais committé.
+/prisma/seed.mjs

@@ -1,0 +1,109 @@
+// Schéma Prisma — Story 4.1 (pivot Epic 4).
+// Périmètre STRICT : uniquement Project / Highlight / Stack + enums.
+// TimelineEntry/Hobby → 4.2 · SiteSetting → 4.3 · Media/User/… → Epic 5.
+// Ne PAS déclarer de relation vers Media (inexistant) : cover/coverId
+// seront ajoutés par migration en Epic 5 (décision Jeevons, story 4.1).
+
+generator client {
+  provider = "prisma-client"
+  // Prisma 7 : le générateur "prisma-client" (ESM) exige un output explicite.
+  // Généré hors de src/ pour ne pas polluer le code applicatif, et gitignoré.
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  // Prisma 7 : l'URL de connexion ne vit plus ici. Elle est fournie à Migrate
+  // via prisma.config.ts (datasource.url) et au runtime via un driver adapter
+  // passé au constructeur PrismaClient (voir src/lib/db.ts).
+  provider = "postgresql"
+}
+
+enum ProjectCategory {
+  FLAGSHIP
+  PERSONAL
+  LAB
+}
+
+enum SkillLevel {
+  LEARNING
+  COMFORTABLE
+  STRONG
+}
+
+model Project {
+  id          String          @id @default(cuid())
+  slug        String          @unique
+  category    ProjectCategory
+  company     String
+  title       String
+  description String?         @db.Text
+  period      String // ex. "Janvier - 2024"
+  sortOrder   Int             @default(0)
+  published   Boolean         @default(false)
+  link        String?
+  repoUrl     String?
+  // cover/coverId : ajoutés en Epic 5 avec le modèle Media (story 4.1, décision).
+  highlights  Highlight[]
+  stacks      Stack[]         @relation("ProjectStacks")
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([category, sortOrder])
+}
+
+model Highlight {
+  id        String  @id @default(cuid())
+  label     String
+  sortOrder Int     @default(0)
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model Stack {
+  id       String      @id @default(cuid())
+  name     String      @unique
+  iconKey  String?
+  level    SkillLevel?
+  projects Project[]   @relation("ProjectStacks")
+}
+
+// Story 4.2 — Parcours (rendu par Testimonials.tsx, id="parcours").
+model TimelineEntry {
+  id        String  @id @default(cuid())
+  slug      String  @unique // clé naturelle : idempotence du seed + jointure avatar
+  title     String
+  place     String
+  body      String  @db.Text
+  // avatarId : le modèle Media n'existe qu'en Epic 5. Pas de relation ici ;
+  // l'avatar reste un import statique joint par `slug` dans le conteneur (4.2, décision).
+  avatarId  String?
+  startYear Int
+  endYear   Int?
+  sortOrder Int     @default(0)
+  published Boolean @default(true)
+
+  @@index([published, sortOrder])
+}
+
+// Story 4.2 — Centres d'intérêt (rendus par About.tsx). Pas de `published`
+// (modèle §2.1 : les hobbies sont toujours affichés).
+model Hobby {
+  id        String @id @default(cuid())
+  slug      String @unique // clé naturelle : idempotence du seed
+  title     String
+  emoji     String
+  posLeft   String
+  posTop    String
+  sortOrder Int    @default(0)
+}
+
+// Story 4.3 — Réglages éditables du site (textes Hero, badge, liens sociaux,
+// e-mail fragmenté). `key @id` : la clé EST l'identifiant → seed idempotent
+// trivial par upsert. `value Json` : valeur structurée (string, { url },
+// { text }, ou { user, host } pour l'e-mail anti-moisson).
+// Contrat de clés consommé par /admin/settings en Epic 5.
+model SiteSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
