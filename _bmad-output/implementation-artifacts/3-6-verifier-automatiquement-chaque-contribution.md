@@ -4,7 +4,7 @@ baseline_commit: a270747a2c1a628c60ee36e4697aede4f6558474
 
 # Story 3.6: Vérifier automatiquement chaque contribution
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -131,28 +131,28 @@ Le workflow **rapporte** un statut ; c'est la **protection de branche** (story 3
 
 ## Tasks / Subtasks
 
-- [ ] **Tâche 1 — Vérifier prérequis** (3.1, 3.2 `done` ; 3.5 recommandée)
-  - [ ] Code sous `apps/web/`, `apps/web/bun.lock` présent. Confirmer les noms de branches cibles (`DEV`/`PROD`).
-- [ ] **Tâche 2 — Écrire `.github/workflows/ci.yml`** (AC: 1, 3 ; pièges n°1, 2, 3, 6)
-  - [ ] Déclencheurs `push` + `pull_request` sur `DEV` et `PROD`.
-  - [ ] Jobs `lint` et `build-web`, `working-directory: apps/web`.
-  - [ ] `oven-sh/setup-bun@v2` avec `bun-version: "1.3"`.
-  - [ ] Cache sur `hashFiles('apps/web/bun.lock')`.
-  - [ ] `bun install --frozen-lockfile` puis `bun run lint` / `bun run build`.
-  - [ ] ❌ Aucun `deploy.yml`, aucun secret (AC3, piège n°6).
-- [ ] **Tâche 3 — Vérifier le déclenchement et la lisibilité** (AC: 1, 2) — 🛑 **cœur de la story**
-  - [ ] Ouvrir une PR de test vers `DEV` → les deux jobs se lancent et passent.
-  - [ ] Introduire volontairement une erreur (lint ou build) → le job **échoue**, la cause est **lisible** dans le rapport de la PR (AC2). Puis annuler.
-  - [ ] Vérifier que le **cache** est utilisé au 2ᵉ run (log « Cache restored »).
-- [ ] **Tâche 4 — [HUMAIN] Rendre les checks bloquants** (AC: 2, piège n°5)
-  - [ ] Jeevons : dans la protection de `PROD`/`DEV`, cocher `lint` et `build-web` comme checks requis (après un premier run). Recoupe la story 3.5.
-- [ ] **Tâche 5 — Vérifier l'absence de secret/deploy** (AC: 3, piège n°6)
-  - [ ] `ls .github/workflows/` → seul `ci.yml`. `grep -ri "ssh\|secret\|deploy" .github/workflows/` → rien.
-  - [ ] Confirmer que le déploiement reste le **webhook Coolify** (inchangé).
-- [ ] **Tâche 6 — Definition of Done** (AGENTS.md §8)
-  - [ ] `bun run lint` · `bunx tsc --noEmit` · `bun run build` en local → verts (miroir de la CI).
-  - [ ] `git diff` : uniquement `.github/workflows/ci.yml` (+ README si mention CI ajoutée).
-  - [ ] `File List` + `Completion Notes` + `Change Log` remplis · `sprint-status.yaml` mis à jour.
+- [x] **Tâche 1 — Vérifier prérequis** (3.1, 3.2 `done` ; 3.5 recommandée)
+  - [x] Code sous `apps/web/`, `apps/web/bun.lock` présent. Branches cibles `DEV`/`PROD` (3.5 faite).
+- [x] **Tâche 2 — Écrire `.github/workflows/ci.yml`** (AC: 1, 3 ; pièges n°1, 2, 3, 6)
+  - [x] Déclencheurs `push` + `pull_request` sur `DEV` et `PROD`.
+  - [x] Jobs `lint` et `build-web`, `working-directory: apps/web`.
+  - [x] `oven-sh/setup-bun@v2` avec `bun-version: "1.3"`.
+  - [x] Cache sur `hashFiles('apps/web/bun.lock')` (+ `restore-keys` de repli).
+  - [x] `bun install --frozen-lockfile` puis `bun run lint` / `bun run build`.
+  - [x] ❌ Aucun `deploy.yml`, aucun secret (AC3, piège n°6) — vérifié.
+- [x] **Tâche 3 — Vérifier le déclenchement et la lisibilité** (AC: 1, 2) — 🛑 **cœur de la story**
+  - [x] Run sur `DEV` : les deux jobs passent (lint 21s, build-web 53s).
+  - [x] PR de test `alpha/test/ci-echec-volontaire` → `DEV` : erreur volontaire (import cassé). **`build-web` échoue**, cause **lisible** (`Type error: Cannot find module ...`, ligne surlignée). PR fermée, branche supprimée.
+  - [x] **Cache utilisé** au run suivant (« Cache restored successfully », hit sur node_modules + setup-bun).
+- [~] **Tâche 4 — [HUMAIN] Rendre les checks bloquants** (AC: 2, piège n°5)
+  - [ ] **Jeevons (à faire)** : cocher `lint` et `build-web` comme checks requis dans la protection de `PROD` (et `DEV`). Commande `gh api` fournie. Les checks existent maintenant (déjà exécutés).
+- [x] **Tâche 5 — Vérifier l'absence de secret/deploy** (AC: 3, piège n°6)
+  - [x] `.github/workflows/` = seul `ci.yml`. `grep` secret/ssh/deploy → rien.
+  - [x] Déploiement inchangé = **webhook Coolify**.
+- [x] **Tâche 6 — Definition of Done** (AGENTS.md §8)
+  - [x] `bun run lint` (0 err, 1 warning pré-existant) · `bunx tsc --noEmit` (0) · `bun run build` (vert, y compris sans `NEXT_PUBLIC_SITE_URL`) → miroir CI.
+  - [x] `git diff` : `.github/workflows/ci.yml` + déplacement `eslint-config-prettier` racine→apps/web (correctif CI).
+  - [x] `File List` + `Completion Notes` + `Change Log` remplis · `sprint-status.yaml` mis à jour.
 
 ## Dev Notes
 
@@ -191,16 +191,40 @@ Pas de test unitaire à écrire. La story se **teste elle-même** : ouvrir une P
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+claude-opus-4-8
 
 ### Debug Log References
 
+- **Échec CI n°1 — `lint` exit 2** : `apps/web/eslint.config.mjs` importe `eslint-config-prettier`, installé à la **racine** (story 3.4). En local ça marche par remontée d'arbre Node ; en CI le job `bun install` dans `apps/web` seul ne l'installe pas → `ERR_MODULE_NOT_FOUND`. **Corrigé** : `eslint-config-prettier` déplacé de la racine vers `apps/web/package.json` (sa vraie place — c'est une dépendance de la config ESLint de l'app).
+- **Piège n°4 (warning pré-existant)** : `bun run lint` sort en **exit 0** malgré le warning `autoScroll` (eslint n'échoue que sur erreur) → la CI passe. Warning non corrigé (hors périmètre), documenté.
+- **Dette `new URL()` en CI** : le build CI n'a **pas** `NEXT_PUBLIC_SITE_URL`. Vérifié : variable *absente* (undefined) → le fallback `?? "..."` s'applique → build vert. (La dette ne plante que sur chaîne *vide*, pas undefined.) Aucun secret requis en CI.
+- **AC2 — test réel** : erreur d'import volontaire → `build-web` échoue avec message lisible (`Type error: Cannot find module './module-qui-nexiste-pas'`). Note : `lint` est passé sur cette erreur (next/core-web-vitals ne vérifie ni imports ni unused-vars) — c'est le job **build-web** qui joue le rôle de garde-fou compilation.
+- **Annotation Node 20 dépréciée** sur `checkout@v4`/`cache@v4` → bumpés en **`@v5`**, annotation disparue.
+
 ### Completion Notes List
 
+- **Un seul fichier livré** : `.github/workflows/ci.yml` (jobs `lint` + `build-web`, `setup-bun@v2` Bun 1.3, cache sur `apps/web/bun.lock`, `working-directory: apps/web`).
+- **Effet de bord assumé** : correctif d'architecture hérité de 3.4 — `eslint-config-prettier` déplacé racine→`apps/web`. Le lint local et CI fonctionnent tous deux depuis `apps/web/node_modules`.
+- **AC1** ✅ jobs `lint`/`build-web` sur push + PR vers `DEV`/`PROD` ; Bun 1.3 via `setup-bun@v2` ; cache sur `hashFiles('apps/web/bun.lock')` (« Cache restored » confirmé).
+- **AC2** ✅ échec lisible démontré (PR de test) ; blocage effectif **dès que les checks sont marqués requis** dans la protection → **action [HUMAIN] restante**.
+- **AC3** ✅ aucun `deploy.yml`, aucun secret/SSH ; déploiement = webhook Coolify inchangé.
+- **⚠️ Découverte hors périmètre — Vercel encore actif** : la PR de test a déclenché un déploiement **Vercel** (échec) en plus de la CI. Vercel n'est pas encore coupé → c'est précisément l'objet de la **story 2.7** (`ready-for-dev`). À traiter là-bas, pas ici.
+- **Reste [HUMAIN]** : cocher `lint`/`build-web` comme checks requis sur `PROD`/`DEV` (recoupe l'AC3 de 3.5). Commande fournie ci-dessous.
+
 ### File List
+
+**Créé :**
+- `.github/workflows/ci.yml` — workflow CI (lint + build-web, Bun 1.3, cache)
+
+**Modifiés (correctif CI hérité de 3.4) :**
+- `apps/web/package.json` — ajout de `eslint-config-prettier` en devDep
+- `package.json` (racine) — retrait de `eslint-config-prettier` (déplacé vers apps/web)
+- `apps/web/bun.lock`, `bun.lock` (racine) — mis à jour
 
 ### Change Log
 
 | Date | Description |
 |------|-------------|
 | 2026-07-23 | Story 3.6 créée — CI GitHub Actions (`lint`, `build-web`), Bun 1.3, cache bun.lock. |
+| 2026-07-23 | `ci.yml` créé. 1er run rouge (`eslint-config-prettier` introuvable en CI) → dépendance déplacée racine→apps/web. Run vert (lint + build-web, cache actif). |
+| 2026-07-24 | AC2 vérifié via PR de test (échec build lisible, blocage). checkout/cache bumpés en v5. Story → review. Reste : cocher les checks requis (HUMAIN). |
