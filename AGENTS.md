@@ -84,9 +84,10 @@ jeevonsPortoflio-2024/
 
 ## 4. 🛑 Git Workflow — non négociable
 
-- **Branche de base** : `develop` (deviendra `DEV` en story 3.5). On ne code **jamais** directement sur la branche de base ni sur `Production`/`PROD`.
+- **Branche de base** : `DEV`. On ne code **jamais** directement sur `DEV` ni sur `PROD` (branche par défaut, protégée).
+- **Flux** : `alpha/feat/<epic>-<num>-<slug>` → PR → `DEV` → PR → `PROD`.
 - **Une story = une branche** : `alpha/feat/<epic>-<num>-<slug-kebab>` (ex. `alpha/feat/1-3-ouvrir-les-liens-externes-sans-risque`).
-- **Toujours** repartir d'une base à jour : `git checkout develop && git pull` avant de créer la branche.
+- **Toujours** repartir d'une base à jour : `git checkout DEV && git pull` avant de créer la branche.
 - **Commits conventionnels** : `feat(hero): ...`, `fix(footer): ...`, `chore(docs): ...`, `test(e2e): ...`, `perf(images): ...`.
 - **Merge uniquement par Pull Request**, **CI verte obligatoire** dès que `.github/workflows/ci.yml` existe (story 3.6). Jamais de push direct.
 - **Le commit final et le `git push` sont déclenchés par l'humain** (Jeevons), pas par l'agent en autonomie.
@@ -148,7 +149,7 @@ BMAD est installé (modules `core` + `bmm`), configuré par `_bmad/bmm/config.ya
 - [ ] `npx tsc --noEmit` → **0 erreur**.
 - [ ] `npm run build` → **succès**, sans avertissement de dépréciation non traité.
 - [ ] **Vérification visuelle** dans le navigateur si la story touche l'UI, **y compris avec « réduire les animations » activé** lorsqu'elle introduit du mouvement.
-- [ ] `git diff develop` relu : **rien hors périmètre de la story**.
+- [ ] `git diff DEV` relu : **rien hors périmètre de la story**.
 - [ ] `File List` + `Completion Notes` + `Change Log` de la story remplis.
 - [ ] `sprint-status.yaml` mis à jour.
 

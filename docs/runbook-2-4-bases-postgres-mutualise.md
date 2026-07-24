@@ -219,6 +219,12 @@ postgresql://portfolio_user:<MOT_DE_PASSE>@<host-postgres-coolify>:5432/portfoli
 
 Le fichier `.env.production.example` (story 2.5) sert de checklist des variables à renseigner, toutes valeurs vides.
 
+> ⚠️ Dans Coolify, cocher **`Available at Buildtime`** sur `DATABASE_URL` même si la variable est purement
+> runtime : `docker-compose.prod.yml` la référence dans son bloc `environment:`, et Docker Compose résout
+> tout le fichier au moment du `build`. Sans cette case, le build échoue sur
+> `The "DATABASE_URL" variable is not set` (exit 255). Sans impact sécurité : la variable n'est jamais
+> déclarée en `build.args`, elle sert uniquement au parsing du compose.
+
 ---
 
 ## Résultats à consigner pour clore la story

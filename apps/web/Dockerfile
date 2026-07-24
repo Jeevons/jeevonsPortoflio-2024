@@ -1,32 +1,36 @@
 # Convention Doshwork — 4 étages sur node:22-alpine.
-# npm partout : Bun n'est introduit qu'en story 3.2 (AGENTS.md §2).
+# Bun 1.3.3 dans deps/builder/development ; production reste sur node server.js (sans Bun).
 
 # ---------- deps ----------
 FROM node:22-alpine AS deps
 WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci
+# Bun 1.3.3 — copié depuis l'image officielle alpine (musl, compatible node:22-alpine).
+COPY --from=oven/bun:1.3.3-alpine /usr/local/bin/bun /usr/local/bin/bun
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
 
 # ---------- builder ----------
 FROM node:22-alpine AS builder
 WORKDIR /app
 # Prérequis système de sharp, utilisé pour le traitement d'images en Epic 5.
 RUN apk add --no-cache vips-dev
+COPY --from=oven/bun:1.3.3-alpine /usr/local/bin/bun /usr/local/bin/bun
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # Les NEXT_PUBLIC_* sont inlinées par Next au moment du build : les passer
 # au runtime n'aurait aucun effet. Changer de domaine impose un rebuild.
 ARG NEXT_PUBLIC_SITE_URL
 ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
-RUN npm run build
+RUN bun run build
 
 # ---------- development ----------
 FROM node:22-alpine AS development
 WORKDIR /app
+COPY --from=oven/bun:1.3.3-alpine /usr/local/bin/bun /usr/local/bin/bun
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 EXPOSE 3000
-CMD ["npm", "run", "dev"]
+CMD ["bun", "run", "dev"]
 
 # ---------- production ----------
 FROM node:22-alpine AS production

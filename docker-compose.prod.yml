@@ -2,8 +2,7 @@ services:
   web:
     container_name: portfolio_web
     build:
-      # Pas ./apps/web : le monorepo arrive en story 3.1.
-      context: .
+      context: ./apps/web
       target: production
       args:
         # Next inline les NEXT_PUBLIC_* au moment du build : les passer en

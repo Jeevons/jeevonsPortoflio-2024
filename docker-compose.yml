@@ -17,11 +17,11 @@ services:
 
   web:
     build:
-      context: .
+      context: ./apps/web
       target: development
     ports: ["3000:3000"]
     volumes:
-      - .:/app
+      - ./apps/web:/app
       # Volumes anonymes : préservent node_modules et .next du conteneur,
       # compilés pour Alpine/Linux, du montage de l'hôte (macOS/arm64).
       - /app/node_modules

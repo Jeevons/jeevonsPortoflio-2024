@@ -1,85 +1,50 @@
 import ArrowUpRightIcon from "@/assets/icons/arrow-up-right.svg";
 import CheckCircleIcon from "@/assets/icons/check-circle.svg";
-import gallery from "@/assets/images/gallery-mockup.webp";
-import sunnysideAgency from "@/assets/images/sunnyside-landingPage.webp";
-import insureLandingPage from "@/assets/images/insureLanding-page.webp";
-import sleepingAppMockup from "@/assets/images/sleepingApp-mockup.webp";
 import { Card } from "@/components/Card";
 import { SectionHeader } from "@/components/SectionHeader";
-import Image from "next/image";
+import Image, { type StaticImageData } from "next/image";
 
-const portfolioProjects = [
-  {
-    company: "Insure",
-    year: "Octobre - 2024",
-    title: "Landing page.",
-    results: [
-      { title: "Html, CSs et Javascript" },
-      {
-        title: "Masterisé le responsive",
-      },
-      { title: "Notions d'ergonomie & d'accessibilité" },
-    ],
-    link: "https://insure-landing-page-jeevons.vercel.app/",
-    image: insureLandingPage,
-  },
-  {
-    company: "Sunnyside",
-    year: "Août - 2024",
-    title: "Landing Page.",
-    results: [
-      { title: "Html, Css, Javascript" },
-      {
-        title: "Masterisé le responsive",
-      },
-      { title: "Entraînement sur des dispositions d'interface plus complexes" },
-    ],
-    link: "https://jeevons-sunnyside.vercel.app/index.html",
-    image: sunnysideAgency,
-  },
-  {
-    company: "SleepingTime",
-    year: "Janvier - 2024",
-    title: "Calculateur de temps de sommeil",
-    results: [
-      { title: "Html, Css, Javascript" },
-      {
-        title: "Mes débuts avec javascript",
-      },
-      { title: "Script basique, responsive, manipulation du DOM" },
-    ],
-    link: "https://sleeping-calculator.vercel.app/",
-    image: sleepingAppMockup,
-  },
-  {
-    company: "Gallerie",
-    year: "Novembre - 2023",
-    title: "Une simple gallerie d'images pour m'entrainer avec Grid.",
-    results: [
-      { title: "Html, Css, Javascript" },
-      {
-        title: "Display grid, flexbox, responsive design",
-      },
-      { title: "Composants réutilisable" },
-    ],
-    link: "https://img-galery-psi.vercel.app/",
-    image: gallery,
-  },
-  
-];
+// Contrat de donnée d'un projet, partagé par les deux sections.
+// Sert de contrat stable pour l'Epic 4 (branchement DB) : le composant ne
+// connaît que cette forme, pas la façon dont les projets ont été obtenus (AC3).
+export type Project = {
+  company: string;
+  year: string;
+  title: string;
+  results: { title: string }[];
+  link: string;
+  image: StaticImageData;
+};
 
-export const SelfProjectsSection = () => {
+type ProjectListProps = {
+  id: string; // "projects" | "side-projects" — ancres posées en Epic 1 (AC2)
+  eyebrow: string;
+  title: string;
+  description: string;
+  projects: Project[]; // données injectées, source-agnostique (AC3)
+};
+
+// Composant de présentation unique consommé par ProjectsSection et
+// SelfProjectsSection. Aucune donnée ni image importée ici : tout arrive en
+// props (AC3). Rendu strictement identique à l'existant (AC2).
+export const ProjectList = ({
+  id,
+  eyebrow,
+  title,
+  description,
+  projects,
+}: ProjectListProps) => {
   return (
-    <section className="pb-16 lg:py-24" id="side-projects">
+    <section className="pb-16 lg:py-24" id={id}>
       <div className="container">
         <SectionHeader
-          eyebrow="eat() explore() sleep() repeat()"
-          title="Mes petites réalisations personnelles"
-          description="Quoi de mieux pour apprendre que d'expérimenter soi-même ?"
+          eyebrow={eyebrow}
+          title={title}
+          description={description}
         />
 
         <div className="mt-10 md:mt-20 flex flex-col  gap-20">
-          {portfolioProjects.map((project, projectIndex) => (
+          {projects.map((project, projectIndex) => (
             <Card
               key={project.title}
               className="px-8 pt-8 pb-0  md:pt-12 m:px-10 lg:pt-16 lg:px-20 sticky"

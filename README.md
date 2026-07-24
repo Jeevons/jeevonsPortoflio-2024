@@ -6,9 +6,35 @@ Prérequis : Docker Desktop.
 docker compose up
 ```
 
+`docker compose up` se lance depuis la **racine du dépôt** (les fichiers de composition y vivent).
+
 Le site est disponible sur http://localhost:3000 et la base Postgres sur `127.0.0.1:5432`.
 
-Le code source est monté dans le conteneur : toute modification dans `src/` est prise en compte immédiatement, sans redémarrage.
+Le code applicatif vit sous **`apps/web/`** (monorepo). Il est monté dans le conteneur : toute modification dans `apps/web/src/` est prise en compte immédiatement, sans redémarrage.
+
+Pour les commandes Node en local (hors Docker), se placer dans `apps/web/` (gestionnaire : **Bun**) :
+
+```bash
+cd apps/web
+bun install
+bun run dev    # http://localhost:3000
+bun run build
+bun run lint
+```
+
+---
+
+## 🌿 Flux Git
+
+```
+alpha/feat/<epic>-<num>-<slug>  →  PR  →  DEV  →  PR  →  PROD
+```
+
+- On travaille sur une branche `alpha/feat/*` (une par story), jamais directement sur `DEV` ni `PROD`.
+- L'intégration se fait par **pull request** vers `DEV`, puis de `DEV` vers `PROD`.
+- **`PROD`** est la branche par défaut et la branche **protégée** : elle n'accepte que des PR, avec **intégration continue au vert obligatoire**. C'est elle que Coolify déploie.
+
+La qualité est verrouillée en local par les crochets Git (Prettier + ESLint + commitlint, story 3.4) et à distance par la CI (story 3.6).
 
 ---
 

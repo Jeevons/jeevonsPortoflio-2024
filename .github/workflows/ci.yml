@@ -1,0 +1,52 @@
+name: CI
+
+# Vérifie chaque poussée et chaque PR visant DEV et PROD (story 3.6).
+# Deux jobs : lint (style/qualité) et build-web (compilation Next).
+# Pas de déploiement ici — la prod reste pilotée par le webhook natif de Coolify (AC3).
+
+on:
+  push:
+    branches: [DEV, PROD]
+  pull_request:
+    branches: [DEV, PROD]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        # Le code applicatif vit sous apps/web (monorepo) — package.json et bun.lock y sont.
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3"
+      - uses: actions/cache@v5
+        with:
+          # Chemins relatifs à la RACINE du dépôt, pas au working-directory.
+          path: apps/web/node_modules
+          key: bun-${{ runner.os }}-${{ hashFiles('apps/web/bun.lock') }}
+          restore-keys: |
+            bun-${{ runner.os }}-
+      - run: bun install --frozen-lockfile
+      - run: bun run lint
+
+  build-web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3"
+      - uses: actions/cache@v5
+        with:
+          path: apps/web/node_modules
+          key: bun-${{ runner.os }}-${{ hashFiles('apps/web/bun.lock') }}
+          restore-keys: |
+            bun-${{ runner.os }}-
+      - run: bun install --frozen-lockfile
+      - run: bun run build

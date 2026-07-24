@@ -81,11 +81,7 @@ export const HeroSection = () => {
           <div className="size-2 rounded-full bg-emerald-300/10 "></div>
         </HeroOrbit>
         <HeroOrbit size={820} rotation={140} shouldOrbit orbitDuration="48s">
-          <SparkleIcon
-            className="size-14 text-emerald-300/20"
-            shouldSpin
-            spinDuration="3s"
-          />
+          <SparkleIcon className="size-14 text-emerald-300/20" />
         </HeroOrbit>
         <HeroOrbit size={820} rotation={92} shouldOrbit orbitDuration="50s">
           <div className="size-3 rounded-full bg-emerald-300/20 "></div>

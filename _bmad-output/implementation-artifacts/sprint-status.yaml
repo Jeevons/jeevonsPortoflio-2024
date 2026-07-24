@@ -1,5 +1,5 @@
 # generated: 2026-07-21
-# last_updated: 2026-07-21
+# last_updated: 2026-07-24
 # project: jeevonsPortoflio-2024
 # project_key: NOKEY
 # tracking_system: file-system
@@ -41,7 +41,7 @@
 # - Retrospective appends its action items to action_items; sprint-status surfaces open ones
 
 generated: 2026-07-21
-last_updated: 2026-07-21
+last_updated: 2026-07-24
 project: jeevonsPortoflio-2024
 project_key: NOKEY
 tracking_system: file-system
@@ -66,17 +66,17 @@ development_status:
   2-3-developper-en-local-dans-les-memes-conditions-qu-en-production: review
   2-4-heberger-les-donnees-du-portfolio-sur-le-postgres-mutualise: review
   2-5-decrire-le-deploiement-de-production: review
-  2-6-rendre-le-portfolio-joignable-sur-son-sous-domaine: ready-for-dev
+  2-6-rendre-le-portfolio-joignable-sur-son-sous-domaine: done
   2-7-couper-vercel-sans-risque: ready-for-dev
   epic-2-retrospective: optional
-  epic-3: backlog
-  3-1-reorganiser-le-projet-en-monorepo: backlog
-  3-2-passer-a-bun-comme-gestionnaire-de-paquets: backlog
-  3-3-monter-le-socle-a-next-16-et-react-19: backlog
-  3-4-empecher-qu-un-code-mal-forme-entre-dans-le-depot: backlog
-  3-5-aligner-les-branches-sur-la-convention-doshwork: backlog
-  3-6-verifier-automatiquement-chaque-contribution: backlog
-  3-7-eliminer-la-duplication-entre-les-deux-sections-de-projets: backlog
+  epic-3: in-progress
+  3-1-reorganiser-le-projet-en-monorepo: review
+  3-2-passer-a-bun-comme-gestionnaire-de-paquets: review
+  3-3-monter-le-socle-a-next-16-et-react-19: review
+  3-4-empecher-qu-un-code-mal-forme-entre-dans-le-depot: review
+  3-5-aligner-les-branches-sur-la-convention-doshwork: review
+  3-6-verifier-automatiquement-chaque-contribution: review
+  3-7-eliminer-la-duplication-entre-les-deux-sections-de-projets: review
   epic-3-retrospective: optional
   epic-4: backlog
   4-1-servir-les-projets-depuis-la-base: backlog

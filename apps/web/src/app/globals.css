@@ -51,7 +51,7 @@ html {
 }
 
 :root {
-  --text-3xs: .675rem;
+  --text-3xs: 0.675rem;
 }
 
 .text-3xs {
