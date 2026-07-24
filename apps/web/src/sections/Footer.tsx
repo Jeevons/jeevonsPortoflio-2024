@@ -1,25 +1,17 @@
 import ArrowUpRightIcon from "@/assets/icons/arrow-up-right.svg";
+import { getSocialSettings } from "@/lib/settings";
 
-const footerLinks = [
-  {
-    title: "Twitter",
-    href: "https://x.com/Jeevons__",
-  },
-  {
-    title: "Instagram",
-    href: "https://www.instagram.com/jeevons_/profilecard/?igsh=eGE4YnBtazhobmk0",
-  },
-  {
-    title: "LinkedIn",
-    href: "https://www.linkedin.com/in/jeevons-eya-3660a7297/?locale=fr_FR",
-  },
-  {
-    title: "Github",
-    href: "https://github.com/Jeevons",
-  },
-];
+// Server Component async (Story 4.3) : les 4 liens sociaux viennent de la base,
+// avec valeur par défaut si une clé manque (AC2/AC3). L'ordre reste figé.
+export const Footer = async () => {
+  const social = await getSocialSettings();
+  const footerLinks = [
+    { title: "Twitter", href: social.twitter },
+    { title: "Instagram", href: social.instagram },
+    { title: "LinkedIn", href: social.linkedin },
+    { title: "Github", href: social.github },
+  ];
 
-export const Footer = () => {
   return (
     <footer className="relative z-0 overflow-x-clip">
       <div className="absolute h-[400px] w-[1600px] bottom-0 left-1/2 -translate-x-1/2 bg-emerald-300/30 [mask-image:radial-gradient(50%_50%_at_bottom_center,black,transparent)] -z-10 pointer-events-none"></div>

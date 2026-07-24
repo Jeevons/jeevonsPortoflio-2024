@@ -1,72 +1,11 @@
-"use client";
+import { ContactClient } from "@/sections/ContactClient";
+import { getContactSettings } from "@/lib/settings";
 
-import ArrowUpRightIcon from "@/assets/icons/arrow-up-right.svg";
-import grainImage from "@/assets/images/grain.jpg";
-
-// Coordonnées stockées en fragments : la chaîne complète n'existe jamais
-// dans le balisage servi, elle n'est recomposée qu'au clic.
-const MAIL_USER = ["jeevons", "eya", "jr"];
-const MAIL_HOST = ["gmail", "com"];
-
-const buildMail = () => `${MAIL_USER.join(".")}@${MAIL_HOST.join(".")}`;
-
-const LINKEDIN_URL =
-  "https://www.linkedin.com/in/jeevons-eya-3660a7297/?locale=fr_FR";
-
-export const ContactSection = () => {
-  return (
-    <section className="py-16 pt-12 lg:py-24 lg:pt-20" id="contact">
-      <div className="container">
-        <div className="bg-gradient-to-r from-emerald-300 to-sky-400 text-gray-900 py-8 px-10 rounded-3xl text-center md:text-left relative overflow-hidden z-0">
-          <div
-            className="absolute inset-0 opacity-5 -z-10"
-            style={{
-              backgroundImage: `url(${grainImage.src})`,
-            }}
-          ></div>
-          <div className="flex flex-col md:flex-row gap-8 md:gap-16 items-center">
-            <div className="">
-              <h2 className="font-serif text-2xl md:text-3xl">
-                À la recherche d&apos;une nouvelle aventure
-              </h2>
-              <p className="text-sm mt-2 md:text-base flex flex-col gap-4">
-                Je suis actuellement à la recherche d&apos;une alternance pour
-                l&apos;année scolaire 2026-2027. N&apos;hésitez pas à me
-                contacter !
-                <span className="flex flex-col md:flex-row gap-2">
-                  <a
-                    href={LINKEDIN_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm font-bold underline"
-                  >
-                    Me retrouver sur LinkedIn
-                  </a>
-                </span>
-              </p>
-              <noscript>
-                <p className="text-sm mt-4">
-                  Le bouton de contact direct nécessite JavaScript. Vous pouvez
-                  me joindre via le lien LinkedIn ci-dessus.
-                </p>
-              </noscript>
-            </div>
-            <div>
-              <button
-                type="button"
-                aria-label="Envoyer un e-mail à Jeevons"
-                onClick={() => {
-                  window.location.href = `mailto:${buildMail()}`;
-                }}
-                className="text-white bg-gray-900 items-center px-6 h-12 rounded-xl gap-2 inline-flex w-max border border-gray-900 hover:scale-110 transform transition duration-300 ease-in-out"
-              >
-                <span className="font-semibold">Me Contacter</span>
-                <ArrowUpRightIcon aria-hidden="true" className="size-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
+// Conteneur serveur async (Story 4.3) : lit le lien LinkedIn et l'e-mail
+// fragmenté en base (avec défauts si clé absente, AC2/AC3), puis passe le tout
+// en props à la vue cliente. L'e-mail transite en fragments — jamais recomposé
+// côté serveur — pour ne pas apparaître dans le HTML servi (anti-moisson).
+export const ContactSection = async () => {
+  const { email, linkedin } = await getContactSettings();
+  return <ContactClient email={email} linkedinUrl={linkedin} />;
 };

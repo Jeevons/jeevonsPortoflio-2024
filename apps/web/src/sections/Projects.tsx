@@ -1,41 +1,33 @@
 import maufebWebsite from "@/assets/images/maufebMode-mockup.webp";
 import quantumWebSite from "@/assets/images/quantumWebSite-mockup.webp";
 import { ProjectList, type Project } from "@/components/ProjectList";
+import { getPublishedProjects } from "@/lib/projects";
+import type { StaticImageData } from "next/image";
 
-const portfolioProjects: Project[] = [
-  {
-    company: "Quantum",
-    year: "Janvier - 2024",
-    title: "Site Web de la marque de bière Quantum",
-    results: [
-      { title: "Php, mySQL et Javascript" },
-      {
-        title: "Développement full-stack, front & back-end ",
-      },
-      { title: "Gestion de projet & travail d'équipe" },
-    ],
-    link: "https://quantum.2024.mmibut1.org/index.php",
-    image: quantumWebSite,
-  },
-  {
-    company: "Maufeb Mode",
-    year: "Juin - 2024",
-    title:
-      "Création de la boutique en ligne Maufeb Mode, et de l'identité visuelle",
-    results: [
-      { title: "Wordpress, Sumup" },
-      {
-        title:
-          "Création logo, référencement et gestions des stocks, et des paiements",
-      },
-      { title: "Relation et service client ++" },
-    ],
-    link: "https://www.maufeb-mode.com/",
-    image: maufebWebsite,
-  },
-];
+// Jointure locale slug → image (piège n°4, story 4.1) : le modèle Media
+// n'existe qu'en Epic 5. Les projets (texte/lien/period) viennent de la base,
+// mais l'image reste un import statique associé par slug. Le contrat
+// `image: StaticImageData` de ProjectList reste ainsi intact (AC3).
+const projectImagesBySlug: Record<string, StaticImageData> = {
+  quantum: quantumWebSite,
+  "maufeb-mode": maufebWebsite,
+};
 
-export const ProjectsSection = () => {
+// Server Component async : lit la base (AC3) au lieu d'une constante en dur.
+export const ProjectsSection = async () => {
+  const dbProjects = await getPublishedProjects("FLAGSHIP");
+
+  const projects: Project[] = dbProjects.map((project) => ({
+    company: project.company,
+    year: project.period,
+    title: project.title,
+    results: project.highlights.map((highlight) => ({
+      title: highlight.label,
+    })),
+    link: project.link ?? "",
+    image: projectImagesBySlug[project.slug],
+  }));
+
   return (
     <ProjectList
       id="projects"
@@ -43,7 +35,7 @@ export const ProjectsSection = () => {
       title="Projets phares"
       description="Créer des expériences accessibles, fluides et intuitives est au cœur
           de ce que j'aime faire."
-      projects={portfolioProjects}
+      projects={projects}
     />
   );
 };

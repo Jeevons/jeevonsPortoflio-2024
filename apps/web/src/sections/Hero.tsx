@@ -4,9 +4,13 @@ import StartIcon from "@/assets/icons/star.svg";
 import grainImage from "@/assets/images/grain.jpg";
 import memojiImage from "@/assets/images/jeevons-avatar-coding.webp";
 import { HeroOrbit } from "@/components/HeroOrbit";
+import { getHeroSettings } from "@/lib/settings";
 import Image from "next/image";
 
-export const HeroSection = () => {
+// Server Component async (Story 4.3) : lit les textes Hero en base avec valeur
+// par défaut si une clé manque (AC2/AC3). Rendu iso.
+export const HeroSection = async () => {
+  const { title, subtitle, statusBadge } = await getHeroSettings();
   return (
     <section
       className="py-32 md:py-48 lg:py-60 relative z-0 overflow-x-clip"
@@ -108,23 +112,15 @@ export const HeroSection = () => {
             <div className="bg-green-500 size-2.5 rounded-full relative">
               <div className="bg-green-500 inset-0 rounded-full absolute animate-ping-large"></div>
             </div>
-            <div className="text-sm font-medium text-center">
-              En recherche d&apos;une alternance pour 2026-2027
-            </div>
+            <div className="text-sm font-medium text-center">{statusBadge}</div>
           </div>
         </div>
         <div className="md:max-w-xl lg:max-w-4xl mx-auto">
           <h1 className="font-serif text-3xl md:text-5xl lg:text-6xl text-center mt-8">
-            Imaginer et construire des expériences qui donnent envie d&apos;être
-            vécues !
+            {title}
           </h1>
           <p className="mt-4 text-white/60 text-center md:text-lg">
-            Le front-end est mon terrain de jeu, mais pour moi, c&apos;est dans
-            les coulisses que la vraie magie opère. Avec des bases solides en
-            développement front, je veux explorer tout le spectre pour
-            véritablement devenir &quot;tech-savvy&quot;. Et quand je ne code
-            pas, je m&apos;amuse à donner vie à mes idées grâce à la suite
-            Adobe.
+            {subtitle}
           </p>
         </div>
         <div className="flex flex-col md:flex-row justify-center items-center mt-8 gap-4 z-30">
