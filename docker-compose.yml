@@ -31,6 +31,15 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql://portfolio:portfolio@db:5432/portfolio_dev?schema=public
+      # Credentials admin lus depuis le .env racine (gitignoré). Sans valeur par
+      # défaut : si le .env manque, le seed échoue explicitement (voulu).
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      AUTH_SECRET: ${AUTH_SECRET}
+    # Au démarrage : migrations + seed (comme l'entrypoint de prod, story 4.6),
+    # PUIS le serveur de dev. Un seul `docker compose up` → app connectable,
+    # compte admin créé. `migrate dev` crée/applique les migrations manquantes.
+    command: sh -c "bun run db:migrate && bun run db:seed && bun run dev"
 
 volumes:
   portfolio_db_data:
