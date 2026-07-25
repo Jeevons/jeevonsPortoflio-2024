@@ -36,11 +36,12 @@ type NavItem = {
 
 const NAV_ITEMS: NavItem[] = [
   { href: "/admin", label: "Tableau de bord", icon: GaugeCircle, ready: true },
+  // Story 5.8 — écran livré : l'entrée devient un vrai lien.
   {
     href: "/admin/projects",
     label: "Projets",
     icon: FolderKanban,
-    ready: false,
+    ready: true,
   },
   { href: "/admin/timeline", label: "Parcours", icon: Route, ready: false },
   { href: "/admin/stacks", label: "Technologies", icon: Layers, ready: false },
