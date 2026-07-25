@@ -41,7 +41,7 @@
 # - Retrospective appends its action items to action_items; sprint-status surfaces open ones
 
 generated: 2026-07-21
-last_updated: 2026-07-25 (Story 5.6 → review · socle sécurité 5.1-5.6 complet)
+last_updated: 2026-07-25 (Story 5.7 → review · tableau de bord /admin, layout admin, fondation shadcn/ui)
 project: jeevonsPortoflio-2024
 project_key: NOKEY
 tracking_system: file-system
@@ -93,7 +93,7 @@ development_status:
   5-4-conserver-un-moyen-d-entrer-si-je-perds-mon-telephone: review
   5-5-me-connecter-en-deux-temps: review
   5-6-debloquer-mon-acces-depuis-le-serveur: review
-  5-7-voir-l-etat-de-mon-portfolio-d-un-coup-d-il: ready-for-dev
+  5-7-voir-l-etat-de-mon-portfolio-d-un-coup-d-il: review
   5-8-gerer-mes-projets: ready-for-dev
   5-9-decrire-finement-un-projet: ready-for-dev
   5-10-choisir-l-ordre-d-affichage-de-mes-projets: ready-for-dev

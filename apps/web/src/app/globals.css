@@ -58,6 +58,48 @@ html {
   font-size: var(--text-3xs);
 }
 
+/* Story 5.7 — Tokens de design shadcn/ui (fondation des écrans admin 5.7-5.20).
+   Valeurs HSL sans `hsl()` : c'est le contrat shadcn, `tailwind.config.ts` les
+   enveloppe en `hsl(var(--token) / <alpha-value>)` pour que l'opacité Tailwind
+   (`bg-card/50`) reste utilisable.
+
+   ⚠️ Une SEULE palette, sombre. Le site public est en sombre permanent
+   (#111827 / emerald) : introduire un thème clair ici créerait une deuxième
+   identité visuelle non demandée. Les tokens sont donc calés sur le sombre
+   existant — `--background` reprend le gray-900 du site, `--primary` son
+   emerald-300. Aucun bloc `.dark` : pas de bascule de thème dans cette story. */
+:root {
+  --background: 217 33% 11%;
+  --foreground: 210 40% 98%;
+
+  --card: 217 33% 14%;
+  --card-foreground: 210 40% 98%;
+
+  --popover: 217 33% 14%;
+  --popover-foreground: 210 40% 98%;
+
+  --primary: 156 72% 67%;
+  --primary-foreground: 217 33% 11%;
+
+  --secondary: 217 33% 20%;
+  --secondary-foreground: 210 40% 98%;
+
+  --muted: 217 33% 20%;
+  --muted-foreground: 215 20% 65%;
+
+  --accent: 217 33% 24%;
+  --accent-foreground: 210 40% 98%;
+
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 210 40% 98%;
+
+  --border: 217 33% 24%;
+  --input: 217 33% 24%;
+  --ring: 156 72% 67%;
+
+  --radius: 0.5rem;
+}
+
 /* Respect du réglage système « réduire les animations » (UX-DR20, règle D11).
    Placée hors de tout @layer pour primer sur les utilitaires Tailwind.
    0.01ms plutôt que `none` : l'animation saute à son état FINAL au lieu de
