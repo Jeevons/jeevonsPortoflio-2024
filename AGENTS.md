@@ -18,17 +18,19 @@ Portfolio personnel de **Jeevons**, refonte 2026. Un site vitrine Next.js aujour
 - **Domaine de production** : `portfolio.doshwork.com` (VPS Hetzner `89.167.90.7`, Coolify).
 - **Garde-fous durs** : coût VPS additionnel nul (Postgres mutualisé) · **anti-scope-creep (UNE story à la fois)** · **accessibilité non négociable** (`prefers-reduced-motion`, AA, clavier) · aucun secret versionné · **ne jamais toucher aux ressources Coolify `doshwork-api` / `doshwork-web`**.
 
-### 🛑 Le stack évolue en cours de route — vérifie toujours où tu en es
+### 🛑 Stack en vigueur
 
-Ce dépôt est **en cours de migration**. L'état de la table ci-dessous change à l'Epic 3. **Avant toute commande, lis `package.json` et la présence de `apps/web/` — ne présume jamais.**
+**La migration de l'Epic 3 est faite.** L'état ci-dessous est celui du dépôt aujourd'hui.
 
-| | Aujourd'hui (Epics 1–2) | Après Epic 3 |
-|---|---|---|
-| Emplacement du code | racine (`src/`) | `apps/web/` |
-| Package manager | **npm** (`package-lock.json`) | **Bun 1.3+** (`apps/web/bun.lock`) |
-| Next / React | 14.2.5 / 18 | 16.2 / 19.2 |
-| Animations | `framer-motion` 11 | `motion` 12 |
-| Branches | `Production` / `develop` | `PROD` / `DEV` |
+| | État actuel |
+|---|---|
+| Emplacement du code | `apps/web/` |
+| Package manager | **Bun** (`apps/web/bun.lock`) |
+| Next / React | 16.2 / 19.2 |
+| Animations | `motion` 12 |
+| Branches | `PROD` / `DEV` |
+
+> ⚠️ Un `bun.lock` traîne aussi à la racine alors que celle-ci ne déclare pas de `workspaces`. Le lockfile qui fait foi est `apps/web/bun.lock`.
 
 > Les epics 4 à 7 ajoutent Prisma 7 + Postgres, Auth.js v5 + TOTP, shadcn/ui, Playwright et Umami. Ils n'existent pas encore : ne les invoque pas tant que leur epic n'est pas atteint.
 
@@ -36,21 +38,21 @@ Ce dépôt est **en cours de migration**. L'état de la table ci-dessous change 
 
 ## 2. Commandes
 
-**Toujours vérifier le gestionnaire de paquets en vigueur avant de lancer quoi que ce soit.**
+Le gestionnaire de paquets est **Bun**. Les commandes se lancent depuis `apps/web/`.
 
-| Tâche | Aujourd'hui | Après Epic 3 |
-|---|---|---|
-| Installer | `npm install` | `bun install` |
-| Dev | `npm run dev` | `bun run dev` |
-| Build | `npm run build` | `bun run build` |
-| Lint | `npm run lint` | `bun run lint` |
-| Types | `npx tsc --noEmit` | `bunx tsc --noEmit` |
+| Tâche | Commande |
+|---|---|
+| Installer | `bun install` |
+| Dev | `bun run dev` |
+| Build | `bun run build` |
+| Lint | `bun run lint` |
+| Types | `bunx tsc --noEmit` |
 
 À partir de l'Epic 2, la stack de développement se lance aussi par `docker compose up` (service `db` Postgres + service `web`).
 
 ### ❌ Strictement interdit
 
-- **Mélanger les gestionnaires de paquets.** Tant que l'Epic 3.2 n'est pas `done`, c'est npm et rien d'autre — pas de `bun install` « pour aller plus vite », il produirait un lockfile concurrent.
+- **Mélanger les gestionnaires de paquets.** C'est Bun et rien d'autre — pas de `npm install` « par habitude », il produirait un `package-lock.json` concurrent de `apps/web/bun.lock`.
 - **Committer un secret.** Seul `.env.production.example` est versionné, **sans aucune valeur réelle**. Vérifie `git status` avant chaque commit : un `.env` réel ne doit jamais y apparaître.
 - **Ajouter une dépendance** non prévue par la story ou le plan, sans validation explicite de Jeevons.
 - **Toucher aux ressources Coolify de Doshwork** (`doshwork-api`, `doshwork-web`, bases existantes). Le portfolio est une **application Coolify distincte**.
@@ -118,7 +120,7 @@ Statuts valides dans `_bmad-output/implementation-artifacts/sprint-status.yaml` 
 
 ## 6. 🛑 Standards de qualité du code
 
-- **TypeScript strict.** `npx tsc --noEmit` doit passer sans erreur. Pas de `any` implicite, pas de `@ts-ignore` sans justification écrite.
+- **TypeScript strict.** `bunx tsc --noEmit` doit passer sans erreur. Pas de `any` implicite, pas de `@ts-ignore` sans justification écrite.
 - **Composants** : logique de données côté Server Components ; `"use client"` uniquement quand l'interactivité l'impose. Vues « bêtes », données passées en props.
 - **Pas de duplication.** `Projects.tsx` / `SelfProject.tsx` partagent ~90 % de code : la factorisation est traitée en story 3.7 — n'aggrave pas la dette d'ici là.
 - **Accessibilité — non négociable** :
@@ -145,9 +147,9 @@ BMAD est installé (modules `core` + `bmm`), configuré par `_bmad/bmm/config.ya
 ## 8. 🛑 Definition of Done technique (avant `review` → `done`)
 
 - [ ] Tous les **critères d'acceptation** de la story cochés (ils sont rédigés en Given/When/Then — vérifie-les un par un).
-- [ ] `npm run lint` (ou `bun run lint`) → **0 warning**.
-- [ ] `npx tsc --noEmit` → **0 erreur**.
-- [ ] `npm run build` → **succès**, sans avertissement de dépréciation non traité.
+- [ ] `bun run lint` → **0 warning**.
+- [ ] `bunx tsc --noEmit` → **0 erreur**.
+- [ ] `bun run build` → **succès**, sans avertissement de dépréciation non traité.
 - [ ] **Vérification visuelle** dans le navigateur si la story touche l'UI, **y compris avec « réduire les animations » activé** lorsqu'elle introduit du mouvement.
 - [ ] `git diff DEV` relu : **rien hors périmètre de la story**.
 - [ ] `File List` + `Completion Notes` + `Change Log` de la story remplis.
