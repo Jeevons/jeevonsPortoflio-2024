@@ -269,3 +269,88 @@ export async function listStackOptions(): Promise<AdminStackOption[]> {
     return [];
   }
 }
+
+// ---------------------------------------------------------------------------
+// Story 5.10 — Lecture dédiée à l'ÉCRAN DE RÉORDONNANCEMENT (AC1, AC3).
+// ---------------------------------------------------------------------------
+
+/** Une ligne déplaçable de l'écran de tri. Volontairement minimale. */
+export type ReorderableProject = {
+  id: string;
+  title: string;
+  company: string;
+  published: boolean;
+};
+
+/** Les projets d'une catégorie, dans leur ordre d'affichage public actuel. */
+export type ProjectCategoryGroup = {
+  category: ProjectCategory;
+  projects: ReorderableProject[];
+};
+
+/** Résultat du chargement. `available: false` = base injoignable, PAS « 0 projet ». */
+export type ProjectOrderGroups =
+  { available: true; groups: ProjectCategoryGroup[] } | { available: false };
+
+/**
+ * Charge les projets GROUPÉS PAR CATÉGORIE, dans l'ordre d'affichage public
+ * (AC1, AC3).
+ *
+ * ⚠️ Décision Jeevons : le réordonnancement se fait AU SEIN D'UNE CATÉGORIE, et
+ * non globalement. C'est ce que reflète le site public, qui rend une section par
+ * catégorie ; c'est aussi ce que suppose l'index `@@index([category, sortOrder])`.
+ * Un tri global n'aurait aucun effet observable entre deux catégories.
+ *
+ * ⚠️ Cette lecture n'est PAS filtrable et n'expose PAS de tri alternatif, à la
+ * différence de `listAdminProjects` : réordonner une liste partielle ou triée par
+ * date produirait des `sortOrder` calculés sur une séquence incomplète, donc un
+ * ordre faux pour les projets absents de l'écran. Ici, l'ordre affiché EST
+ * l'ordre persisté — c'est la condition pour que « position dans la liste =
+ * `sortOrder` » reste vrai.
+ *
+ * Les brouillons sont inclus : Jeevons place un projet avant de le publier.
+ *
+ * Tri secondaire par `title` : plusieurs projets peuvent partager le même
+ * `sortOrder` (notamment `0` par défaut, avant tout réordonnancement). Sans ce
+ * départage, Postgres renverrait ces lignes dans un ordre non garanti et la
+ * liste « sauterait » d'un rendu à l'autre.
+ */
+export async function listProjectsForReorder(): Promise<ProjectOrderGroups> {
+  try {
+    const rows = await prisma.project.findMany({
+      orderBy: [{ sortOrder: "asc" }, { title: "asc" }],
+      select: {
+        id: true,
+        title: true,
+        company: true,
+        published: true,
+        category: true,
+      },
+    });
+
+    // Groupement en JS plutôt qu'en N requêtes : le volume est celui d'un
+    // portfolio (quelques dizaines de lignes), et une seule requête garantit
+    // que toutes les catégories reflètent le MÊME instant.
+    const groups = (Object.values(ProjectCategory) as ProjectCategory[]).map(
+      (category) => ({
+        category,
+        projects: rows
+          .filter((row) => row.category === category)
+          .map(({ id, title, company, published }) => ({
+            id,
+            title,
+            company,
+            published,
+          })),
+      }),
+    );
+
+    return { available: true, groups };
+  } catch (error) {
+    const raw = error instanceof Error ? error.message : String(error);
+    console.error(
+      `[admin] Ordre des projets indisponible. Cause : ${raw.replace(/\s+/g, " ").trim()}`,
+    );
+    return { available: false };
+  }
+}

@@ -71,9 +71,19 @@ export default async function AdminProjectsPage({
           </div>
           {/* `buttonVariants()` sur un `<Link>` : apparence de bouton, vraie
               sémantique de lien — jamais de `<button>` dans un `<a>`. */}
-          <Link href="/admin/projects/new" className={cn(buttonVariants())}>
-            Nouveau projet
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            {/* Story 5.10 — Le réordonnancement a son propre écran : il exige la
+                liste COMPLÈTE et non filtrée (voir order/page.tsx). */}
+            <Link
+              href="/admin/projects/order"
+              className={cn(buttonVariants({ variant: "outline" }))}
+            >
+              Réordonner
+            </Link>
+            <Link href="/admin/projects/new" className={cn(buttonVariants())}>
+              Nouveau projet
+            </Link>
+          </div>
         </header>
 
         {justSaved ? (
