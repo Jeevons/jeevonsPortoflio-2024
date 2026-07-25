@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { AdminShell } from "@/components/admin/admin-shell";
 import { auth } from "@/lib/auth";
+import { listStackOptions } from "@/lib/admin/projects";
 
 import { ProjectForm } from "../project-form";
 
@@ -25,9 +26,13 @@ export default async function NewProjectPage() {
   const session = await auth();
   const email = session?.user?.email ?? "";
 
+  // Story 5.9 — technologies proposées au sélecteur dès la création (AC2).
+  const stackOptions = await listStackOptions();
+
   return (
     <AdminShell email={email}>
-      <div className="mx-auto flex max-w-3xl flex-col gap-8">
+      {/* Story 5.9 — élargi pour accueillir l'aperçu live en seconde colonne. */}
+      <div className="mx-auto flex max-w-6xl flex-col gap-8">
         <header className="flex flex-col gap-1">
           <Link
             href="/admin/projects"
@@ -41,7 +46,7 @@ export default async function NewProjectPage() {
           </p>
         </header>
 
-        <ProjectForm />
+        <ProjectForm stackOptions={stackOptions} />
       </div>
     </AdminShell>
   );

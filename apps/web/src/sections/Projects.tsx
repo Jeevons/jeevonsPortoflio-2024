@@ -26,6 +26,8 @@ export const ProjectsSection = async () => {
     })),
     link: project.link ?? "",
     image: projectImagesBySlug[project.slug],
+    // Story 5.9 (AC4) : vide → la carte masque la section correspondante.
+    outcome: project.outcome,
   }));
 
   return (

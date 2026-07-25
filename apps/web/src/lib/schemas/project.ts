@@ -93,12 +93,44 @@ function optionalUrl(message: string) {
     });
 }
 
+/** Longueur max d'un point fort — une ligne de carte, pas un paragraphe. */
+const HIGHLIGHT_MAX = 300;
+
 /**
- * Règles d'un projet, communes au client et au serveur (AC2).
+ * Un point fort du projet (story 5.9, AC1).
  *
- * Périmètre VERROUILLÉ aux champs scalaires du modèle `Project` : highlights et
- * stacks détaillés sont la story 5.9, le tri est 5.10, la cover est 5.12.
- * `sortOrder` n'est pas exposé ici (5.10) — la création laisse le défaut `0`.
+ * `id` est OPTIONNEL et porte toute la logique de réconciliation côté serveur :
+ *  - présent  → point fort EXISTANT à mettre à jour (on préserve sa ligne, donc
+ *    son identité) ;
+ *  - absent   → point fort AJOUTÉ dans le formulaire, à créer.
+ * Les points forts existants absents de la soumission sont supprimés. Sans cet
+ * `id`, la seule stratégie possible serait « tout supprimer / tout recréer », ce
+ * que le piège n°2 de la story interdit (duplication et churn d'identifiants).
+ *
+ * `sortOrder` n'est pas transmis par le client : le serveur le DÉRIVE de l'ordre
+ * du tableau reçu (index). Une seule source de vérité pour l'ordre — la position
+ * dans la liste — plutôt que deux qui pourraient diverger.
+ */
+export const highlightSchema = z.object({
+  id: z.string().trim().min(1).optional(),
+  label: z
+    .string()
+    .trim()
+    .min(1, "Un point fort ne peut pas être vide.")
+    .max(
+      HIGHLIGHT_MAX,
+      `Un point fort ne peut dépasser ${HIGHLIGHT_MAX} caractères.`,
+    ),
+});
+
+export type HighlightInput = z.infer<typeof highlightSchema>;
+
+/**
+ * Règles d'un projet, communes au client et au serveur (AC2 de 5.8).
+ *
+ * Story 5.9 : le schéma s'étend à `outcome` (résultat chiffré optionnel, AC4),
+ * `highlights` (AC1) et `stackIds` (AC2). Le tri des projets est 5.10, la cover
+ * est 5.12. `sortOrder` du projet n'est pas exposé ici (5.10).
  */
 export const projectSchema = z.object({
   slug: z
@@ -144,6 +176,22 @@ export const projectSchema = z.object({
   ),
   link: optionalUrl("Le lien doit être une URL complète (https://…)."),
   repoUrl: optionalUrl("Le dépôt doit être une URL complète (https://…)."),
+  // AC4 — « un projet peut ne pas avoir de résultat chiffré ». Le champ est donc
+  // optionnel : vide → `null`, l'enregistrement est ACCEPTÉ, et le site public
+  // masque la section correspondante (jamais de bloc vide).
+  outcome: optionalText(
+    SHORT_TEXT_MAX,
+    `Le résultat ne peut dépasser ${SHORT_TEXT_MAX} caractères.`,
+  ),
+  // AC1 — Points forts, SANS LIMITE ARBITRAIRE de nombre : aucun `.max()` sur le
+  // tableau, c'est explicitement ce que l'AC demande. L'ordre du tableau EST
+  // l'ordre d'affichage (il devient `sortOrder` côté serveur).
+  highlights: z.array(highlightSchema),
+  // AC2 — Technologies associées, par identifiant. Le formulaire ne propose que
+  // des `Stack` EXISTANTES (la création de technologies est la story 5.15) ; le
+  // serveur vérifie de son côté que chaque identifiant existe réellement, car
+  // cette liste reste une entrée utilisateur.
+  stackIds: z.array(z.string().trim().min(1)),
   // `published` est exposé en lecture/écriture SIMPLE ici (piège n°6) : la
   // gestion brouillon/preview (`?preview=1`, visibilité conditionnelle) est la
   // story 5.11. Une case à cocher absente du POST vaut `false`.
@@ -188,7 +236,60 @@ export function projectFormDataToInput(formData: FormData): unknown {
     description: text("description"),
     link: text("link"),
     repoUrl: text("repoUrl"),
-    // Une case NON cochée n'est pas envoyée du tout : absence = `false`.
-    published: formData.get("published") === "on",
+    outcome: text("outcome"),
+    // Une case NON cochée n'est pas envoyée du tout : absence = `false`. On teste
+    // la PRÉSENCE de la clé plutôt que l'égalité à « on », qui est une convention
+    // de navigateur : la seule chose qui fasse sens ici est « la case était-elle
+    // cochée ».
+    published: formData.has("published"),
+    highlights: formDataToHighlights(formData),
+    // `getAll` : les cases à cocher de technologies partagent le même nom, une
+    // ligne par technologie sélectionnée. Aucune coché → tableau vide, donc
+    // « le projet n'a aucune technologie », ce qui est un état légitime.
+    stackIds: formData
+      .getAll("stackIds")
+      .filter((value): value is string => typeof value === "string"),
   };
+}
+
+/**
+ * Reconstruit le tableau ordonné des points forts depuis le `FormData` (AC1).
+ *
+ * ⚠️ Un `FormData` est PLAT : il n'a pas de notion de tableau d'objets. Les
+ * champs sont donc émis par paires indexées — `highlights[0].id`,
+ * `highlights[0].label`, `highlights[1].label`… — et reconstitués ici.
+ *
+ * L'index sert UNIQUEMENT à regrouper id et label d'une même ligne ; il ne fixe
+ * pas l'ordre final. On trie explicitement par index numérique avant de produire
+ * le tableau, car `FormData` ne garantit pas que « 10 » vienne après « 9 » si
+ * l'on se fiait à l'ordre lexicographique des clés. C'est la POSITION dans le
+ * tableau résultant qui devient le `sortOrder` persisté.
+ *
+ * Les lignes entièrement vides (label blanc et pas d'identifiant) sont écartées
+ * en silence : une ligne ajoutée puis laissée vide ne doit pas faire échouer
+ * l'enregistrement du projet entier.
+ */
+function formDataToHighlights(formData: FormData): unknown[] {
+  const byIndex = new Map<number, { id?: string; label: string }>();
+
+  for (const [key, value] of formData.entries()) {
+    const match = /^highlights\[(\d+)\]\.(id|label)$/.exec(key);
+    if (!match || typeof value !== "string") continue;
+
+    const index = Number(match[1]);
+    const entry = byIndex.get(index) ?? { label: "" };
+    if (match[2] === "id") {
+      // Une ligne nouvellement ajoutée poste un `id` vide : on ne le conserve
+      // pas, sinon le serveur croirait devoir mettre à jour une ligne existante.
+      if (value.trim().length > 0) entry.id = value;
+    } else {
+      entry.label = value;
+    }
+    byIndex.set(index, entry);
+  }
+
+  return [...byIndex.entries()]
+    .sort(([a], [b]) => a - b)
+    .map(([, entry]) => entry)
+    .filter((entry) => entry.label.trim().length > 0 || entry.id !== undefined);
 }

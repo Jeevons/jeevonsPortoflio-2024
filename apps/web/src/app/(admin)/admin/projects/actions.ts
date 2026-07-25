@@ -92,6 +92,25 @@ function isSlugConflict(error: unknown): boolean {
 }
 
 /**
+ * Détecte une référence inexistante (P2025) — story 5.9.
+ *
+ * Se produit si le formulaire poste l'identifiant d'une technologie supprimée
+ * entre-temps (autre onglet, liste obsolète). Sans traduction, l'utilisateur
+ * verrait une erreur générique de panne alors que la cause est connue et que
+ * l'action à mener est simple : rafraîchir la page.
+ */
+function isMissingRelation(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    (error as { code?: unknown }).code === "P2025"
+  );
+}
+
+const STALE_STACK_ERROR =
+  "Une technologie sélectionnée n'existe plus. Rafraîchissez la page puis réessayez.";
+
+/**
  * Garde + validation communes à la création et à la modification (AC2).
  *
  * Renvoie soit les données validées, soit l'état d'erreur à retourner au
@@ -159,12 +178,31 @@ export async function createProjectAction(
   const guard = await guardAndValidate(formData);
   if (!guard.ok) return guard.state;
 
+  // Story 5.9 — les relations sont extraites des champs scalaires : Prisma
+  // n'accepte pas un tableau brut là où il attend une écriture imbriquée.
+  const { highlights, stackIds, ...scalars } = guard.data;
+
   let createdId: string;
   try {
     const created = await prisma.project.create({
       // `sortOrder` non fourni : le défaut `0` du schéma s'applique. Le
       // réordonnancement est la story 5.10.
-      data: guard.data,
+      data: {
+        ...scalars,
+        // AC1 — L'ORDRE DU TABLEAU devient le `sortOrder` persisté. C'est ce qui
+        // fait que l'ordre saisi dans l'éditeur se retrouve tel quel sur le site
+        // public, dont la lecture ordonne déjà par `sortOrder`.
+        highlights: {
+          create: highlights.map((highlight, index) => ({
+            label: highlight.label,
+            sortOrder: index,
+          })),
+        },
+        // AC2 — `connect` sur des technologies EXISTANTES. La relation
+        // `ProjectStacks` étant bidirectionnelle en base, associer ici suffit :
+        // la technologie « connaît » aussitôt ce projet, sans seconde écriture.
+        stacks: { connect: stackIds.map((id) => ({ id })) },
+      },
       select: { id: true },
     });
     createdId = created.id;
@@ -177,6 +215,9 @@ export async function createProjectAction(
         // la correction doit se faire.
         fieldErrors: { slug: "Cet identifiant est déjà pris." },
       };
+    }
+    if (isMissingRelation(error)) {
+      return { status: "error", message: STALE_STACK_ERROR, fieldErrors: {} };
     }
     const raw = error instanceof Error ? error.message : String(error);
     console.error(
@@ -214,11 +255,74 @@ export async function updateProjectAction(
     return { status: "error", message: GENERIC_ERROR, fieldErrors: {} };
   }
 
+  const { highlights, stackIds, ...scalars } = guard.data;
+
   try {
-    await prisma.project.update({
-      where: { id },
-      data: guard.data,
-      select: { id: true },
+    // ⚠️ TRANSACTION — points forts et technologies sont réconciliés en
+    // plusieurs écritures. Sans transaction, un échec en cours de route
+    // laisserait le projet à moitié modifié : des points forts supprimés mais
+    // pas recréés, donc une perte de données silencieuse.
+    await prisma.$transaction(async (tx) => {
+      // AC1 — RÉCONCILIATION des points forts par identifiant (piège n°2).
+      //
+      // On ne fait PAS « tout supprimer puis tout recréer » : cette facilité
+      // changerait l'identifiant de chaque point fort à chaque enregistrement
+      // et ferait churner la table sans raison. On calcule donc les trois
+      // opérations réelles :
+      //  - SUPPRIMER les points forts existants absents de la soumission ;
+      //  - METTRE À JOUR ceux qui portent un `id` connu (label + position) ;
+      //  - CRÉER ceux qui arrivent sans `id`.
+      const existing = await tx.highlight.findMany({
+        where: { projectId: id },
+        select: { id: true },
+      });
+      const existingIds = new Set(existing.map((highlight) => highlight.id));
+
+      // ⚠️ Un `id` posté qui n'appartient PAS à ce projet est ignoré (traité
+      // comme un ajout) : le formulaire est une entrée utilisateur, et un
+      // identifiant emprunté à un autre projet ne doit pas permettre de le
+      // modifier au passage.
+      const submittedIds = new Set(
+        highlights
+          .map((highlight) => highlight.id)
+          .filter((value): value is string => value !== undefined)
+          .filter((value) => existingIds.has(value)),
+      );
+
+      const removedIds = [...existingIds].filter(
+        (existingId) => !submittedIds.has(existingId),
+      );
+      if (removedIds.length > 0) {
+        await tx.highlight.deleteMany({ where: { id: { in: removedIds } } });
+      }
+
+      // L'INDEX dans le tableau devient le `sortOrder` : l'ordre affiché dans
+      // l'éditeur est donc exactement celui persisté, puis celui rendu sur le
+      // site public (AC1).
+      for (const [index, highlight] of highlights.entries()) {
+        if (highlight.id !== undefined && submittedIds.has(highlight.id)) {
+          await tx.highlight.update({
+            where: { id: highlight.id },
+            data: { label: highlight.label, sortOrder: index },
+          });
+        } else {
+          await tx.highlight.create({
+            data: { label: highlight.label, sortOrder: index, projectId: id },
+          });
+        }
+      }
+
+      await tx.project.update({
+        where: { id },
+        data: {
+          ...scalars,
+          // AC2 — `set` (et non `connect`) : il REMPLACE l'ensemble des
+          // associations par celui soumis. C'est ce qui permet de DÉSASSOCIER
+          // une technologie décochée ; un `connect` seul ne saurait qu'ajouter.
+          stacks: { set: stackIds.map((stackId) => ({ id: stackId })) },
+        },
+        select: { id: true },
+      });
     });
   } catch (error) {
     if (isSlugConflict(error)) {
@@ -227,6 +331,12 @@ export async function updateProjectAction(
         message: slugConflictMessage(guard.data.slug),
         fieldErrors: { slug: "Cet identifiant est déjà pris." },
       };
+    }
+    // P2025 en modification : soit une technologie sélectionnée a disparu, soit
+    // le projet lui-même. Le message couvre les deux cas par la même action —
+    // rafraîchir — car l'utilisateur n'a pas à distinguer laquelle des deux.
+    if (isMissingRelation(error)) {
+      return { status: "error", message: STALE_STACK_ERROR, fieldErrors: {} };
     }
     const raw = error instanceof Error ? error.message : String(error);
     console.error(

@@ -4,7 +4,7 @@ baseline_commit: 5c22f3a6c48914801d0a226ab5a0b15c005d8765
 
 # Story 5.9: Décrire finement un projet
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -82,21 +82,21 @@ Dans l'éditeur de projet (5.8) : gérer les **`Highlight`** (ajout/modif/suppr 
 
 ## Tasks / Subtasks
 
-- [ ] **Tâche 0 — Prérequis** (AC: 1)
-  - [ ] 5.8 `done`. Réutiliser schéma Zod + Server Action projet.
-- [ ] **Tâche 1 — Highlights répétables + ordre** (AC: 1 ; piège n°2)
-  - [ ] UI répétable (add/edit/remove, sans limite) + réordonnancement (accessible clavier) → `sortOrder` persisté ; `revalidateTag`.
-- [ ] **Tâche 2 — Sélecteur de stacks** (AC: 2 ; piège n°3)
-  - [ ] Multi-select des `Stack` existantes → `connect/set` (bidirectionnel).
-- [ ] **Tâche 3 — Aperçu live** (AC: 3 ; piège n°1)
-  - [ ] Réutiliser le composant carte réel, alimenté par l'état client ; MAJ à la frappe. Extraire la présentation si nécessaire.
-- [ ] **Tâche 4 — Champs optionnels** (AC: 4 ; piège n°4)
-  - [ ] Optionnels tolérés ; section masquée côté public si vide. 🛑 Clarifier « résultat chiffré » (champ hors schéma ?) avec Jeevons.
-- [ ] **Tâche 5 — Vérification locale** (AC: 1-4 ; piège n°6)
-  - [ ] Highlights (CRUD + ordre reflété), stacks (bidirectionnel), aperçu live fidèle, optionnels vides tolérés + masquage.
-- [ ] **Tâche 6 — Definition of Done** (AGENTS.md §8)
-  - [ ] lint 0 / tsc 0 / build OK. Vérif visuelle (dont aperçu). `git diff DEV` : éditeur enrichi, gestion highlights/stacks, aperçu — rien d'autre.
-  - [ ] `File List` + `Completion Notes` + `Change Log` · `sprint-status.yaml`.
+- [x] **Tâche 0 — Prérequis** (AC: 1)
+  - [x] 5.8 `done`. Réutiliser schéma Zod + Server Action projet.
+- [x] **Tâche 1 — Highlights répétables + ordre** (AC: 1 ; piège n°2)
+  - [x] UI répétable (add/edit/remove, sans limite) + réordonnancement (accessible clavier) → `sortOrder` persisté ; `revalidateTag`.
+- [x] **Tâche 2 — Sélecteur de stacks** (AC: 2 ; piège n°3)
+  - [x] Multi-select des `Stack` existantes → `connect/set` (bidirectionnel).
+- [x] **Tâche 3 — Aperçu live** (AC: 3 ; piège n°1)
+  - [x] Réutiliser le composant carte réel, alimenté par l'état client ; MAJ à la frappe. Extraire la présentation si nécessaire.
+- [x] **Tâche 4 — Champs optionnels** (AC: 4 ; piège n°4)
+  - [x] Optionnels tolérés ; section masquée côté public si vide. 🛑 Clarifier « résultat chiffré » (champ hors schéma ?) avec Jeevons.
+- [x] **Tâche 5 — Vérification locale** (AC: 1-4 ; piège n°6)
+  - [x] Highlights (CRUD + ordre reflété), stacks (bidirectionnel), aperçu live fidèle, optionnels vides tolérés + masquage.
+- [x] **Tâche 6 — Definition of Done** (AGENTS.md §8)
+  - [x] lint 0 / tsc 0 / build OK. Vérif visuelle (dont aperçu). `git diff DEV` : éditeur enrichi, gestion highlights/stacks, aperçu — rien d'autre.
+  - [x] `File List` + `Completion Notes` + `Change Log` · `sprint-status.yaml`.
 
 ## Dev Notes
 
@@ -128,3 +128,90 @@ Vérification **manuelle en local** + visuelle (aperçu). Les 4 AC (highlights C
 - [Source: apps/web/src/components/Card.tsx, ProjectList.tsx — composants de carte à réutiliser pour l'aperçu ; _bmad-output/implementation-artifacts/4-2-*.md — pattern conteneur serveur → vue Client]
 - [Source: _bmad-output/implementation-artifacts/5-8-gerer-mes-projets.md — schéma Zod + Server Action projet à étendre]
 - [Source: AGENTS.md §6 — vues bêtes, a11y clavier ; §9 — anti-scope-creep]
+
+## Dev Agent Record
+
+### Completion Notes
+
+**Décision Jeevons — « résultat chiffré » (piège n°4, Tâche 4).** L'AC4 parle d'un résultat
+chiffré qui n'existait pas au schéma. Question posée, réponse retenue : **ajouter un champ
+`outcome String?`** par migration additive (`20260725122815_add_project_outcome`), plutôt que
+de réinterpréter l'AC sur les optionnels existants. Champ optionnel par nature : vide → la
+section publique est masquée, jamais rendue en bloc vide.
+
+**AC3 — aperçu live : extraction de `ProjectCard` (le point technique de la story).** Plutôt
+que de recoder une fausse carte, la carte a été **extraite** de `ProjectList.tsx` vers
+`src/components/ProjectCard.tsx`. Ce composant n'a **ni `"use client"`, ni import
+`server-only`, ni accès base** : c'est une vue pure (pattern AGENTS.md §6), donc rendue
+côté serveur sur le site public ET côté client dans l'aperçu admin. L'aperçu ne peut donc
+pas diverger du rendu réel — c'est littéralement le même composant. `ProjectList` réexporte
+`type Project = ProjectCardData` : aucun import appelant n'a bougé.
+
+**AC1 — ordre des highlights : la position dans le tableau est la source unique.** Le
+formulaire réindexe les `name` à chaque rendu, et le serveur dérive `sortOrder` de l'index du
+tableau. Il n'existe donc pas de seconde valeur d'ordre susceptible de diverger.
+Réordonnancement par boutons monter/descendre — **nativement accessibles au clavier**, et
+choix délibéré de **ne pas introduire dnd-kit ici** pour ne pas dupliquer l'infra de 5.10
+(piège n°2).
+
+**AC1 — réconciliation par `id`, pas delete-all/recreate.** Les highlights soumis sont
+rapprochés des existants par `id` dans une `$transaction` : mise à jour si l'id existe,
+création sinon, suppression des absents. Un highlight modifié **conserve son id** (vérifié).
+Garde de sécurité : les ids soumis sont filtrés contre ceux appartenant réellement au projet
+— un id emprunté à un autre projet ne peut pas servir à le modifier.
+
+**AC2 — bidirectionnalité vérifiée, pas seulement supposée.** `set` (et non `connect` seul)
+côté update pour permettre la **dés**association. Vérifié en base que `stack.projects`
+contient bien le projet après association.
+
+**⚠️ Bug que j'ai introduit puis corrigé — clé `published` perdue.** En réécrivant l'objet
+retourné par `projectFormDataToInput`, j'avais omis `published` : `projectSchema.parse`
+échouait alors avec `expected boolean, received undefined` et **toute sauvegarde aurait
+échoué**. Ni `tsc` ni le lint ne l'ont vu (le retour est typé `unknown`) — seule l'exécution
+réelle l'a révélé. Restauré en `formData.has("published")`, plus robuste que le
+`=== "on"` d'origine qui repose sur une convention navigateur.
+
+**Vérification réalisée (Tâche 5).** Un script jetable a exercé la **vraie logique serveur
+contre le vrai Postgres** : outcome vide → `null` persisté ; ordre initial `sortOrder` 0,1,2 ;
+stacks connectées + bidirectionnalité confirmée ; réordonnancement → ordre attendu avec
+`sortOrder` contigus ; suppression effective ; **identité préservée** ; désassociation via
+`set` ; liste de highlights vide tolérée. Script supprimé ensuite. Masquage AC4 vérifié sur le
+HTML réellement rendu, dans les deux sens (vide → ni bloc outcome, ni `<ul>` vide, ni bouton).
+
+**⚠️ Limite à connaître avant de passer la story en `done`.** L'écran admin lui-même n'a **pas
+été ouvert dans un navigateur** : y accéder exige mot de passe + TOTP (stories 5.3/5.5), et je
+n'ai pas cherché à contourner la 2FA. Les AC1–AC4 ont été validés par la logique serveur
+contre la vraie base et par le rendu réel de `ProjectCard`. **Une passe visuelle manuelle de
+Jeevons sur `/admin/projects/[id]` reste recommandée** avant `done`.
+
+**Hors périmètre, non touché.** Un warning lint préexistant subsiste dans
+`sections/TestimonialsClient.tsx` (`useEffect` dep `autoScroll`) : sans rapport avec cette
+story, délibérément laissé en l'état.
+
+### File List
+
+**Ajoutés**
+- `apps/web/prisma/migrations/20260725122815_add_project_outcome/migration.sql`
+- `apps/web/src/components/ProjectCard.tsx`
+- `apps/web/src/app/(admin)/admin/projects/highlights-editor.tsx`
+- `apps/web/src/app/(admin)/admin/projects/stacks-selector.tsx`
+- `apps/web/src/app/(admin)/admin/projects/project-preview.tsx`
+
+**Modifiés**
+- `apps/web/prisma/schema.prisma` (champ `outcome String?`)
+- `apps/web/src/lib/schemas/project.ts` (`highlightSchema`, `outcome`, `stackIds`, `formDataToHighlights`)
+- `apps/web/src/lib/admin/projects.ts` (`outcome`/`highlights`/`stacks` + `listStackOptions`)
+- `apps/web/src/app/(admin)/admin/projects/actions.ts` (nested create + réconciliation en transaction)
+- `apps/web/src/app/(admin)/admin/projects/project-form.tsx` (highlights, stacks, aperçu, `useWatch`)
+- `apps/web/src/app/(admin)/admin/projects/[id]/page.tsx`
+- `apps/web/src/app/(admin)/admin/projects/new/page.tsx`
+- `apps/web/src/components/ProjectList.tsx` (consomme `ProjectCard`)
+- `apps/web/src/sections/Projects.tsx`, `apps/web/src/sections/SelfProject.tsx` (mapping `outcome`)
+- `apps/web/src/content/fallbacks.ts` (`outcome: null`)
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+
+## Change Log
+
+| Date | Version | Description |
+| --- | --- | --- |
+| 2026-07-25 | 0.1 | Story 5.9 implémentée : highlights répétables ordonnés, association de stacks bidirectionnelle, aperçu live via extraction de `ProjectCard`, champ `outcome` optionnel (migration additive, décision Jeevons). lint 0 erreur / tsc 0 erreur / build OK. Statut → `review`. |

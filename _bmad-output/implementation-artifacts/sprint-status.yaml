@@ -41,7 +41,7 @@
 # - Retrospective appends its action items to action_items; sprint-status surfaces open ones
 
 generated: 2026-07-21
-last_updated: 2026-07-25 (Story 5.8 → review · CRUD projets, schéma Zod partagé, pattern de mutation pour 5.9-5.19)
+last_updated: 2026-07-25 (Story 5.9 → review · éditeur enrichi : highlights, stacks, aperçu live)
 project: jeevonsPortoflio-2024
 project_key: NOKEY
 tracking_system: file-system
@@ -95,7 +95,7 @@ development_status:
   5-6-debloquer-mon-acces-depuis-le-serveur: review
   5-7-voir-l-etat-de-mon-portfolio-d-un-coup-d-il: review
   5-8-gerer-mes-projets: review
-  5-9-decrire-finement-un-projet: ready-for-dev
+  5-9-decrire-finement-un-projet: review
   5-10-choisir-l-ordre-d-affichage-de-mes-projets: ready-for-dev
   5-11-preparer-un-projet-avant-de-le-publier: ready-for-dev
   5-12-illustrer-mes-projets: ready-for-dev

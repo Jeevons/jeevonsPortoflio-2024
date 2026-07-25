@@ -180,7 +180,7 @@ export async function listAdminProjects(
   }
 }
 
-/** Un projet complet, tel que l'éditeur le charge (champs scalaires — 5.8). */
+/** Un projet complet, tel que l'éditeur le charge (5.8 + 5.9). */
 export type AdminProject = {
   id: string;
   slug: string;
@@ -191,16 +191,26 @@ export type AdminProject = {
   period: string;
   link: string | null;
   repoUrl: string | null;
+  /** Story 5.9 — résultat chiffré, optionnel (AC4). */
+  outcome: string | null;
   published: boolean;
+  /** Story 5.9 — points forts DÉJÀ ORDONNÉS par `sortOrder` (AC1). */
+  highlights: { id: string; label: string }[];
+  /** Story 5.9 — technologies associées (AC2). */
+  stacks: { id: string; name: string }[];
 };
 
 /**
- * Charge UN projet pour l'éditeur (AC4). `null` si l'identifiant n'existe pas —
- * la page rend alors un 404.
+ * Charge UN projet pour l'éditeur (AC4 de 5.8). `null` si l'identifiant n'existe
+ * pas — la page rend alors un 404.
  *
- * ⚠️ Ne sélectionne QUE les champs scalaires édités par cette story. Les
- * highlights et les stacks sont chargés par la story 5.9 : les inclure ici
- * transporterait des données que l'écran n'affiche pas.
+ * Story 5.9 : la sélection inclut désormais les points forts et les technologies,
+ * que l'éditeur enrichi affiche et modifie.
+ *
+ * ⚠️ `orderBy: sortOrder` sur les highlights : l'éditeur doit présenter l'ordre
+ * RÉEL, celui qu'applique déjà la lecture publique (`lib/projects.ts`). Sans ce
+ * tri, Postgres renverrait les lignes dans un ordre non garanti et l'admin
+ * verrait un ordre différent du site — l'AC1 ne serait pas vérifiable.
  */
 export async function getAdminProject(
   id: string,
@@ -217,7 +227,45 @@ export async function getAdminProject(
       period: true,
       link: true,
       repoUrl: true,
+      outcome: true,
       published: true,
+      highlights: {
+        orderBy: { sortOrder: "asc" },
+        select: { id: true, label: true },
+      },
+      stacks: {
+        orderBy: { name: "asc" },
+        select: { id: true, name: true },
+      },
     },
   });
+}
+
+/** Une technologie proposée par le sélecteur de l'éditeur (5.9, AC2). */
+export type AdminStackOption = { id: string; name: string };
+
+/**
+ * Liste TOUTES les technologies existantes, pour le sélecteur de l'éditeur (AC2).
+ *
+ * ⚠️ Périmètre : cette story ASSOCIE des technologies existantes, elle n'en crée
+ * pas — le CRUD des `Stack` est la story 5.15. Si la liste revient vide,
+ * l'éditeur invite à en créer plutôt que d'offrir un champ libre.
+ *
+ * Une base injoignable renvoie un tableau vide plutôt que de faire tomber
+ * l'éditeur entier : le reste du formulaire (champs scalaires, points forts)
+ * doit rester utilisable. La page signale déjà l'indisponibilité par ailleurs.
+ */
+export async function listStackOptions(): Promise<AdminStackOption[]> {
+  try {
+    return await prisma.stack.findMany({
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    });
+  } catch (error) {
+    const raw = error instanceof Error ? error.message : String(error);
+    console.error(
+      `[admin] Liste des technologies indisponible. Cause : ${raw.replace(/\s+/g, " ").trim()}`,
+    );
+    return [];
+  }
 }
