@@ -31,7 +31,19 @@ export default auth((req) => {
   const { nextUrl } = req;
 
   // `req.auth` est la session résolue par Auth.js (null si absente/invalide).
-  if (req.auth) return NextResponse.next();
+  if (req.auth) {
+    // Story 5.3 — Le gate 2FA (redirection forcée vers l'enrôlement, AC2) vit
+    // dans le layout admin (runtime Node : il lit `totpEnabledAt` en base, ce
+    // que ce garde EDGE ne peut pas faire). Ce garde connaît en revanche le
+    // chemin exact : on le transmet via un header interne pour que le layout
+    // sache s'il rend l'écran d'enrôlement (à laisser passer) ou une autre page
+    // admin (à rediriger si la 2FA n'est pas encore activée). Header POSÉ par
+    // nous, non falsifiable par le client (le proxy le réécrit à chaque requête
+    // /admin/* avant d'atteindre le layout).
+    const requestHeaders = new Headers(req.headers);
+    requestHeaders.set("x-pathname", nextUrl.pathname);
+    return NextResponse.next({ request: { headers: requestHeaders } });
+  }
 
   // Pas de session : rediriger vers le login en mémorisant la page demandée
   // pour y revenir après authentification (AC3). On ne transmet que le CHEMIN
