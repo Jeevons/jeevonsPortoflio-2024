@@ -11,9 +11,18 @@ import {
   buildTotpUri,
   verifyTotpCode,
 } from "@/lib/auth/totp";
+import {
+  generateRecoveryCodes,
+  replaceRecoveryCodes,
+} from "@/lib/auth/recovery-codes";
 
 // Story 5.3 — Server actions de l'écran d'enrôlement 2FA (AGENTS.md §6 : toute
 // la logique côté serveur, la page reste une vue « bête »).
+//
+// Story 5.4 — Ces actions portent aussi les CODES DE RÉCUPÉRATION : génération à
+// l'activation (AC1) et régénération manuelle (AC4). Les codes en clair ne
+// sortent QUE par la valeur de retour de l'action, consommée immédiatement par
+// l'écran d'affichage. ❌ Jamais dans une URL, un log ou une réponse ultérieure.
 
 /**
  * Prépare le secret à afficher sur l'écran d'enrôlement (AC3 + AC4).
@@ -68,18 +77,38 @@ export async function preparePendingSecret(): Promise<{
   };
 }
 
-export type EnrollState = { error: string | null };
+/**
+ * État du formulaire d'enrôlement.
+ *
+ * Story 5.4 : sur succès, `recoveryCodes` porte les 8 codes EN CLAIR — c'est
+ * leur UNIQUE sortie (AC1). Le formulaire bascule alors sur l'écran
+ * d'affichage. Aucun rechargement ne peut les récupérer : ils n'existent que
+ * dans cette réponse-là.
+ */
+export type EnrollState = {
+  error: string | null;
+  recoveryCodes?: string[];
+};
 
 const GENERIC_ERROR =
   "Ce code n'est pas valide. Vérifiez l'heure de votre téléphone et réessayez.";
 
 /**
- * Confirme l'enrôlement par un PREMIER code valide (AC4).
+ * Confirme l'enrôlement par un PREMIER code valide (5.3 AC4).
  *
  * Tant que ce code n'est pas fourni et validé contre le secret, `totpEnabledAt`
  * reste `null` : la 2FA n'est pas active et l'utilisateur ne peut pas se
- * verrouiller dehors. Sur succès : on pose `totpEnabledAt = now()` et on
- * redirige vers l'admin (le guard laisse alors passer).
+ * verrouiller dehors.
+ *
+ * Story 5.4 (AC1) — Sur succès, l'activation et la génération des 8 codes de
+ * récupération se font dans la MÊME écriture : « je viens d'activer mon second
+ * facteur » et « huit codes me sont présentés » sont un seul et même instant.
+ * Une écriture unique interdit l'état bâtard « 2FA active sans aucun code de
+ * secours », qui est exactement le lock-out que cette story doit empêcher.
+ *
+ * ⚠️ Plus de `redirect()` vers /admin ici : les codes en clair doivent être
+ * affichés AVANT de quitter l'écran (AC1, une seule fois). C'est l'écran de
+ * codes qui renvoie vers /admin une fois l'utilisateur prêt.
  */
 export async function confirmEnrollmentAction(
   _prevState: EnrollState,
@@ -96,9 +125,12 @@ export async function confirmEnrollmentAction(
   if (!user || !user.totpSecret) {
     return { error: GENERIC_ERROR };
   }
-  // Déjà activée : ne rien re-poser (idempotent), laisser le guard router.
+  // Déjà activée : ne rien re-poser (idempotent). ⚠️ Surtout ne PAS régénérer de
+  // codes ici — ce serait invalider silencieusement le jeu de l'utilisateur sur
+  // une double soumission. La régénération est une action explicite et séparée
+  // (`regenerateRecoveryCodesAction`, AC4).
   if (user.totpEnabledAt) {
-    redirect("/admin");
+    return { error: null };
   }
 
   const rawCode = formData.get("code");
@@ -111,13 +143,69 @@ export async function confirmEnrollmentAction(
     return { error: GENERIC_ERROR };
   }
 
-  // Succès : activation confirmée (AC4). Le secret déjà chiffré reste tel quel.
+  // Succès : activation confirmée (5.3 AC4) + jeu de 8 codes de récupération
+  // (5.4 AC1/AC2). Les hash sont écrits dans la MÊME requête que
+  // `totpEnabledAt` : jamais de 2FA active sans moyen de secours.
+  const { plain, stored } = await generateRecoveryCodes();
   await prisma.user.update({
     where: { email },
-    data: { totpEnabledAt: new Date() },
+    data: { totpEnabledAt: new Date(), recoveryCodes: stored },
   });
 
   // La décision de redirection (guard du layout) lit la base : on rafraîchit.
   revalidatePath("/admin", "layout");
-  redirect("/admin");
+
+  // Les codes remontent au formulaire, qui bascule sur l'écran d'affichage.
+  // Unique sortie du clair (AC1) — rien n'est loggué ni persisté en clair.
+  return { error: null, recoveryCodes: plain };
+}
+
+export type RegenerateState = {
+  error: string | null;
+  recoveryCodes?: string[];
+};
+
+/**
+ * Story 5.4 (AC4) — Régénère un jeu complet de 8 codes de récupération.
+ *
+ * Action SENSIBLE : elle invalide d'un coup tous les codes existants. Trois
+ * protections :
+ *  - `requireAdmin` (5.2) : aucune exécution sans session admin valide ;
+ *  - 2FA active exigée : régénérer avant l'enrôlement n'a aucun sens (les codes
+ *    sont générés par l'activation elle-même) ;
+ *  - confirmation explicite côté écran (l'utilisateur sait qu'il écrase).
+ *
+ * ⚠️ Traçable (5.19) SANS jamais enregistrer les codes : le jour où l'AuditLog
+ * existera, on y consignera « jeu de codes régénéré » et l'horodatage — rien
+ * d'autre. Les codes en clair ne sortent que par la valeur de retour.
+ */
+export async function regenerateRecoveryCodesAction(
+  _prevState: RegenerateState,
+  _formData: FormData,
+): Promise<RegenerateState> {
+  const session = await requireAdmin();
+  const email = session.user?.email;
+  if (!email) {
+    return { error: "Session invalide : régénération impossible." };
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: { totpEnabledAt: true },
+  });
+  if (!user?.totpEnabledAt) {
+    // Pas de 2FA active → pas de jeu à régénérer (l'activation s'en charge).
+    return {
+      error:
+        "Activez d'abord la double authentification : les codes de récupération sont générés avec elle.",
+    };
+  }
+
+  const plain = await replaceRecoveryCodes(email);
+
+  // L'écran de sécurité affiche le décompte restant : il doit refléter le
+  // nouveau jeu au prochain rendu.
+  revalidatePath("/admin", "layout");
+
+  return { error: null, recoveryCodes: plain };
 }

@@ -71,7 +71,16 @@ model Project {
 //  - totpEnabledAt : null = 2FA pas encore confirmée. Posé UNIQUEMENT après un
 //                    premier code TOTP valide (AC4). Sert de point de décision
 //                    au guard de redirection forcée (AC2).
-//  - recoveryCodes : champ créé ici mais REMPLI en story 5.4 (8 codes hashés).
+//  - recoveryCodes : champ créé ici, REMPLI depuis la story 5.4.
+//
+// Story 5.4 — `recoveryCodes` contient un tableau `[{ hash, usedAt }]` de 8
+// entrées (voir src/lib/auth/recovery-codes.ts, SOURCE UNIQUE de sa lecture et
+// de son écriture) :
+//  - hash   : code de secours haché ARGON2ID — jamais lisible en base (AC2) ;
+//  - usedAt : null tant que le code est disponible, horodatage ISO une fois
+//             consommé. Les codes utilisés sont CONSERVÉS (usage unique
+//             définitif + décompte des restants, AC3).
+// Aucune migration : le champ Json? existant accueille cette forme telle quelle.
 model User {
   id            String    @id @default(cuid())
   email         String    @unique

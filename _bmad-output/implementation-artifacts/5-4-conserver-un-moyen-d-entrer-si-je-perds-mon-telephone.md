@@ -4,7 +4,7 @@ baseline_commit: 5c22f3a6c48914801d0a226ab5a0b15c005d8765
 
 # Story 5.4: Conserver un moyen d'entrer si je perds mon téléphone
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -79,19 +79,19 @@ so that **la perte de mon téléphone ne me coupe pas définitivement l'accès �
 
 ## Tasks / Subtasks
 
-- [ ] **Tâche 0 — Prérequis** (AC: 1)
-  - [ ] 5.3 `done` (champ `recoveryCodes` créé, activation TOTP). Réutiliser `argon2` (5.1).
-- [ ] **Tâche 1 — Génération à l'activation** (AC: 1, 2 ; pièges n°1, 2, 5)
-  - [ ] Générer 8 codes aléatoires ; stocker hash argon2id (`{hash, usedAt}`) ; afficher **une seule fois** + avertissement.
-- [ ] **Tâche 2 — Validation & consommation d'un code** (AC: 3 ; pièges n°1, 3)
-  - [ ] `verifyRecoveryCode` : compare argon2 contre les hash non utilisés ; si match → marque `usedAt` (atomique) ; renvoie succès + reste. Exposé à 5.5.
-- [ ] **Tâche 3 — Régénération** (AC: 4 ; piège n°4)
-  - [ ] Détection 0 restant → avertissement admin + action « régénérer » (protégée `requireAdmin`, tracée sans les codes).
-- [ ] **Tâche 4 — Vérification locale** (AC: 1-4 ; piège n°6)
-  - [ ] 8 codes une fois ; hash en base ; login par code (usage unique, reste décrémenté) ; régénération à 0.
-- [ ] **Tâche 5 — Definition of Done** (AGENTS.md §8)
-  - [ ] lint 0 / tsc 0 / build OK. `git diff DEV` : génération/validation/régénération codes + écran d'affichage — rien d'autre.
-  - [ ] `File List` + `Completion Notes` + `Change Log` · `sprint-status.yaml`.
+- [x] **Tâche 0 — Prérequis** (AC: 1)
+  - [x] 5.3 `done` (champ `recoveryCodes` créé, activation TOTP). Réutiliser `argon2` (5.1).
+- [x] **Tâche 1 — Génération à l'activation** (AC: 1, 2 ; pièges n°1, 2, 5)
+  - [x] Générer 8 codes aléatoires ; stocker hash argon2id (`{hash, usedAt}`) ; afficher **une seule fois** + avertissement.
+- [x] **Tâche 2 — Validation & consommation d'un code** (AC: 3 ; pièges n°1, 3)
+  - [x] `verifyRecoveryCode` : compare argon2 contre les hash non utilisés ; si match → marque `usedAt` (atomique) ; renvoie succès + reste. Exposé à 5.5.
+- [x] **Tâche 3 — Régénération** (AC: 4 ; piège n°4)
+  - [x] Détection 0 restant → avertissement admin + action « régénérer » (protégée `requireAdmin`, tracée sans les codes).
+- [x] **Tâche 4 — Vérification locale** (AC: 1-4 ; piège n°6)
+  - [x] 8 codes une fois ; hash en base ; login par code (usage unique, reste décrémenté) ; régénération à 0.
+- [x] **Tâche 5 — Definition of Done** (AGENTS.md §8)
+  - [x] lint 0 / tsc 0 / build OK. `git diff DEV` : génération/validation/régénération codes + écran d'affichage — rien d'autre.
+  - [x] `File List` + `Completion Notes` + `Change Log` · `sprint-status.yaml`.
 
 ## Dev Notes
 
@@ -121,3 +121,59 @@ Vérification **manuelle en local**. Affichage unique (AC1), hash en base (AC2),
 - [Source: _bmad-output/implementation-artifacts/5-1-me-connecter-au-back-office.md — argon2id (réutilisé pour les codes)]
 - [Source: _bmad-output/implementation-artifacts/5-2-verrouiller-l-acces-a-l-administration.md — `requireAdmin` pour la régénération]
 - [Source: AGENTS.md §6 — secrets/codes jamais loggés ; §9 — zéro dépendance non prévue]
+
+## Dev Agent Record
+
+### Implementation Plan
+
+Deux décisions validées par Jeevons avant implémentation :
+
+1. **Écran de sécurité à deux modes** plutôt qu'une route dédiée. `/admin/settings/security` sert l'enrôlement quand `totpEnabledAt` est `null`, et la gestion des codes (décompte, avertissement, régénération) une fois la 2FA active. Conséquence : le guard du layout ne renvoie plus cette route vers `/admin` après activation.
+2. **Compare-and-swap sur la colonne JSON** pour l'atomicité de la consommation, plutôt qu'une transaction interactive Prisma. `updateMany` avec `where: { recoveryCodes: { equals: <valeur relue> } }` : Postgres évalue le prédicat au moment de l'écriture, donc une soumission concurrente touche 0 ligne et est refusée. Aucune migration, pas de `SELECT FOR UPDATE`.
+
+**Génération couplée à l'activation** : les 8 codes et `totpEnabledAt` sont écrits dans la **même requête** `prisma.user.update`. C'est ce qui rend impossible l'état bâtard « 2FA active sans aucun code de secours » — précisément le lock-out que la story existe pour empêcher.
+
+**Sortie unique du clair** : les codes en clair remontent par la valeur de retour de la server action (`EnrollState.recoveryCodes` / `RegenerateState.recoveryCodes`), consommée immédiatement par le composant d'affichage. Jamais d'URL (fuite dans l'historique / les logs de proxy), jamais de log, jamais de persistance. C'est pour cela que `confirmEnrollmentAction` ne fait plus de `redirect("/admin")` sur succès : une redirection tuerait l'unique occasion d'afficher les codes.
+
+### Debug Log
+
+- **`tsc` — `TS2322` sur le filtre JSON du compare-and-swap.** Passer `recoveryCodes: user.recoveryCodes` directement en filtre ne compile pas : Prisma attend un `JsonNullableFilter`, pas une valeur brute. Corrigé en forme explicite `{ equals: user.recoveryCodes as Prisma.InputJsonValue }`, avec `import type { Prisma } from "@/generated/prisma/client"`.
+- **Vérification impossible via `bun run <script>` seul.** Les modules du domaine importent `server-only`, qui lève hors condition d'export `react-server`. Contourné avec `bun --conditions=react-server` pour l'exécution des scripts de vérification (jetables, hors dépôt).
+- **Cas oublié repéré à la relecture** : sous l'ancien guard, `confirmEnrollmentAction` faisait `redirect("/admin")` quand la 2FA était déjà active. La page restant désormais accessible dans ce cas, ce chemin aurait pu être atteint par double soumission — et régénérer un jeu à l'insu de l'utilisateur. Remplacé par un retour neutre (`{ error: null }`) : la régénération est **exclusivement** une action explicite et confirmée.
+
+### Completion Notes
+
+**Vérification exécutée contre la base de dev réelle** (script jetable en scratchpad, supprimé après coup ; le dépôt n'a pas de framework de test et la story interdit toute nouvelle dépendance — son standard est « vérification manuelle en local »). **26 contrôles, tous verts** :
+
+- **AC1** — 8 codes générés, tous distincts, format `XXXX-XXXX` ; l'écran affiche les 8 codes, annonce « ne vous seront plus jamais affichés » dans un `role="alert"`, section labellisée, retour de copie en `aria-live="polite"`, aucun contrôle interactif imbriqué.
+- **AC2** — tous les hash commencent par `$argon2id$` ; `argon2.verify` valide le code correspondant ; **aucun code en clair présent dans la valeur persistée**, vérifié aussi par relecture brute de la colonne en base.
+- **AC3** — code valide accepté et reste annoncé à 7 ; **le même code est refusé au second essai** ; décompte persisté ; saisie tolérante (casse, espace, tiret manquant) acceptée ; code inconnu refusé **sans rien consommer** ; **anti-course : sur deux soumissions simultanées du même code, une seule réussit et un seul code est consommé**.
+- **AC4** — épuisement détecté (`remaining: 0`, `exhausted: true`) ; régénération produisant 8 nouveaux codes ; **les anciens codes deviennent invalides** ; les nouveaux fonctionnent.
+- **Robustesse** — `recoveryCodes` `null` → `[]` ; entrées malformées ignorées plutôt que de casser l'authentification ; saisie de longueur invalide rejetée.
+
+`bunx tsc --noEmit` → 0 erreur. `bun run lint` → 0 erreur (1 warning **pré-existant** sur `src/sections/TestimonialsClient.tsx`, fichier non touché par cette story — `git diff DEV` le confirme). `bun run build` → succès.
+
+**Point d'intégration 5.5** (la story ne livre pas l'écran de login, hors périmètre) : `verifyAndConsumeRecoveryCode(email, input)` est prête et documentée dans `src/lib/auth/recovery-codes.ts`. À l'étape du second facteur, si `verifyTotpCode` échoue, appeler cette fonction avec la même saisie ; `ok: true` autorise la session et `remaining` est le décompte à afficher.
+
+**⚠️ Reste à faire par Jeevons — vérification visuelle navigateur.** Je n'ai pas eu accès au navigateur pendant cette session ; le rendu a été validé par rendu serveur du balisage, pas dans Chrome. La base de dev est actuellement dans l'état « 2FA active, 0 code » : en te connectant à `/admin`, tu dois voir le **bandeau rouge d'avertissement**, puis pouvoir régénérer un jeu depuis `/admin/settings/security` et voir les 8 codes affichés une seule fois.
+
+**Dette assumée** : la traçabilité de la régénération (5.19) est préparée par un commentaire mais pas implémentée — le modèle `AuditLog` n'existe pas encore. Quand il arrivera, y consigner « jeu régénéré » + horodatage, **jamais les codes**.
+
+### File List
+
+- `apps/web/src/lib/auth/recovery-codes.ts` *(nouveau)* — source unique : génération, hachage argon2id, vérification/consommation atomique, décompte, remplacement du jeu.
+- `apps/web/src/app/(admin)/admin/settings/security/recovery-codes-panel.tsx` *(nouveau)* — écran d'affichage unique des codes (avertissement, copie, a11y).
+- `apps/web/src/app/(admin)/admin/settings/security/regenerate-form.tsx` *(nouveau)* — régénération avec confirmation explicite en deux temps.
+- `apps/web/src/app/(admin)/admin/settings/security/actions.ts` *(modifié)* — génération des codes dans la même écriture que l'activation ; `regenerateRecoveryCodesAction` ; suppression du `redirect` post-activation.
+- `apps/web/src/app/(admin)/admin/settings/security/page.tsx` *(modifié)* — page à deux modes (enrôlement / gestion des codes).
+- `apps/web/src/app/(admin)/admin/settings/security/enroll-form.tsx` *(modifié)* — bascule sur l'écran de codes après activation réussie.
+- `apps/web/src/app/(admin)/admin/layout.tsx` *(modifié)* — le guard n'expulse plus l'écran de sécurité une fois la 2FA active.
+- `apps/web/src/app/(admin)/admin/page.tsx` *(modifié)* — bandeau d'avertissement « plus de codes » + décompte (AC4).
+- `apps/web/prisma/schema.prisma` *(modifié)* — documentation de la forme de `recoveryCodes`. **Aucune migration** : le champ `Json?` existant accueille la structure telle quelle.
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` *(modifié)* — statut de la story.
+
+### Change Log
+
+| Date | Changement |
+|---|---|
+| 2026-07-25 | Story 5.4 implémentée : 8 codes de récupération générés à l'activation du TOTP et affichés une seule fois (AC1), hachés argon2id (AC2), validation à usage unique avec consommation atomique et décompte des restants (AC3), régénération protégée avec avertissement à l'épuisement (AC4). Aucune dépendance ajoutée, aucune migration. Statut `ready-for-dev` → `review`. |

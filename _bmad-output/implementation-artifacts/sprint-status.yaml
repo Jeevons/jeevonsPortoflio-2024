@@ -41,7 +41,7 @@
 # - Retrospective appends its action items to action_items; sprint-status surfaces open ones
 
 generated: 2026-07-21
-last_updated: 2026-07-25 (Story 5.3 → review)
+last_updated: 2026-07-25 (Story 5.4 → review)
 project: jeevonsPortoflio-2024
 project_key: NOKEY
 tracking_system: file-system
@@ -90,7 +90,7 @@ development_status:
   5-1-me-connecter-au-back-office: review
   5-2-verrouiller-l-acces-a-l-administration: review
   5-3-activer-la-double-authentification-a-ma-premiere-connexion: review
-  5-4-conserver-un-moyen-d-entrer-si-je-perds-mon-telephone: ready-for-dev
+  5-4-conserver-un-moyen-d-entrer-si-je-perds-mon-telephone: review
   5-5-me-connecter-en-deux-temps: ready-for-dev
   5-6-debloquer-mon-acces-depuis-le-serveur: ready-for-dev
   5-7-voir-l-etat-de-mon-portfolio-d-un-coup-d-il: ready-for-dev

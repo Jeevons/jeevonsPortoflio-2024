@@ -28,7 +28,12 @@ export const metadata: Metadata = {
 
 // Seul écran admin accessible AVANT que la 2FA ne soit activée (AC2). Tout autre
 // chemin /admin/* est inaccessible tant que `totpEnabledAt` est null.
-const ENROLLMENT_PATH = "/admin/settings/security";
+//
+// Story 5.4 — Cette même route reste accessible APRÈS activation : elle devient
+// l'écran de gestion des codes de récupération (décompte, avertissement si
+// épuisés, régénération — AC4). Le guard ne l'expulse donc plus vers /admin ;
+// c'est la page elle-même qui choisit son mode selon `totpEnabledAt`.
+const SECURITY_PATH = "/admin/settings/security";
 
 export default async function AdminLayout({
   children,
@@ -58,17 +63,15 @@ export default async function AdminLayout({
   // qu'on n'est PAS sur l'écran d'enrôlement → une session non enrôlée est
   // redirigée vers l'enrôlement plutôt que de laisser passer.
   const pathname = (await headers()).get("x-pathname") ?? "";
-  const isOnEnrollmentScreen = pathname === ENROLLMENT_PATH;
+  const isOnSecurityScreen = pathname === SECURITY_PATH;
 
-  // 2FA non encore activée : SEUL l'écran d'enrôlement est accessible (AC2).
-  if (!user?.totpEnabledAt && !isOnEnrollmentScreen) {
-    redirect(ENROLLMENT_PATH);
+  // 2FA non encore activée : SEUL l'écran de sécurité est accessible (AC2).
+  if (!user?.totpEnabledAt && !isOnSecurityScreen) {
+    redirect(SECURITY_PATH);
   }
 
-  // 2FA déjà activée : l'écran d'enrôlement n'a plus lieu d'être → vers l'admin.
-  if (user?.totpEnabledAt && isOnEnrollmentScreen) {
-    redirect("/admin");
-  }
+  // 2FA activée : plus aucune redirection ici. L'écran de sécurité bascule de
+  // lui-même en mode « gestion des codes de récupération » (5.4).
 
   return children;
 }
