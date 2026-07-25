@@ -1,7 +1,7 @@
 import "server-only";
 
 import { randomUUID } from "node:crypto";
-import { mkdir, unlink, writeFile } from "node:fs/promises";
+import { access, mkdir, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 // Story 5.12 — STOCKAGE des fichiers téléversés (AC1).
@@ -98,6 +98,29 @@ export async function writeMediaFile(
   }
   await mkdir(path.dirname(absolute), { recursive: true });
   await writeFile(absolute, data);
+}
+
+/**
+ * Le fichier existe-t-il RÉELLEMENT sur le volume ? (story 5.13, AC1)
+ *
+ * ⚠️ Base et volume peuvent DIVERGER : un volume non restauré après une
+ * migration, un nettoyage manuel, ou un téléversement interrompu entre l'écriture
+ * du fichier et l'insertion en base laissent un `Media` qui pointe vers rien.
+ * La bibliothèque doit alors afficher la ligne en la SIGNALANT — c'est le seul
+ * écran depuis lequel Jeevons peut réparer (remplacer) ou nettoyer (supprimer).
+ * La faire disparaître ou planter rendrait l'incohérence invisible ET
+ * irréparable.
+ */
+export async function mediaFileExists(relativePath: string): Promise<boolean> {
+  const absolute = resolveMediaPath(relativePath);
+  if (!absolute) return false;
+
+  try {
+    await access(absolute);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /**

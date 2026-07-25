@@ -3,7 +3,7 @@ import "server-only";
 import { prisma } from "@/lib/db";
 
 import { processUploadedImage } from "./process";
-import { newMediaPath, writeMediaFile } from "./storage";
+import { deleteMediaFile, newMediaPath, writeMediaFile } from "./storage";
 
 // Story 5.12 — ACCÈS AUX DONNÉES média. Point d'entrée unique entre le
 // traitement d'image (process.ts), le volume (storage.ts) et la base.
@@ -122,4 +122,86 @@ export async function updateMediaAlt(
   alt: string | null,
 ): Promise<void> {
   await prisma.media.update({ where: { id }, data: { alt } });
+}
+
+export type ReplaceMediaResult =
+  { ok: true; media: MediaSummary } | { ok: false; message: string };
+
+/**
+ * Remplace le CONTENU d'un média en conservant son identifiant (5.13, AC2).
+ *
+ * ⚠️ C'est le MÊME `Media.id` qui survit, et c'est tout l'intérêt : les projets
+ * référencent l'image par son `id`. En le conservant, tous les usages pointent
+ * vers la nouvelle image AUTOMATIQUEMENT — « je n'ai pas à modifier chaque
+ * projet un par un » (AC2). Créer un nouveau `Media` obligerait à repointer
+ * chaque référence, ce que l'AC exclut explicitement.
+ *
+ * ⚠️ MAIS LE `path` CHANGE, et c'est indispensable. La route de service pose
+ * `Cache-Control: immutable` sur un an (5.12) : réécrire le fichier sous le
+ * même chemin laisserait les navigateurs afficher l'ANCIENNE image jusqu'à un
+ * an, malgré une base parfaitement à jour. Un chemin neuf change l'URL, donc
+ * contourne le cache PAR CONSTRUCTION, plutôt que par un paramètre de version
+ * qu'un intermédiaire pourrait ignorer. (Décision Jeevons : même `Media`,
+ * nouveau `path`.)
+ */
+export async function replaceMedia(
+  id: string,
+  input: Buffer,
+): Promise<ReplaceMediaResult> {
+  const existing = await prisma.media.findUnique({ where: { id } });
+  if (!existing) {
+    return { ok: false, message: "Cette image n'existe plus." };
+  }
+
+  const processed = await processUploadedImage(input);
+  if (!processed.ok) {
+    return { ok: false, message: processed.message };
+  }
+
+  const nextPath = newMediaPath();
+  await writeMediaFile(nextPath, processed.image.data);
+
+  const media = await prisma.media.update({
+    where: { id },
+    data: {
+      path: nextPath,
+      // Dimensions et miniature RECALCULÉES : garder celles de l'ancienne image
+      // réserverait la mauvaise place et ferait sauter la page — exactement ce
+      // que l'AC2 de 5.12 cherche à éviter.
+      width: processed.image.width,
+      height: processed.image.height,
+      blurDataUrl: processed.image.blurDataUrl,
+      // `alt` volontairement PRÉSERVÉ : remplacer le fichier ne change pas ce
+      // que l'image représente. L'effacer ferait régresser l'accessibilité sans
+      // que personne ne s'en aperçoive.
+    },
+  });
+
+  // Ancien fichier supprimé EN DERNIER : si la mise à jour en base avait
+  // échoué, il serait encore là et le média resterait affichable. Un résidu
+  // n'est qu'un gaspillage d'espace, jamais une image cassée.
+  await deleteMediaFile(existing.path);
+
+  return { ok: true, media };
+}
+
+/**
+ * Supprime un média : ligne en base PUIS fichier (5.13, AC4).
+ *
+ * ⚠️ ORDRE — base d'abord, fichier ensuite. Si la suppression du fichier échoue,
+ * il reste un orphelin que plus rien ne référence : invisible et sans
+ * conséquence. Dans l'ordre inverse, un échec en base laisserait un `Media`
+ * pointant vers un fichier absent, c'est-à-dire une image cassée sur le site.
+ *
+ * ⚠️ Cette fonction NE VÉRIFIE PAS les usages : l'appelant doit passer par
+ * `findMediaUsages` d'abord (voir l'action de suppression). La garde est
+ * délibérément à l'extérieur, pour que la vérification et le message de refus
+ * restent au même endroit.
+ */
+export async function deleteMedia(id: string): Promise<void> {
+  const existing = await prisma.media.findUnique({ where: { id } });
+  if (!existing) return; // déjà supprimé : objectif atteint (idempotent)
+
+  await prisma.media.delete({ where: { id } });
+  await deleteMediaFile(existing.path);
 }
