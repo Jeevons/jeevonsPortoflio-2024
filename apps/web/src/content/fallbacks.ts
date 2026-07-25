@@ -43,6 +43,13 @@ export function fallbackProjects(
       // Story 5.9 — le contenu statique de repli ne porte pas de résultat
       // chiffré : `null`, donc la carte masque simplement la section (AC4).
       outcome: null,
+      // Story 5.12 — Le repli sert quand la BASE est injoignable (4.5). Or les
+      // couvertures sont des lignes `Media` en base : elles sont donc, par
+      // construction, inaccessibles dans ce mode. `coverId`/`cover` à `null`,
+      // et les cartes retombent sur l'import statique par slug — exactement le
+      // comportement d'avant cette story, ce qui est le but du repli.
+      coverId: null,
+      cover: null,
       createdAt: FALLBACK_DATE,
       updatedAt: FALLBACK_DATE,
       highlights: p.highlights.map((label, index) => ({

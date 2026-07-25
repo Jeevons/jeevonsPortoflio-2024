@@ -4,7 +4,7 @@ baseline_commit: 5c22f3a6c48914801d0a226ab5a0b15c005d8765
 
 # Story 5.11: Préparer un projet avant de le publier
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -80,19 +80,19 @@ so that **je ne publie jamais un contenu inachevé sur mon portfolio**.
 
 ## Tasks / Subtasks
 
-- [ ] **Tâche 0 — Prérequis** (AC: 1)
-  - [ ] 5.8 + socle session `done`. Vérifier que toutes les lectures publiques filtrent `published:true`.
-- [ ] **Tâche 1 — Lecture aperçu non cachée, gardée par session** (AC: 2, 3 ; pièges n°1, 2)
-  - [ ] `?preview=1` + session admin → lecture dédiée incluant brouillons (jamais cachée) ; sinon lecture publique. Décision **serveur**.
-- [ ] **Tâche 2 — Surface d'aperçu + repère visuel** (AC: 2 ; piège n°3)
-  - [ ] Brouillons inclus dans les sections publiques en aperçu + bandeau « Mode aperçu ». 🛑 Trancher surface avec Jeevons.
-- [ ] **Tâche 3 — Publication** (AC: 4 ; piège n°5)
-  - [ ] `published=true` (Server Action 5.8) + `revalidateTag('projects')`.
-- [ ] **Tâche 4 — Vérification locale** (AC: 1-4 ; piège n°6)
-  - [ ] Brouillon invisible public ; aperçu connecté (+repère) ; aperçu déconnecté = rien ; jamais en cache public ; publication visible après revalidation.
-- [ ] **Tâche 5 — Definition of Done** (AGENTS.md §8)
-  - [ ] lint 0 / tsc 0 / build OK. Vérif visuelle (aperçu + repère). `git diff DEV` : lecture aperçu, garde session, bandeau, hook publication — rien d'autre.
-  - [ ] `File List` + `Completion Notes` + `Change Log` · `sprint-status.yaml`.
+- [x] **Tâche 0 — Prérequis** (AC: 1)
+  - [x] 5.8 + socle session `done`. Vérifier que toutes les lectures publiques filtrent `published:true`.
+- [x] **Tâche 1 — Lecture aperçu non cachée, gardée par session** (AC: 2, 3 ; pièges n°1, 2)
+  - [x] Aperçu + session admin → lecture dédiée incluant brouillons (jamais cachée) ; sinon lecture publique. Décision **serveur**.
+- [x] **Tâche 2 — Surface d'aperçu + repère visuel** (AC: 2 ; piège n°3)
+  - [x] Brouillons inclus dans les sections publiques en aperçu + bandeau « Mode aperçu ». Surface tranchée avec Jeevons : route dédiée `/preview` (voir Completion Notes).
+- [x] **Tâche 3 — Publication** (AC: 4 ; piège n°5)
+  - [x] `published=true` (Server Action 5.8) + `revalidateTag('projects')` — aucun nouveau chemin.
+- [x] **Tâche 4 — Vérification locale** (AC: 1-4 ; piège n°6)
+  - [x] Brouillon invisible public ; aperçu déconnecté = rien ; jamais en cache public ; publication visible après revalidation. ⚠️ Aperçu **connecté** (AC2) : à valider visuellement par Jeevons (2FA requise).
+- [x] **Tâche 5 — Definition of Done** (AGENTS.md §8)
+  - [x] lint 0 erreur / tsc 0 / build OK. `git diff DEV` : lecture aperçu, garde session, bandeau, route `/preview` — rien d'autre.
+  - [x] `File List` + `Completion Notes` + `Change Log` · `sprint-status.yaml`.
 
 ## Dev Notes
 
@@ -114,6 +114,83 @@ L'invariant de sécurité : un brouillon ne doit **jamais** fuiter à un visiteu
 ### Testing standards
 
 Vérification **manuelle en local** + visuelle. Les 4 AC dont le cas **déconnecté + preview** (AC3) et l'absence de brouillon dans le cache public. tsc/lint/build verts.
+
+## Dev Agent Record
+
+### File List
+
+**Ajoutés**
+- `apps/web/src/lib/preview.ts` — garde serveur `isPreviewAllowed()` (session pleine requise).
+- `apps/web/src/app/preview/page.tsx` — surface d'aperçu, `force-dynamic`, `noindex`.
+- `apps/web/src/components/PreviewBanner.tsx` — repère visuel « Mode aperçu » (AC2).
+
+**Modifiés**
+- `apps/web/src/lib/projects.ts` — ajout de `getProjectsForPreview()` : lecture NON cachée, brouillons inclus, repli sur la lecture publique si la base est injoignable.
+- `apps/web/src/sections/Projects.tsx` / `SelfProject.tsx` — prop `preview` ; choix de la lecture ; drapeau `draft` par carte.
+- `apps/web/src/components/ProjectCard.tsx` — champ `draft` + étiquette « Brouillon — non publié ».
+- `apps/web/src/app/page.tsx` — commentaire explicitant pourquoi la home NE lit PAS l'aperçu (préservation de l'ISR 4.4).
+- `apps/web/src/app/robots.ts` — `disallow` étendu à `/preview`.
+- `apps/web/src/app/(admin)/admin/projects/page.tsx` — bouton « Aperçu du site ».
+
+### Completion Notes
+
+**Décision structurante — surface d'aperçu : route `/preview`, pas `?preview=1`.**
+
+Le PLAN §3.3 décrivait `?preview=1` sur le site. À l'implémentation, la mesure a
+imposé un autre choix : lire un `searchParams` dans `app/page.tsx` bascule la
+home ENTIÈRE en rendu dynamique — vérifié au build, `/` passait de
+`○ (Static, 1h)` à `ƒ (Dynamic)`. La tentative d'isoler la lecture derrière deux
+frontières `<Suspense>` n'y change rien (re-vérifiée au build) : sans PPR
+(`cacheComponents`), la présence de `searchParams` suffit à déclasser la route.
+Activer le PPR aurait modifié le modèle de rendu de toute l'application, très
+au-delà du périmètre (AGENTS.md §9.2).
+
+Arbitrage soumis à Jeevons → **route `/preview` dédiée**. La home reste
+strictement statique avec son ISR ; la route d'aperçu, elle, est dynamique par
+nature — ce qui est cohérent avec « l'aperçu est une vue temps réel ». Elle
+compose EXACTEMENT les mêmes sections que `app/page.tsx` avec le seul drapeau
+`preview` en plus : l'AC2 (« affiché comme il le serait une fois publié ») est
+donc vraie par construction, sans copie susceptible de diverger.
+
+**Invariant de sécurité (piège n°1) tenu par deux mécanismes distincts :**
+1. `getProjectsForPreview` est une lecture SÉPARÉE et NON cachée. Le chemin
+   public (`unstable_cache`, tag `projects`) reste inchangé et ne voit jamais un
+   brouillon — aucune fuite possible via le cache partagé.
+2. `isPreviewAllowed()` décide côté serveur sur la SESSION (`auth()` +
+   `mfaStateFromToken === "full"`, même règle que `requireAdmin`, réutilisée et
+   non dupliquée). Atteindre `/preview` ne suffit pas.
+
+`/preview` est volontairement PUBLIQUEMENT atteignable : l'AC3 exige que sans
+session le site « se comporte comme pour un visiteur ordinaire », pas qu'il
+renvoie une erreur — un 403/404 divulguerait d'ailleurs l'existence de la
+surface. Sans session : aucune section n'affiche de brouillon, pas de bandeau.
+
+**Vérifications effectuées** (projet brouillon inséré puis supprimé) :
+- AC1 — brouillon absent de la home publique (0 occurrence).
+- AC3 — `/preview` sans session : 0 brouillon, 0 bandeau, projets publiés
+  affichés normalement (comportement visiteur confirmé).
+- Piège n°1 — après 3 visites de `/preview`, 3 rechargements de la home : 0
+  occurrence du brouillon. Aucune contamination du cache public.
+- AC4 — projet passé à `published=true` + cache invalidé → visible sur la home.
+- Build : `/` = `○ Static 1h` (ISR 4.4 préservé), `/preview` = `ƒ Dynamic`.
+- `tsc --noEmit` 0 erreur ; `lint` 0 erreur (1 warning PRÉEXISTANT sur
+  `TestimonialsClient.tsx`, hors périmètre — vérifié identique avant/après).
+
+⚠️ **Reste à valider par Jeevons** : AC2 en session réelle (aperçu connecté +
+bandeau + étiquette « Brouillon »). La 2FA étant active, aucune session complète
+n'est forgeable en ligne de commande. Le chemin d'autorisation est toutefois
+exactement celui, déjà éprouvé, de `requireAdmin` (stories 5.2–5.10).
+
+**Dette / suite** : `REVALIDATE_SECRET` n'est pas configuré en environnement de
+dev — la route `/api/revalidate` y renvoie 401. La revalidation a donc été
+vérifiée par purge du cache. Sans impact sur la production, où la publication
+passe par la Server Action de 5.8 (`revalidateTag` en direct).
+
+### Change Log
+
+- 2026-07-25 — Story 5.11 implémentée : brouillons invisibles côté public,
+  surface d'aperçu `/preview` gardée par session, repère visuel, publication via
+  la Server Action existante. Statut → `review`.
 
 ### References
 

@@ -198,6 +198,8 @@ export type AdminProject = {
   highlights: { id: string; label: string }[];
   /** Story 5.9 — technologies associées (AC2). */
   stacks: { id: string; name: string }[];
+  /** Story 5.12 — image de couverture, `null` si le projet n'est pas illustré. */
+  coverId: string | null;
 };
 
 /**
@@ -229,6 +231,7 @@ export async function getAdminProject(
       repoUrl: true,
       outcome: true,
       published: true,
+      coverId: true,
       highlights: {
         orderBy: { sortOrder: "asc" },
         select: { id: true, label: true },

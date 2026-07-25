@@ -45,7 +45,8 @@ const NAV_ITEMS: NavItem[] = [
   },
   { href: "/admin/timeline", label: "Parcours", icon: Route, ready: false },
   { href: "/admin/stacks", label: "Technologies", icon: Layers, ready: false },
-  { href: "/admin/media", label: "Médias", icon: ImageIcon, ready: false },
+  // Story 5.13 — bibliothèque d'images livrée : l'entrée devient un vrai lien.
+  { href: "/admin/media", label: "Médias", icon: ImageIcon, ready: true },
   { href: "/admin/messages", label: "Messages", icon: Mail, ready: false },
   { href: "/admin/settings", label: "Réglages", icon: Settings, ready: false },
   {

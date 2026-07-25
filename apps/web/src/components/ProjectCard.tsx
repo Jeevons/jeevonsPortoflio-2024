@@ -40,8 +40,35 @@ export type ProjectCardData = {
    * et l'upload de couverture est la story 5.12).
    */
   image?: StaticImageData;
+  /**
+   * Story 5.12 (AC5) — Couverture TÉLÉVERSÉE depuis l'administration.
+   *
+   * ⚠️ Distincte de `image`, qui reste un import STATIQUE hérité d'Epic 4 (la
+   * jointure par slug). Les deux coexistent le temps que les anciens projets
+   * migrent vers une couverture téléversée ; `cover` est PRIORITAIRE, puisque
+   * c'est le choix explicite de Jeevons dans l'éditeur.
+   *
+   * `alt` peut être `null` : l'absence de texte alternatif est signalée comme un
+   * défaut en administration (AC3), sans jamais bloquer l'affichage public.
+   */
+  cover?: {
+    url: string;
+    width: number;
+    height: number;
+    blurDataUrl: string;
+    alt: string | null;
+  } | null;
   /** Story 5.9 (AC4) — résultat chiffré. Vide/absent : la section est MASQUÉE. */
   outcome?: string | null;
+  /**
+   * Story 5.11 (AC2) — ce projet est un BROUILLON affiché en mode aperçu.
+   *
+   * ⚠️ Ce drapeau n'a de sens QU'EN APERÇU : la lecture publique ne renvoie
+   * jamais de brouillon, il y vaut donc toujours `false`. Il ne contrôle PAS la
+   * visibilité (c'est la lecture qui le fait, côté serveur) — il ne fait
+   * qu'ÉTIQUETER une carte que Jeevons est seul à voir.
+   */
+  draft?: boolean;
 };
 
 type ProjectCardProps = {
@@ -64,6 +91,17 @@ export const ProjectCard = ({
             <span>&bull;</span>
             <span className="text-3xs md:text-sm">{project.year}</span>
           </div>
+
+          {/* Story 5.11 (AC2) — étiquette « Brouillon » sur les cartes non
+              publiées, visibles uniquement en mode aperçu. Contraste AA sur le
+              fond sombre des cartes (ambre 200 sur ambre 500/15) et texte réel
+              plutôt qu'une pastille de couleur seule : l'information ne repose
+              pas sur la couleur (AGENTS.md §6). */}
+          {project.draft ? (
+            <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-amber-300/40 bg-amber-500/15 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-amber-200">
+              Brouillon — non publié
+            </p>
+          ) : null}
 
           <h3 className="font-serif text-2xl mt-2 md:text-4xl md:mt-5">
             {project.title}
@@ -116,7 +154,33 @@ export const ProjectCard = ({
           ) : null}
         </div>
         <div className="relative">
-          {project.image ? (
+          {project.cover ? (
+            /* Story 5.12 — `<img>` et NON `next/image` : le fichier est déjà
+               normalisé en WebP et redimensionné par sharp au téléversement, le
+               repasser dans l'optimiseur de Next le retraiterait sans gain.
+
+               ⚠️ `width`/`height` explicites + `blurDataUrl` en fond : le
+               navigateur connaît le ratio AVANT le chargement et réserve la
+               place, ce qui empêche la page de sauter (AC2). C'est la raison
+               d'être des colonnes `width`/`height` du modèle `Media`. */
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              className="mt-8 -mb-4 md:mb-0 lg:mt-0 lg:absolute lg:h-full lg:w-auto lg:max-w-[450px]"
+              src={project.cover.url}
+              width={project.cover.width}
+              height={project.cover.height}
+              /* `alt=""` quand le texte manque : une image DÉCORATIVE est
+                 ignorée par les lecteurs d'écran, ce qui vaut mieux qu'un nom
+                 de fichier lu à voix haute. Le défaut est signalé côté
+                 administration (AC3), là où il peut être corrigé. */
+              alt={project.cover.alt ?? ""}
+              loading="lazy"
+              style={{
+                backgroundImage: `url(${project.cover.blurDataUrl})`,
+                backgroundSize: "cover",
+              }}
+            />
+          ) : project.image ? (
             <Image
               className="mt-8 -mb-4 md:mb-0 lg:mt-0 lg:absolute lg:h-full lg:w-auto lg:max-w-[450px]"
               src={project.image}
