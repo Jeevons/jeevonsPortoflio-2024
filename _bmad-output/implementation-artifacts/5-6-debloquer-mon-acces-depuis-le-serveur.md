@@ -4,7 +4,7 @@ baseline_commit: 5c22f3a6c48914801d0a226ab5a0b15c005d8765
 
 # Story 5.6: Débloquer mon accès depuis le serveur
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -74,19 +74,22 @@ Un **script CLI de secours** exécutable dans le conteneur de prod (`bun run adm
 
 ## Tasks / Subtasks
 
-- [ ] **Tâche 0 — Prérequis** (AC: 1)
-  - [ ] 5.1-5.5 `done`. Comprendre l'exécution node-sans-Bun en prod (4.6).
-- [ ] **Tâche 1 — Script de reset** (AC: 1 ; pièges n°1, 4)
-  - [ ] Script (`scripts/admin-reset-2fa.ts`) : efface `totpSecret`, `totpEnabledAt=null`, vide `recoveryCodes` pour `ADMIN_EMAIL`/argument. Bundle node (`.mjs`) copié dans l'image. 🛑 Trancher forme finale avec Jeevons.
-- [ ] **Tâche 2 — Confirmation + traçabilité** (AC: 2 ; pièges n°2, 3)
-  - [ ] Confirmation explicite (flag `--confirm` sûr en `docker exec`). Log serveur horodaté sans secret (AuditLog reporté à 5.19).
-- [ ] **Tâche 3 — Runbook `docs/ops/`** (AC: 3 ; piège n°5)
-  - [ ] Procédure pas à pas + commande exacte VPS + suite (ré-enrôlement). Sans secret.
-- [ ] **Tâche 4 — Vérification locale** (AC: 1, 2 ; piège n°6)
-  - [ ] Reset local → champs effacés → ré-enrôlement forcé au login. Sans `--confirm` → refus. Pas de secret loggé.
-- [ ] **Tâche 5 — Definition of Done** (AGENTS.md §8)
-  - [ ] lint 0 / tsc 0 / build OK (+ bundle script si applicable). `git diff DEV` : script + bundling + copie image + runbook — rien d'autre.
-  - [ ] `File List` + `Completion Notes` + `Change Log` · `sprint-status.yaml`.
+- [x] **Tâche 0 — Prérequis** (AC: 1)
+  - [x] 5.1-5.5 `done`. Comprendre l'exécution node-sans-Bun en prod (4.6).
+- [x] **Tâche 1 — Script de reset** (AC: 1 ; pièges n°1, 4)
+  - [x] Script (`scripts/admin-reset-2fa.ts`) : efface `totpSecret`, `totpEnabledAt=null`, vide `recoveryCodes` pour `ADMIN_EMAIL`/argument. Bundle node (`.mjs`) copié dans l'image. 🛑 Trancher forme finale avec Jeevons.
+    - ✅ **Décision Jeevons** : bundle `.mjs` (même infra que le seed 4.6) + **argument e-mail obligatoire valant confirmation** (pas `ADMIN_EMAIL`).
+    - ✅ `totpLastCounter` remis à `null` en plus des 3 champs prévus (sinon le compteur anti-rejeu de 5.5 fausserait la validation du nouvel enrôlement).
+- [x] **Tâche 2 — Confirmation + traçabilité** (AC: 2 ; pièges n°2, 3)
+  - [x] Confirmation explicite (flag `--confirm` sûr en `docker exec`). Log serveur horodaté sans secret (AuditLog reporté à 5.19).
+- [x] **Tâche 3 — Runbook `docs/ops/`** (AC: 3 ; piège n°5)
+  - [x] Procédure pas à pas + commande exacte VPS + suite (ré-enrôlement). Sans secret.
+- [x] **Tâche 4 — Vérification locale** (AC: 1, 2 ; piège n°6)
+  - [x] Reset local → champs effacés → ré-enrôlement forcé au login. Sans `--confirm` → refus. Pas de secret loggé.
+  - [x] Vérifié **en plus** dans l'étage `production` réel (conteneur sans Bun, Postgres jetable) : la commande exacte du runbook fonctionne de bout en bout.
+- [x] **Tâche 5 — Definition of Done** (AGENTS.md §8)
+  - [x] lint 0 / tsc 0 / build OK (+ bundle script si applicable). `git diff DEV` : script + bundling + copie image + runbook — rien d'autre.
+  - [x] `File List` + `Completion Notes` + `Change Log` · `sprint-status.yaml`.
 
 ## Dev Notes
 
@@ -117,3 +120,88 @@ Vérification **manuelle en local** (DB `docker-compose`) : reset → ré-enrôl
 - [Source: _bmad-output/implementation-artifacts/5-3-activer-la-double-authentification-a-ma-premiere-connexion.md — guard ré-enrôlement (`totpEnabledAt=null`)]
 - [Source: memory prisma7-setup-gotchas — DATABASE_URL runtime via adapter-pg, `generate` avant usage]
 - [Source: AGENTS.md §5 — socle sécurité avant écrans ; §6 — secrets par env ; §9 — anti-scope-creep]
+
+## Dev Agent Record
+
+### Decisions
+
+Deux arbitrages tranchés avec Jeevons avant l'implémentation (piège n°1 : PLAN §9.3 nomme `bun run admin:reset-2fa`, mais **Bun n'existe pas dans l'étage `production`**) :
+
+1. **Forme du script → bundle `.mjs` exécuté par `node`**, exactement l'infra du seed de 4.6 (`bun build --target node --format esm --external pg`), plutôt qu'un `prisma db execute` sur un fichier SQL. Le SQL pur ne permettait ni la confirmation explicite ni la trace horodatée demandées par AC2, et rendait le ciblage par e-mail malcommode. La commande réelle sur le VPS est donc `docker exec <conteneur> node scripts/admin-reset-2fa.mjs --confirm <email>`.
+2. **Confirmation → argument e-mail obligatoire** (`--confirm <email>`) plutôt que `ADMIN_EMAIL` de l'environnement + un simple flag. Une seule saisie porte alors **deux** garde-fous : impossible de déclencher par accident, et impossible de réinitialiser le mauvais compte sans le savoir. Aucune interactivité TTY (indisponible en `docker exec`).
+
+Un troisième choix a été fait en cours d'implémentation : **`totpLastCounter` est aussi remis à `null`**, en plus des trois champs prévus par la story. Le laisser conserverait le compteur anti-rejeu de 5.5 (ex. 12345) face à un secret tout neuf, ce qui aurait faussé la validation des premiers codes du nouvel enrôlement.
+
+### Points d'attention
+
+- **Rien réimplémenté côté web** (piège n°4). Le script ne touche QUE la base ; le ré-enrôlement forcé est assuré par le guard existant de 5.3 (`apps/web/src/app/(admin)/admin/layout.tsx:85`). Vérifié de bout en bout, pas seulement déduit.
+- **`Prisma.DbNull`, pas `null`.** `recoveryCodes` est une colonne `Json?` : Prisma distingue le NULL SQL du `null` JSON et **refuse un `null` nu** (erreur TS2322, détectée par `tsc`). `Prisma.DbNull` écrit un vrai NULL SQL — l'état exact d'un compte fraîchement seedé, que `parseStoredRecoveryCodes` (5.4) lit déjà comme « aucun code ». Vérifié en base : la colonne est bien `IS NULL`, pas la chaîne `null`.
+- **Traçabilité : un `docker exec` n'alimente PAS `docker logs`.** Piège découvert en vérifiant le runbook : la sortie d'un `exec` va dans le flux de sa propre session, pas dans le log du conteneur. Une trace qui disparaît avec le terminal est une trace faible pour AC2 — d'autant qu'on est par définition dans un moment de panique. Le script écrit donc **aussi** sur la sortie du processus 1 (`/proc/1/fd/1`), ce qui rend la trace visible dans `docker logs` et durable. L'écriture est tolérante à l'échec : hors conteneur (exécution locale via Bun), elle est ignorée silencieusement — une réinitialisation ne doit jamais échouer pour un problème de log.
+- **Les refus sont tracés aussi**, pas seulement les succès : une tentative avortée est une information d'exploitation.
+- **Aucun secret manipulé.** Le script efface le secret TOTP, il ne le déchiffre jamais → il n'a pas besoin d'`AUTH_SECRET`. Aucun secret n'est loggué (vérifié par recherche active de fuites dans la sortie).
+- **`AuditLog` non créé** (piège n°3, anti-scope-creep) : le modèle appartient à la story 5.19. La trace est volontairement un log conteneur.
+- **Le bundle `.mjs` est exclu d'ESLint.** Sans cela, `bun run lint` tentait d'analyser 5,3 Mo de code généré (avertissement Babel « deoptimised »). Même traitement que `prisma/seed.mjs` (4.6).
+
+### Debug Log
+
+Vérification en local uniquement — **aucune action sur la production** (piège n°6). Aucun secret n'a été lu depuis `.env` ni affiché : les identifiants ont été chargés dans l'environnement du shell (`set -a; . ./.env`) puis consommés par les commandes sans jamais être imprimés.
+
+La vérification s'est faite en **deux étages**, le second étant le seul qui prouve l'AC :
+
+1. **Sur l'hôte (Bun + Postgres du `docker-compose`)** : refus, succès, état en base, connexion réelle au flux Auth.js (`/api/auth/csrf` → `callback/credentials`) pour observer la redirection forcée avec une vraie session.
+2. **Dans l'étage `production` réel** : image construite (`--target production`), lancée contre un Postgres jetable, et **absence de Bun confirmée** (`command -v bun` → absent) avant de lancer la commande exacte du runbook. C'est cet étage qui valide le piège n°1 ; le tester seulement sur l'hôte (où Bun existe) n'aurait rien prouvé.
+
+Deux défauts trouvés et corrigés grâce à ces vérifications :
+
+1. **`recoveryCodes: null` rejeté par Prisma** (TS2322). Mes premiers essais passaient malgré tout car Bun n'effectue aucun contrôle de types à l'exécution : ils écrivaient un `null` JSON au lieu d'un NULL SQL. Corrigé via `Prisma.DbNull`, puis re-vérifié en distinguant explicitement les deux en SQL.
+2. **Runbook faux à l'étape 5.** J'avais écrit « vérifiez avec `docker logs | grep` » — or la trace n'y apparaissait pas (voir Points d'attention). Corrigé dans le code (écriture vers PID 1) plutôt qu'en abaissant le runbook, puis re-vérifié après reconstruction de l'image : les deux lignes (refus + succès) apparaissent bien dans `docker logs`.
+
+Ressources de test intégralement supprimées (conteneurs `pf56-*`, réseau, image `portfolio-web:5-6-test`, cookies de session du scratchpad).
+
+⚠️ **Effet de bord sur la base de DEV** : le compte admin local a sa 2FA réinitialisée (état légitime — la prochaine connexion à `/admin` proposera simplement un nouvel enrôlement).
+
+### Completion Notes
+
+**11/11 vérifications au vert**, dont 6 dans le conteneur de production réel :
+
+| AC | Vérification | Où | Résultat |
+|----|--------------|-----|----------|
+| AC1 | `totpSecret`, `totpEnabledAt`, `totpLastCounter`, `recoveryCodes` effacés | hôte + prod | ✅ NULL SQL réel |
+| AC1 | Session authentifiée → redirection forcée vers l'enrôlement | hôte | ✅ 307 → `/admin/settings/security` |
+| AC1 | Écran d'enrôlement joignable et en mode « Activer la double authentification » | hôte | ✅ 200 |
+| AC2 | Sans `--confirm` → refus, `exit 1`, **zéro écriture** | hôte + prod | ✅ état inchangé |
+| AC2 | `--confirm` suivi d'un flag (`--force`) → refus | hôte | ✅ non interprété comme e-mail |
+| AC2 | E-mail inconnu → refus, `exit 1`, zéro écriture | hôte + prod | ✅ |
+| AC2 | Trace horodatée visible dans `docker logs` (refus **et** succès) | prod | ✅ |
+| AC2 | Aucun secret dans la sortie (recherche active de fuites) | prod | ✅ |
+| AC3 | Commande exacte du runbook exécutée telle quelle | prod | ✅ |
+| — | Bun réellement absent de l'image de production | prod | ✅ `bun ABSENT` |
+| — | Bundle `.mjs` exécutable par `node` nu (v26) | hôte + prod | ✅ |
+
+**Portes de qualité :** `bunx tsc --noEmit` → 0 erreur · `bun run lint` → 0 erreur (1 avertissement **préexistant** dans `TestimonialsClient.tsx`, fichier non touché par cette story — introduit en 4.2) · `bun run build` → succès · `docker build --target production` → succès · `git diff DEV` relu : script + bundling + copie image + runbook, rien d'autre.
+
+**Zéro dépendance ajoutée** : `@prisma/adapter-pg` et le client Prisma étaient déjà présents (Epic 4) ; `node:fs` est natif.
+
+**Reporté à 5.19 (assumé)** : enregistrer cette opération dans `AuditLog` en plus du log conteneur, quand le modèle existera. La trace actuelle reste soumise à la rotation des logs Docker.
+
+**Socle sécurité 5.1-5.6 complet** → les écrans de gestion (5.7+) peuvent démarrer.
+
+### File List
+
+**Créés**
+- `apps/web/scripts/admin-reset-2fa.ts` — script de secours : réinitialise le second facteur, confirmation explicite par e-mail, trace horodatée (stdout + log conteneur)
+- `docs/ops/runbook-5-6-reset-2fa-secours.md` — runbook pas à pas (nouveau dossier `docs/ops/`, PLAN §9.3) : quand l'utiliser, commande VPS exacte, table des refus, marche à suivre après le reset
+
+**Modifiés**
+- `apps/web/package.json` — scripts `build:reset-2fa` (bundle node) et `admin:reset-2fa` (usage local)
+- `apps/web/Dockerfile` — bundling du script à l'étage `builder` + copie dans l'étage `production`, à côté de `server.js`
+- `apps/web/.gitignore` — ignore l'artefact généré `scripts/admin-reset-2fa.mjs`
+- `apps/web/eslint.config.mjs` — exclut ce même bundle de l'analyse ESLint
+
+> Non versionné : `apps/web/scripts/admin-reset-2fa.mjs` (généré par `bun run build:reset-2fa` au build du conteneur).
+
+### Change Log
+
+| Date | Version | Description |
+|------|---------|-------------|
+| 2026-07-25 | 1.0 | Story 5.6 implémentée : commande de secours `admin-reset-2fa` exécutable par `node` dans l'étage production (sans Bun), confirmation explicite par e-mail obligatoire, trace horodatée visible dans `docker logs`, runbook `docs/ops/`. 11/11 vérifications au vert dont 6 dans le conteneur de production réel. Clôt le socle sécurité 5.1-5.6. |

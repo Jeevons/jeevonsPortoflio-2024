@@ -5,3 +5,7 @@
 # Seed transpilé pour node (story 4.6) : bundle produit par `bun run build:seed`
 # au build du conteneur. Artefact régénérable — jamais committé.
 /prisma/seed.mjs
+
+# Script de secours 2FA transpilé pour node (story 5.6) : bundle produit par
+# `bun run build:reset-2fa` au build du conteneur. Artefact régénérable.
+/scripts/admin-reset-2fa.mjs
