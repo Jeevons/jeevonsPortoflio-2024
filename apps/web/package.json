@@ -8,6 +8,8 @@
     "start": "next start",
     "lint": "eslint .",
     "build:seed": "bun build prisma/seed.ts --target node --format esm --external pg --external argon2 --outfile prisma/seed.mjs",
+    "build:reset-2fa": "bun build scripts/admin-reset-2fa.ts --target node --format esm --external pg --outfile scripts/admin-reset-2fa.mjs",
+    "admin:reset-2fa": "bun run scripts/admin-reset-2fa.ts",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:seed": "prisma db seed",

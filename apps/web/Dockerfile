@@ -35,6 +35,11 @@ RUN bun run build
 # Seul `pg` reste externe (natif, présent dans le standalone) ; @prisma/adapter-pg
 # est bundlé car non tracé par Next (le seed n'est pas dans le graphe du build).
 RUN bun run build:seed
+# Story 5.6 : même traitement pour le script de secours 2FA
+# (scripts/admin-reset-2fa.mjs), exécuté à la demande par `docker exec` en prod,
+# là où Bun n'existe pas. `pg` reste externe (natif, présent dans le standalone) ;
+# pas besoin d'externaliser argon2 : ce script ne hache rien (il efface).
+RUN bun run build:reset-2fa
 
 # ---------- development ----------
 FROM node:22-alpine AS development
@@ -87,6 +92,11 @@ COPY --from=migrator --chown=nextjs:nodejs /opt/prisma-tools/prisma/seed.mjs ./p
 # prebuilds multi-plateformes, dont linux-musl du conteneur) là où le standalone
 # place déjà `pg`, pour que `node prisma/seed.mjs` le résolve comme pg.
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/argon2 ./node_modules/argon2
+# Story 5.6 — Script de secours 2FA (commande de dernier recours, lancée à la
+# main par `docker exec`, jamais au démarrage). Placé à côté de server.js pour
+# résoudre @prisma/adapter-pg + pg depuis le node_modules du standalone, comme le
+# seed. Voir docs/ops/runbook-5-6-reset-2fa-secours.md.
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/admin-reset-2fa.mjs ./scripts/admin-reset-2fa.mjs
 COPY --chown=nextjs:nodejs docker-entrypoint.sh ./docker-entrypoint.sh
 RUN chmod +x docker-entrypoint.sh
 USER nextjs
