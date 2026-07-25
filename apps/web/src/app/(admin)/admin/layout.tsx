@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { mfaStateFromToken, MFA_CHALLENGE_PATH } from "@/lib/auth.config";
 
 // Story 5.2 — Guard SERVEUR du groupe /admin (défense en profondeur, AC1/AC2).
 //
@@ -47,6 +48,21 @@ export default async function AdminLayout({
     // demandée. Ce guard n'agit qu'en cas de CONTOURNEMENT du proxy : on renvoie
     // alors vers le login avec un fallback interne sûr (`/admin`). Chemin relatif
     // codé en dur → aucun open-redirect possible (piège n°3).
+    redirect("/login?callbackUrl=%2Fadmin");
+  }
+
+  // Story 5.5 — Défense en profondeur sur la session PARTIELLE (AC1). Le proxy
+  // a normalement déjà dévié ces requêtes, mais s'il était contourné, AUCUNE
+  // page admin ne doit se rendre avec un second facteur non franchi : le
+  // `redirect()` court-circuite le rendu ici, côté serveur.
+  //
+  // Même source de vérité que le proxy (`mfaStateFromToken`) : une session
+  // partielle EXPIRÉE (> 5 min) est traitée comme absente et repart du login.
+  const mfaState = mfaStateFromToken(session);
+  if (mfaState === "pending") {
+    redirect(`${MFA_CHALLENGE_PATH}?callbackUrl=%2Fadmin`);
+  }
+  if (mfaState === "none") {
     redirect("/login?callbackUrl=%2Fadmin");
   }
 

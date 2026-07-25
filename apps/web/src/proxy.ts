@@ -1,7 +1,11 @@
 import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
 
-import { authConfig } from "@/lib/auth.config";
+import {
+  authConfig,
+  mfaStateFromToken,
+  MFA_CHALLENGE_PATH,
+} from "@/lib/auth.config";
 
 // Story 5.2 — Garde de bord (edge) sur /admin/*.
 //
@@ -30,8 +34,27 @@ const { auth } = NextAuth(authConfig);
 export default auth((req) => {
   const { nextUrl } = req;
 
+  // Story 5.5 — Trois états, pas deux (AC1). Une session PARTIELLE (mot de
+  // passe validé, code TOTP pas encore fourni) n'ouvre AUCUNE route /admin :
+  // elle est renvoyée vers l'écran de saisie du code, en mémorisant la page
+  // demandée pour y revenir une fois la session complète (AC2).
+  //
+  // ⚠️ `mfaStateFromToken` est la source unique partagée avec le layout admin
+  // (Node) : edge et Node prennent ici exactement la même décision. Elle juge
+  // aussi de l'EXPIRATION des 5 min → une session partielle périmée retombe en
+  // `none` et repart du login (AC1).
+  const mfaState = mfaStateFromToken(req.auth);
+
+  if (mfaState === "pending") {
+    const callbackUrl = `${nextUrl.pathname}${nextUrl.search}`;
+    const challengeUrl = new URL(MFA_CHALLENGE_PATH, nextUrl.origin);
+    challengeUrl.searchParams.set("callbackUrl", callbackUrl);
+    // 307 : aucun octet de la page /admin demandée n'est rendu (AC1).
+    return NextResponse.redirect(challengeUrl);
+  }
+
   // `req.auth` est la session résolue par Auth.js (null si absente/invalide).
-  if (req.auth) {
+  if (req.auth && mfaState === "full") {
     // Story 5.3 — Le gate 2FA (redirection forcée vers l'enrôlement, AC2) vit
     // dans le layout admin (runtime Node : il lit `totpEnabledAt` en base, ce
     // que ce garde EDGE ne peut pas faire). Ce garde connaît en revanche le

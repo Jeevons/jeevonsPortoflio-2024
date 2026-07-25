@@ -3,6 +3,7 @@ import "server-only";
 import type { Session } from "next-auth";
 
 import { auth } from "@/lib/auth";
+import { mfaStateFromToken } from "@/lib/auth.config";
 
 // Story 5.2 — Garde SERVEUR réutilisable pour toute logique d'administration.
 //
@@ -38,6 +39,12 @@ export async function requireAdmin(): Promise<Session> {
   if (!session?.user) {
     throw new UnauthorizedError();
   }
+  // Story 5.5 (AC1) — Une session PARTIELLE (second facteur non franchi, ou
+  // dont les 5 min sont écoulées) ne vaut PAS autorisation : elle ne doit
+  // exécuter aucune mutation admin, même si l'appelant contourne les écrans.
+  if (mfaStateFromToken(session) !== "full") {
+    throw new UnauthorizedError();
+  }
   return session;
 }
 
@@ -52,6 +59,11 @@ export async function requireAdmin(): Promise<Session> {
 export async function requireAdminApi(): Promise<Session | Response> {
   const session = await auth();
   if (!session?.user) {
+    return Response.json({ error: "Non autorisé" }, { status: 401 });
+  }
+  // Story 5.5 (AC1) — Idem `requireAdmin` : une session partielle est refusée
+  // comme une absence de session, sans divulguer l'état intermédiaire.
+  if (mfaStateFromToken(session) !== "full") {
     return Response.json({ error: "Non autorisé" }, { status: 401 });
   }
   return session;

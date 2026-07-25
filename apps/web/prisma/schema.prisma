@@ -81,15 +81,23 @@ model Project {
 //             consommé. Les codes utilisés sont CONSERVÉS (usage unique
 //             définitif + décompte des restants, AC3).
 // Aucune migration : le champ Json? existant accueille cette forme telle quelle.
+// Story 5.5 — `totpLastCounter` : dernier pas RFC 6238 (time step) consommé par
+// un code TOTP validé. ANTI-REJEU (AC4) : à la vérification suivante, otplib
+// refuse tout code dont le pas est ≤ à cette valeur — un code déjà utilisé est
+// donc mort, même encore dans sa fenêtre de validité, et le rejeu reste bloqué
+// d'une session à l'autre comme après un redémarrage du conteneur (ce qu'un
+// compteur en mémoire n'aurait pas garanti). Nullable : aucun code consommé
+// avant la première connexion en deux temps.
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  passwordHash  String
-  role          Role      @default(ADMIN)
-  totpSecret    String?
-  totpEnabledAt DateTime?
-  recoveryCodes Json?
-  createdAt     DateTime  @default(now())
+  id              String    @id @default(cuid())
+  email           String    @unique
+  passwordHash    String
+  role            Role      @default(ADMIN)
+  totpSecret      String?
+  totpEnabledAt   DateTime?
+  totpLastCounter Int?
+  recoveryCodes   Json?
+  createdAt       DateTime  @default(now())
 }
 
 model Highlight {
