@@ -4,7 +4,7 @@ baseline_commit: 5c22f3a6c48914801d0a226ab5a0b15c005d8765
 
 # Story 5.7: Voir l'état de mon portfolio d'un coup d'œil
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -74,23 +74,23 @@ La **page d'accueil `/admin`** (session complète, guard 5.2/5.5) : compteurs pr
 
 ## Tasks / Subtasks
 
-- [ ] **Tâche 0 — Prérequis** (AC: 1)
-  - [ ] 5.1-5.6 `done`. 🛑 Trancher shadcn/ui (init ici ?) avec Jeevons.
-- [ ] **Tâche 1 — Layout & navigation admin** (AC: 1 ; pièges n°3, 4)
-  - [ ] Coquille `(admin)` : nav (liens écrans à venir), primitives `components/ui/` (sobre). Session complète (guard).
-- [ ] **Tâche 2 — Compteurs projets** (AC: 1 ; piège n°2)
-  - [ ] `prisma.project.count` publiés vs brouillons.
-- [ ] **Tâche 3 — Cartes messages & analytics (états gracieux)** (AC: 1 ; piège n°2)
-  - [ ] Messages : état vide (ContactMessage = 5.18). Analytics : mention « non disponible » (Umami = Epic 7).
-- [ ] **Tâche 4 — Bouton « Revalider le site »** (AC: 2 ; piège n°1)
-  - [ ] Server Action `requireAdmin` → `revalidateTag` projects/timeline/settings + retour visuel. 🛑 Trancher forme.
-- [ ] **Tâche 5 — État vide accueillant** (AC: 3 ; piège n°5)
-  - [ ] Compteurs 0 = normal + invitation, aucune erreur.
-- [ ] **Tâche 6 — Vérification locale** (AC: 1-3 ; piège n°6)
-  - [ ] Compteurs, cartes gracieuses, revalidation effective, base vide sans erreur.
-- [ ] **Tâche 7 — Definition of Done** (AGENTS.md §8)
-  - [ ] lint 0 / tsc 0 / build OK. Vérif visuelle navigateur. `git diff DEV` : layout admin, dashboard, action revalidate, (éventuel init shadcn/ui) — rien d'autre.
-  - [ ] `File List` + `Completion Notes` + `Change Log` · `sprint-status.yaml`.
+- [x] **Tâche 0 — Prérequis** (AC: 1)
+  - [x] 5.1-5.6 `done`. 🛑 Trancher shadcn/ui (init ici ?) avec Jeevons.
+- [x] **Tâche 1 — Layout & navigation admin** (AC: 1 ; pièges n°3, 4)
+  - [x] Coquille `(admin)` : nav (liens écrans à venir), primitives `components/ui/` (sobre). Session complète (guard).
+- [x] **Tâche 2 — Compteurs projets** (AC: 1 ; piège n°2)
+  - [x] `prisma.project.count` publiés vs brouillons.
+- [x] **Tâche 3 — Cartes messages & analytics (états gracieux)** (AC: 1 ; piège n°2)
+  - [x] Messages : état vide (ContactMessage = 5.18). Analytics : mention « non disponible » (Umami = Epic 7).
+- [x] **Tâche 4 — Bouton « Revalider le site »** (AC: 2 ; piège n°1)
+  - [x] Server Action `requireAdmin` → `revalidateTag` projects/timeline/settings + retour visuel. 🛑 Trancher forme.
+- [x] **Tâche 5 — État vide accueillant** (AC: 3 ; piège n°5)
+  - [x] Compteurs 0 = normal + invitation, aucune erreur.
+- [x] **Tâche 6 — Vérification locale** (AC: 1-3 ; piège n°6)
+  - [x] Compteurs, cartes gracieuses, revalidation effective, base vide sans erreur.
+- [x] **Tâche 7 — Definition of Done** (AGENTS.md §8)
+  - [x] lint 0 / tsc 0 / build OK. Vérif visuelle navigateur. `git diff DEV` : layout admin, dashboard, action revalidate, (éventuel init shadcn/ui) — rien d'autre.
+  - [x] `File List` + `Completion Notes` + `Change Log` · `sprint-status.yaml`.
 
 ## Dev Notes
 
@@ -121,3 +121,56 @@ Vérification **manuelle en local** + visuelle navigateur. AC1 (compteurs, carte
 - [Source: apps/web/src/lib/cache-tags.ts — `CACHE_TAGS`, contrat inter-stories repris en Epic 5]
 - [Source: _bmad-output/implementation-artifacts/5-2-verrouiller-l-acces-a-l-administration.md — layout `(admin)`, `requireAdmin` ; 5-5 — session complète]
 - [Source: AGENTS.md §5 — écrans après socle sécurité ; §6 — logique serveur, a11y ; §9 — anti-scope-creep]
+
+## Dev Agent Record
+
+### Debug Log
+
+- **`A "use server" file can only export async functions, found object.`** — `actions.ts` exportait l'état initial (`initialRevalidateState`) à côté de l'action. Dans un module `"use server"`, **chaque export devient un endpoint POST** : exporter un objet fait échouer le module entier au runtime, et le bouton restait inerte. Ni `tsc --noEmit`, ni `eslint`, ni `next build` ne l'ont détecté — **seul le pilotage de la page dans un vrai navigateur** l'a révélé. Corrigé : l'état initial vit désormais dans `revalidate-button.tsx`. `export type` reste autorisé (effacé à la compilation).
+- **`Syntax Error` → 500 sur `/admin`** — commentaire `{/* … */}` placé avant l'élément racine, à l'intérieur de `return (`. Remplacé par un commentaire `//`.
+- **`groupBy` n'émet une ligne que pour les valeurs présentes** — sans initialisation à 0, une base sans brouillon renvoyait `undefined` au lieu de `0`.
+
+### Completion Notes
+
+**🛑 Décision 1 — shadcn/ui initialisé ici** (choix de Jeevons). Init **manuelle**, pas via la CLI interactive : celle-ci réécrit `globals.css` et `tailwind.config.ts`, qui portent le style du site public. Les tokens sont ajoutés **par extension** (`theme.extend`), les couleurs Tailwind par défaut dont dépend le site public sont intactes — vérifié : `/` reste en ISR 1 h. Palette **sombre unique** (pas de bloc `.dark`) alignée sur le site : `--background` = gray-900, `--primary` = emerald-300. `Button` **sans `asChild`** pour éviter `@radix-ui/react-slot` (AGENTS.md §9) : pour un lien en forme de bouton, appliquer `buttonVariants()` sur un `<Link>`.
+
+**🛑 Décision 2 — Server Action directe** (recommandation retenue) plutôt qu'un appel HTTP à la route 4.4 : l'appelant est déjà `requireAdmin` (le secret partagé n'ajouterait rien), et un clic doit purger les **trois** tags alors que le paramètre `tag` de la route est unitaire. La route 4.4 reste inchangée comme surface **externe**. `requireAdmin()` est appelé explicitement dans l'action : une Server Action est un endpoint POST atteignable sans passer par la page, le guard de layout ne la protège pas.
+
+**Choix de conception.** `getProjectCounts` n'utilise **ni `unstable_cache` ni `readWithFallback`** : l'admin doit voir l'état réel (un compteur mis en cache 1 h afficherait « 3 projets » juste après en avoir publié un 4ᵉ), et un fallback statique **mentirait** en laissant croire que la base répond. D'où le drapeau `available: boolean`, qui distingue « portfolio vide » (AC3, légitime) de « base injoignable » (incident) — sans lui, les deux afficheraient 0 et l'AC3 serait faussement satisfait pendant une panne.
+
+`AdminShell` est appliqué **dans la page**, pas dans le layout, parce que `settings/security/page.tsx` rend déjà son propre `<main>`. Les entrées de nav non encore livrées rendent un `<span>` « à venir » et non un lien désactivé (un lien désactivé n'est pas focusable).
+
+**Périmètre respecté** : `ContactMessage` non créé (5.18), Umami non installé (Epic 7), route 4.4 non recréée, aucun CRUD projets.
+
+**Vérifications.** AC1 sur la vraie base : 6 publiés / 1 brouillon conformes au SQL. AC3 sur une base jetable `probe57` : carte d'accueil, invitation, **0 `role="alert"`**. AC2 dans un Chromium réel : clic → « Le contenu public a été rafraîchi. » annoncé dans la région `aria-live`, 0 erreur de page, aux deux passes `prefers-reduced-motion` (`no-preference` et `reduce`), anneau de focus présent, bouton à sa largeur naturelle. HTML valide (0 `<p>` imbriqué, 0 `<button>` dans `<a>`). `tsc` 0 · `lint` 0 erreur (1 warning **préexistant** dans `src/sections/TestimonialsClient.tsx`, hors périmètre) · `build` OK, `/admin` dynamique.
+
+**⚠️ Effets de bord locaux, à signaler à Jeevons.** Pour tester le parcours complet il a fallu activer la 2FA sur `admin@doshwork.com` avec un **nouveau secret TOTP** : `totpEnabledAt` était `null`, donc aucune application d'authentification n'était appairée et rien n'a été perdu — mais il faut réappairer (ou repasser par 5.6) avant la prochaine connexion. Le brouillon de sonde et la base `probe57` ont été supprimés ; les scripts de sonde aussi.
+
+### File List
+
+**Créés**
+- `apps/web/components.json`
+- `apps/web/src/lib/utils.ts`
+- `apps/web/src/components/ui/card.tsx`
+- `apps/web/src/components/ui/button.tsx`
+- `apps/web/src/lib/admin/dashboard.ts`
+- `apps/web/src/components/admin/admin-shell.tsx`
+- `apps/web/src/components/admin/admin-nav.tsx`
+- `apps/web/src/components/admin/stat-card.tsx`
+- `apps/web/src/components/admin/recent-messages-card.tsx`
+- `apps/web/src/components/admin/traffic-card.tsx`
+- `apps/web/src/app/(admin)/admin/actions.ts`
+- `apps/web/src/app/(admin)/admin/revalidate-button.tsx`
+
+**Modifiés**
+- `apps/web/src/app/(admin)/admin/page.tsx` (placeholder 5.2 → tableau de bord)
+- `apps/web/src/app/globals.css` (tokens shadcn/ui, ajout pur)
+- `apps/web/tailwind.config.ts` (tokens + `tailwindcss-animate`, par extension)
+- `apps/web/package.json`, `apps/web/bun.lock` (`clsx`, `class-variance-authority`, `lucide-react`, `tailwindcss-animate`)
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+
+## Change Log
+
+| Date | Version | Description |
+|---|---|---|
+| 2026-07-25 | 1.0 | Story 5.7 implémentée : tableau de bord `/admin` (compteurs projets, cartes messages/fréquentation gracieuses, bouton « Revalider le site »), layout + navigation admin, fondation shadcn/ui. AC1-AC3 vérifiés en local et en navigateur. |
