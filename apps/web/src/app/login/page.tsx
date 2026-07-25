@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 
+import { safeCallbackUrl } from "@/lib/safe-callback-url";
+
 import { LoginForm } from "./login-form";
 
 // Story 5.1 — Page de connexion au back-office. Vit HORS du (futur) groupe
@@ -10,11 +12,24 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function LoginPage() {
+// Story 5.2 — Lit la `callbackUrl` déposée par le middleware pour la propager au
+// formulaire (retour à la page demandée après login, AC3). Assainie dès ici :
+// seul un chemin interne est retenu (anti open-redirect, piège n°3).
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ callbackUrl?: string | string[] }>;
+}) {
+  const params = await searchParams;
+  const raw = Array.isArray(params.callbackUrl)
+    ? params.callbackUrl[0]
+    : params.callbackUrl;
+  const callbackUrl = safeCallbackUrl(raw);
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-8 p-6">
       <h1 className="text-2xl font-semibold">Administration</h1>
-      <LoginForm />
+      <LoginForm callbackUrl={callbackUrl} />
     </main>
   );
 }

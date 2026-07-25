@@ -60,15 +60,36 @@ model Project {
 
 // Story 5.1 — Compte administrateur du back-office. UNIQUE et seedé (aucune
 // inscription : PLAN §3.1, REGISTRATION_OPEN=false). `passwordHash` = argon2id,
-// jamais réversible ni stocké en clair (AC1). Volontairement MINIMAL : les
-// champs 2FA (totpSecret, totpEnabledAt, recoveryCodes) arrivent en 5.3 par une
-// migration additive.
+// jamais réversible ni stocké en clair (AC1).
+//
+// Story 5.3 — Champs 2FA (TOTP obligatoire, PLAN §9.1) ajoutés par migration
+// additive. Tous NULLABLE : le compte seedé démarre sans second facteur
+// (totpEnabledAt = null → enrôlement forcé au 1er login, AC1).
+//  - totpSecret    : secret base32 CHIFFRÉ au repos (AES-256-GCM, clé dérivée
+//                    d'AUTH_SECRET — AC5). Persisté dès la génération ; sa seule
+//                    présence n'active PAS la 2FA (anti-lock-out, AC4).
+//  - totpEnabledAt : null = 2FA pas encore confirmée. Posé UNIQUEMENT après un
+//                    premier code TOTP valide (AC4). Sert de point de décision
+//                    au guard de redirection forcée (AC2).
+//  - recoveryCodes : champ créé ici, REMPLI depuis la story 5.4.
+//
+// Story 5.4 — `recoveryCodes` contient un tableau `[{ hash, usedAt }]` de 8
+// entrées (voir src/lib/auth/recovery-codes.ts, SOURCE UNIQUE de sa lecture et
+// de son écriture) :
+//  - hash   : code de secours haché ARGON2ID — jamais lisible en base (AC2) ;
+//  - usedAt : null tant que le code est disponible, horodatage ISO une fois
+//             consommé. Les codes utilisés sont CONSERVÉS (usage unique
+//             définitif + décompte des restants, AC3).
+// Aucune migration : le champ Json? existant accueille cette forme telle quelle.
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  passwordHash String
-  role         Role     @default(ADMIN)
-  createdAt    DateTime @default(now())
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String
+  role          Role      @default(ADMIN)
+  totpSecret    String?
+  totpEnabledAt DateTime?
+  recoveryCodes Json?
+  createdAt     DateTime  @default(now())
 }
 
 model Highlight {

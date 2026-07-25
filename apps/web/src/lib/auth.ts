@@ -4,7 +4,14 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import * as argon2 from "argon2";
 
+import { headers } from "next/headers";
+
+import { authConfig } from "@/lib/auth.config";
 import { prisma } from "@/lib/db";
+import {
+  checkLoginRateLimit,
+  clientIpFromHeaders,
+} from "@/lib/login-rate-limit";
 
 // Story 5.1 — Socle d'authentification par identifiants (Auth.js v5).
 //
@@ -40,37 +47,11 @@ const credentialsSchema = (raw: unknown) => {
 };
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  // Le portfolio tourne DERRIÈRE un reverse proxy (Traefik/TLS, story 2.6) : la
-  // requête reçue par le serveur a pour hôte `0.0.0.0:3000`, pas le domaine
-  // public. Sans trustHost, Auth.js v5 refuse ces requêtes (UntrustedHost). On
-  // fait donc confiance à l'hôte : c'est le réglage attendu en conteneur derrière
-  // proxy. La sécurité de l'origine est assurée en amont par Traefik.
-  trustHost: true,
-  // Session JWT (AC3) : l'état de session vit dans un cookie signé, pas en base.
-  session: { strategy: "jwt" },
-  // AUTH_SECRET signe/chiffre le JWT. Obligatoire (piège n°3) ; lu depuis
-  // l'environnement par Auth.js. La même clé dérivera le chiffrement du secret
-  // TOTP en 5.3.
-  secret: process.env.AUTH_SECRET,
-  // Cookie de session DURCI (AC3). httpOnly : inaccessible au JS client (anti-XSS).
-  // sameSite=lax : envoyé sur navigation top-level, bloque le CSRF cross-site.
-  // secure : cookie transmis uniquement en HTTPS. En dev HTTP local, Auth.js
-  // gère le préfixe/`secure` selon l'URL → on ne force PAS secure en dur (piège
-  // n°3), on laisse Auth.js décider via `useSecureCookies` par défaut.
-  cookies: {
-    sessionToken: {
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-      },
-    },
-  },
-  pages: {
-    // Page de connexion hors du groupe protégé (évite une boucle de redirection
-    // quand 5.2 ajoutera le guard sur /admin).
-    signIn: "/login",
-  },
+  // Base EDGE-SAFE partagée avec le middleware (trustHost, session JWT, secret,
+  // cookie durci, pages, callback `authorized`). Voir src/lib/auth.config.ts.
+  // Story 5.2 : on n'ajoute ICI que ce qui dépend de Node (Credentials + argon2
+  // + Prisma), car ce module n'est jamais importé depuis l'edge.
+  ...authConfig,
   providers: [
     Credentials({
       credentials: {
@@ -78,6 +59,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         password: { label: "Mot de passe", type: "password" },
       },
       authorize: async (raw) => {
+        // Rate-limit anti-force-brute (AC4, story 5.2) — VRAIE frontière de
+        // sécurité, placée ici car `authorize` est le point où le mot de passe
+        // est effectivement vérifié : cela couvre AUSSI bien le login via la
+        // server action que tout appel DIRECT à /api/auth/callback/credentials
+        // (qui contournerait un rate-limit posé uniquement dans la server
+        // action). IP réelle via X-Forwarded-For derrière Traefik (piège n°4).
+        // Appliqué AVANT tout `argon2.verify` : on ne paie pas le coût de calcul
+        // pour une IP déjà verrouillée. Refus par `null` → message générique
+        // (l'anti-énumération de 5.1 est préservée).
+        const ip = clientIpFromHeaders(await headers());
+        if (!checkLoginRateLimit(ip).allowed) {
+          return null;
+        }
+
         const parsed = credentialsSchema(raw);
         // Entrée malformée : on paie quand même un verify pour ne pas offrir de
         // raccourci temporel, puis on refuse.
