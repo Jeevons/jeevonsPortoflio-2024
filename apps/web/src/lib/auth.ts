@@ -46,7 +46,11 @@ const credentialsSchema = (raw: unknown) => {
   return { email: trimmedEmail, password };
 };
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
+// Story 5.5 — `unstable_update` (nom d'API du beta Auth.js v5) est la seule
+// façon de PROMOUVOIR une session partielle en session complète sans refaire un
+// signIn : il ré-encode le JWT via le callback `jwt` (trigger "update"). Appelé
+// UNIQUEMENT depuis la server action qui vient de valider le second facteur.
+export const { handlers, signIn, signOut, auth, unstable_update } = NextAuth({
   // Base EDGE-SAFE partagée avec le middleware (trustHost, session JWT, secret,
   // cookie durci, pages, callback `authorized`). Voir src/lib/auth.config.ts.
   // Story 5.2 : on n'ajoute ICI que ce qui dépend de Node (Credentials + argon2
@@ -100,9 +104,23 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           .catch(() => false);
         if (!valid) return null;
 
-        // Succès : Auth.js ouvre la session (JWT). On ne renvoie que l'identité
-        // minimale — jamais le passwordHash.
-        return { id: user.id, email: user.email, role: user.role };
+        // Succès du PREMIER facteur. Story 5.5 (AC1) : si le compte a une 2FA
+        // active, le mot de passe seul n'ouvre PAS l'administration — on marque
+        // la session comme PARTIELLE (`mfaPending`). Le callback `jwt`
+        // (auth.config.ts) lui donne alors une échéance de 5 min, et tous les
+        // gardes (/admin) la refusent tant que le code n'est pas fourni.
+        //
+        // `totpEnabledAt === null` (2FA pas encore enrôlée) → session complète :
+        // c'est le cas d'enrôlement forcé, géré par 5.3 (le layout admin renvoie
+        // vers l'écran de sécurité). Ne pas le confondre avec l'état partiel.
+        //
+        // On ne renvoie que l'identité minimale — jamais le passwordHash.
+        return {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+          mfaPending: user.totpEnabledAt !== null,
+        };
       },
     }),
   ],
