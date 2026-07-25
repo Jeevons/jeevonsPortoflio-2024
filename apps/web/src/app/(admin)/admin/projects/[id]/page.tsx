@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 
 import { AdminShell } from "@/components/admin/admin-shell";
 import { auth } from "@/lib/auth";
-import { getAdminProject } from "@/lib/admin/projects";
+import { getAdminProject, listStackOptions } from "@/lib/admin/projects";
 
 import { DeleteProjectDialog } from "../delete-project-dialog";
 import { ProjectForm } from "../project-form";
@@ -25,7 +25,12 @@ export default async function EditProjectPage({
   const session = await auth();
   const email = session?.user?.email ?? "";
 
-  const project = await getAdminProject(id);
+  // Story 5.9 — le projet ET la liste des technologies sont lus en parallèle :
+  // deux requêtes indépendantes, aucune raison de les enchaîner.
+  const [project, stackOptions] = await Promise.all([
+    getAdminProject(id),
+    listStackOptions(),
+  ]);
 
   // Identifiant inconnu (projet supprimé entre-temps, URL bricolée) : 404
   // franche plutôt qu'un formulaire vide qui échouerait à l'enregistrement.
@@ -35,7 +40,9 @@ export default async function EditProjectPage({
 
   return (
     <AdminShell email={email}>
-      <div className="mx-auto flex max-w-3xl flex-col gap-8">
+      {/* Story 5.9 — élargi de `3xl` à `6xl` : l'aperçu live occupe désormais une
+          seconde colonne (AC3), qui ne tiendrait pas dans la largeur d'origine. */}
+      <div className="mx-auto flex max-w-6xl flex-col gap-8">
         <header className="flex flex-col gap-1">
           <Link
             href="/admin/projects"
@@ -51,7 +58,7 @@ export default async function EditProjectPage({
           </p>
         </header>
 
-        <ProjectForm project={project} />
+        <ProjectForm project={project} stackOptions={stackOptions} />
 
         {/* AC5 — Zone de suppression, VISUELLEMENT SÉPARÉE du formulaire : une
             action irréversible ne doit pas voisiner le bouton d'enregistrement,

@@ -40,6 +40,9 @@ export function fallbackProjects(
       published: true,
       link: p.link,
       repoUrl: null,
+      // Story 5.9 — le contenu statique de repli ne porte pas de résultat
+      // chiffré : `null`, donc la carte masque simplement la section (AC4).
+      outcome: null,
       createdAt: FALLBACK_DATE,
       updatedAt: FALLBACK_DATE,
       highlights: p.highlights.map((label, index) => ({

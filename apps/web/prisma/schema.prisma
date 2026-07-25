@@ -45,6 +45,11 @@ model Project {
   title       String
   description String?         @db.Text
   period      String // ex. "Janvier - 2024"
+  // Story 5.9 (AC4) — Résultat chiffré du projet, ex. « +38 % de conversion ».
+  // OPTIONNEL par nature : tous les projets n'ont pas de métrique à afficher.
+  // Vide → la section correspondante est simplement masquée côté public, jamais
+  // rendue en bloc vide (décision Jeevons : migration additive assumée).
+  outcome     String?
   sortOrder   Int             @default(0)
   published   Boolean         @default(false)
   link        String?
