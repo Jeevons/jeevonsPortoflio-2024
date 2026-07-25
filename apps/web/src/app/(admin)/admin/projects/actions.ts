@@ -111,6 +111,27 @@ const STALE_STACK_ERROR =
   "Une technologie sélectionnée n'existe plus. Rafraîchissez la page puis réessayez.";
 
 /**
+ * Détecte une clé étrangère invalide (P2003).
+ *
+ * Story 5.12 — Cas visé : le `coverId` posté désigne un média inexistant, soit
+ * parce qu'il a été supprimé depuis l'ouverture du formulaire, soit parce que
+ * l'identifiant a été forgé. Distinct de `isMissingRelation` (P2025), que
+ * Prisma renvoie pour un `connect` vers un enregistrement absent : la
+ * couverture est une colonne scalaire, sa contrainte est vérifiée par la BASE,
+ * pas par le moteur de relations.
+ */
+function isMissingCover(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    (error as { code?: unknown }).code === "P2003"
+  );
+}
+
+const STALE_COVER_ERROR =
+  "L'image de couverture sélectionnée n'existe plus. Rafraîchissez la page puis choisissez-en une autre.";
+
+/**
  * Garde + validation communes à la création et à la modification (AC2).
  *
  * Renvoie soit les données validées, soit l'état d'erreur à retourner au
@@ -218,6 +239,13 @@ export async function createProjectAction(
     }
     if (isMissingRelation(error)) {
       return { status: "error", message: STALE_STACK_ERROR, fieldErrors: {} };
+    }
+    if (isMissingCover(error)) {
+      return {
+        status: "error",
+        message: STALE_COVER_ERROR,
+        fieldErrors: { coverId: "Cette image n'existe plus." },
+      };
     }
     const raw = error instanceof Error ? error.message : String(error);
     console.error(
@@ -337,6 +365,15 @@ export async function updateProjectAction(
     // rafraîchir — car l'utilisateur n'a pas à distinguer laquelle des deux.
     if (isMissingRelation(error)) {
       return { status: "error", message: STALE_STACK_ERROR, fieldErrors: {} };
+    }
+    // Story 5.12 — L'image de couverture a été supprimée depuis l'ouverture du
+    // formulaire (bibliothèque, 5.13), ou l'identifiant a été forgé.
+    if (isMissingCover(error)) {
+      return {
+        status: "error",
+        message: STALE_COVER_ERROR,
+        fieldErrors: { coverId: "Cette image n'existe plus." },
+      };
     }
     const raw = error instanceof Error ? error.message : String(error);
     console.error(

@@ -21,6 +21,9 @@ function queryPublishedProjects(category: ProjectCategory) {
     orderBy: { sortOrder: "asc" },
     include: {
       highlights: { orderBy: { sortOrder: "asc" } },
+      // Story 5.12 — Couverture téléversée (AC5). `cover` est nullable : un
+      // projet sans illustration reste parfaitement valide.
+      cover: true,
     },
   });
 }
@@ -98,6 +101,9 @@ function queryProjectsForPreview(category: ProjectCategory) {
     orderBy: { sortOrder: "asc" },
     include: {
       highlights: { orderBy: { sortOrder: "asc" } },
+      // Story 5.12 — Couverture téléversée (AC5). `cover` est nullable : un
+      // projet sans illustration reste parfaitement valide.
+      cover: true,
     },
   });
 }

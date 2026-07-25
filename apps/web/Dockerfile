@@ -44,6 +44,11 @@ RUN bun run build:reset-2fa
 # ---------- development ----------
 FROM node:22-alpine AS development
 WORKDIR /app
+# Story 5.12 — même exigence qu'en production : le serveur de dev exécute sharp
+# au runtime des téléversements. Sans libvips ici, la fonctionnalité serait
+# testable en prod mais pas en local, à rebours de la story 2.3 (« développer
+# dans les mêmes conditions qu'en production »).
+RUN apk add --no-cache vips
 COPY --from=oven/bun:1.3.3-alpine /usr/local/bin/bun /usr/local/bin/bun
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -73,7 +78,25 @@ COPY prisma/prod.config.js /opt/prisma-tools/prisma.config.js
 FROM node:22-alpine AS production
 WORKDIR /app
 ENV NODE_ENV=production
+# Story 5.12 — libvips au RUNTIME, et pas seulement au build.
+#
+# 🛑 PIÈGE (le point dur de la story, comme Prisma en 4.6) : sharp traite les
+# images au moment de l'UPLOAD, donc dans ce conteneur-ci, pas dans `builder`.
+# `vips-dev` à l'étage builder ne sert qu'à l'installation du paquet ; sans
+# libvips ici, le premier téléversement en production échoue sur
+# « Could not load the "sharp" module using the linux-musl-arm64 runtime ».
+#
+# `vips` (bibliothèque partagée) suffit au runtime : `vips-dev` n'apporte que
+# les en-têtes de compilation, inutiles ici et plus lourds.
+RUN apk add --no-cache vips
 RUN addgroup -g 1001 -S nodejs && adduser -u 1001 -S nextjs -G nodejs
+# Story 5.12 — Point de montage du volume `portfolio_uploads` (AC1).
+#
+# ⚠️ Créé ET attribué à `nextjs` AVANT le `USER nextjs` : le conteneur tourne en
+# non-root (Epic 2). Docker donne à un volume nommé vide la propriété du
+# répertoire qu'il recouvre au premier montage — sans ce `chown`, il hériterait
+# de root:root et tout téléversement échouerait sur EACCES.
+RUN mkdir -p /app/uploads && chown nextjs:nodejs /app/uploads
 # La sortie standalone ne contient ni les assets statiques ni public/ :
 # les trois copies sont obligatoires, dans cet ordre.
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./

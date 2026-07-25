@@ -54,7 +54,17 @@ model Project {
   published   Boolean         @default(false)
   link        String?
   repoUrl     String?
-  // cover/coverId : ajoutés en Epic 5 avec le modèle Media (story 4.1, décision).
+  // Story 5.12 — Image de couverture. Réservée en 4.1 (« cover/coverId ajoutés
+  // en Epic 5 avec Media »), livrée ici par migration ADDITIVE.
+  //
+  // ⚠️ `onDelete: SetNull` et NON `Cascade` : supprimer une image ne doit
+  // JAMAIS supprimer les projets qui l'utilisent. En pratique la story 5.13
+  // interdit de supprimer un média encore référencé (garde applicative) ; ce
+  // `SetNull` est la ceinture de sécurité au niveau de la base si une
+  // suppression passait malgré tout — le projet perd son illustration, pas son
+  // existence.
+  coverId     String?
+  cover       Media?          @relation(fields: [coverId], references: [id], onDelete: SetNull)
   highlights  Highlight[]
   stacks      Stack[]         @relation("ProjectStacks")
   createdAt   DateTime        @default(now())
@@ -119,6 +129,45 @@ model Stack {
   iconKey  String?
   level    SkillLevel?
   projects Project[]   @relation("ProjectStacks")
+}
+
+// Story 5.12 — Fichier image téléversé depuis l'administration (PLAN §2.1).
+//
+// ⚠️ Le FICHIER lui-même ne vit PAS en base : il est écrit sur le volume
+// persistant `portfolio_uploads` monté sur `/app/uploads` (AC1, « hors de
+// l'image du conteneur »). Cette table n'en porte que les MÉTADONNÉES.
+//
+//  - path        : chemin RELATIF au volume (ex. `2026/07/abc123.webp`), jamais
+//                  un chemin absolu machine — sinon la base deviendrait
+//                  dépendante de l'arborescence d'un hôte donné et casserait au
+//                  moindre changement de montage. `@unique` : deux
+//                  enregistrements ne peuvent pas revendiquer le même fichier,
+//                  sans quoi supprimer l'un effacerait le fichier de l'autre.
+//  - width/height: dimensions RÉELLES de l'image produite (AC2). Servent les
+//                  attributs `width`/`height` de `next/image` : sans elles, le
+//                  navigateur ne peut pas réserver la place et la page saute au
+//                  chargement (CLS).
+//  - blurDataUrl : miniature floutée en data-URI, placeholder pendant le
+//                  chargement (AC2, « éviter que la page ne saute »). Stockée
+//                  en base et non recalculée : elle est minuscule (quelques
+//                  centaines d'octets) et la recalculer à chaque rendu
+//                  imposerait de relire le fichier.
+//  - alt         : texte alternatif (AC3). NULLABLE à dessein — l'AC demande de
+//                  SIGNALER l'absence comme un défaut d'accessibilité, pas de
+//                  la rendre impossible. Un champ obligatoire pousserait à
+//                  saisir n'importe quoi pour passer, ce qui est pire pour
+//                  l'accessibilité qu'un manque explicitement signalé.
+model Media {
+  id          String    @id @default(cuid())
+  path        String    @unique
+  width       Int
+  height      Int
+  blurDataUrl String    @db.Text
+  alt         String?
+  createdAt   DateTime  @default(now())
+  // Story 5.13 : c'est cette relation inverse qui permet de DÉTECTER les usages
+  // avant une suppression (garde d'intégrité).
+  projects    Project[]
 }
 
 // Story 4.2 — Parcours (rendu par Testimonials.tsx, id="parcours").

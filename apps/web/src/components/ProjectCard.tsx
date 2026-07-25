@@ -40,6 +40,24 @@ export type ProjectCardData = {
    * et l'upload de couverture est la story 5.12).
    */
   image?: StaticImageData;
+  /**
+   * Story 5.12 (AC5) — Couverture TÉLÉVERSÉE depuis l'administration.
+   *
+   * ⚠️ Distincte de `image`, qui reste un import STATIQUE hérité d'Epic 4 (la
+   * jointure par slug). Les deux coexistent le temps que les anciens projets
+   * migrent vers une couverture téléversée ; `cover` est PRIORITAIRE, puisque
+   * c'est le choix explicite de Jeevons dans l'éditeur.
+   *
+   * `alt` peut être `null` : l'absence de texte alternatif est signalée comme un
+   * défaut en administration (AC3), sans jamais bloquer l'affichage public.
+   */
+  cover?: {
+    url: string;
+    width: number;
+    height: number;
+    blurDataUrl: string;
+    alt: string | null;
+  } | null;
   /** Story 5.9 (AC4) — résultat chiffré. Vide/absent : la section est MASQUÉE. */
   outcome?: string | null;
   /**
@@ -136,7 +154,33 @@ export const ProjectCard = ({
           ) : null}
         </div>
         <div className="relative">
-          {project.image ? (
+          {project.cover ? (
+            /* Story 5.12 — `<img>` et NON `next/image` : le fichier est déjà
+               normalisé en WebP et redimensionné par sharp au téléversement, le
+               repasser dans l'optimiseur de Next le retraiterait sans gain.
+
+               ⚠️ `width`/`height` explicites + `blurDataUrl` en fond : le
+               navigateur connaît le ratio AVANT le chargement et réserve la
+               place, ce qui empêche la page de sauter (AC2). C'est la raison
+               d'être des colonnes `width`/`height` du modèle `Media`. */
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              className="mt-8 -mb-4 md:mb-0 lg:mt-0 lg:absolute lg:h-full lg:w-auto lg:max-w-[450px]"
+              src={project.cover.url}
+              width={project.cover.width}
+              height={project.cover.height}
+              /* `alt=""` quand le texte manque : une image DÉCORATIVE est
+                 ignorée par les lecteurs d'écran, ce qui vaut mieux qu'un nom
+                 de fichier lu à voix haute. Le défaut est signalé côté
+                 administration (AC3), là où il peut être corrigé. */
+              alt={project.cover.alt ?? ""}
+              loading="lazy"
+              style={{
+                backgroundImage: `url(${project.cover.blurDataUrl})`,
+                backgroundSize: "cover",
+              }}
+            />
+          ) : project.image ? (
             <Image
               className="mt-8 -mb-4 md:mb-0 lg:mt-0 lg:absolute lg:h-full lg:w-auto lg:max-w-[450px]"
               src={project.image}

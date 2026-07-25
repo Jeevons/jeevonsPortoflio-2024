@@ -38,6 +38,15 @@ services:
       # les volumes NOMMÉS, donc portfolio_db_data — la base et le compte admin.
       - /app/node_modules
       - /app/.next
+      # Story 5.12 — Images téléversées, sur un volume NOMMÉ comme en production
+      # (docker-compose.prod.yml). Monté PAR-DESSUS le bind `./apps/web:/app`,
+      # il empêche les fichiers de dev d'atterrir dans le dépôt : ils y seraient
+      # versionnés par accident, alors qu'un upload est une donnée, pas du code.
+      #
+      # ⚠️ Volume NOMMÉ et non anonyme : les images survivent ainsi à un
+      # `docker compose rm -f -v web` (la manœuvre documentée plus haut pour
+      # rafraîchir node_modules), qui détruit les volumes anonymes.
+      - portfolio_uploads_dev:/app/uploads
     depends_on:
       db:
         condition: service_healthy
@@ -74,3 +83,4 @@ services:
 
 volumes:
   portfolio_db_data:
+  portfolio_uploads_dev:

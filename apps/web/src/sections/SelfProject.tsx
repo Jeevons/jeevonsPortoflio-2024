@@ -3,10 +3,11 @@ import insureLandingPage from "@/assets/images/insureLanding-page.webp";
 import sleepingAppMockup from "@/assets/images/sleepingApp-mockup.webp";
 import sunnysideAgency from "@/assets/images/sunnyside-landingPage.webp";
 import { ProjectList, type Project } from "@/components/ProjectList";
+import { toCardCover } from "@/lib/media";
 import { getProjectsForPreview, getPublishedProjects } from "@/lib/projects";
 import type { StaticImageData } from "next/image";
 
-// Jointure locale slug → image (piège n°4, story 4.1) : cf. Projects.tsx.
+// Jointure locale slug → image, repli hérité de 4.1 : cf. Projects.tsx.
 const projectImagesBySlug: Record<string, StaticImageData> = {
   insure: insureLandingPage,
   sunnyside: sunnysideAgency,
@@ -35,6 +36,8 @@ export const SelfProjectsSection = async ({
     })),
     link: project.link ?? "",
     image: projectImagesBySlug[project.slug],
+    // Story 5.12 (AC5) — couverture téléversée, prioritaire (cf. Projects.tsx).
+    cover: toCardCover(project.cover),
     // Story 5.9 (AC4) : vide → la carte masque la section correspondante.
     outcome: project.outcome,
     // Story 5.11 (AC2) — repère « brouillon » en aperçu (cf. Projects.tsx).

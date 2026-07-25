@@ -1,13 +1,15 @@
 import maufebWebsite from "@/assets/images/maufebMode-mockup.webp";
 import quantumWebSite from "@/assets/images/quantumWebSite-mockup.webp";
 import { ProjectList, type Project } from "@/components/ProjectList";
+import { toCardCover } from "@/lib/media";
 import { getProjectsForPreview, getPublishedProjects } from "@/lib/projects";
 import type { StaticImageData } from "next/image";
 
-// Jointure locale slug → image (piège n°4, story 4.1) : le modèle Media
-// n'existe qu'en Epic 5. Les projets (texte/lien/period) viennent de la base,
-// mais l'image reste un import statique associé par slug. Le contrat
-// `image: StaticImageData` de ProjectList reste ainsi intact (AC3).
+// Jointure locale slug → image, HÉRITÉE de la story 4.1 (le modèle Media
+// n'existait pas encore). Conservée en REPLI pour les projets historiques qui
+// n'ont pas encore reçu de couverture téléversée : la story 5.12 ajoute
+// `cover`, qui est prioritaire dès qu'il est renseigné. Cette table pourra
+// disparaître une fois tous les projets illustrés depuis l'administration.
 const projectImagesBySlug: Record<string, StaticImageData> = {
   quantum: quantumWebSite,
   "maufeb-mode": maufebWebsite,
@@ -36,6 +38,10 @@ export const ProjectsSection = async ({
     })),
     link: project.link ?? "",
     image: projectImagesBySlug[project.slug],
+    // Story 5.12 (AC5) — couverture téléversée. PRIORITAIRE sur l'import
+    // statique ci-dessus (voir ProjectCard) : c'est le choix explicite fait
+    // dans l'éditeur.
+    cover: toCardCover(project.cover),
     // Story 5.9 (AC4) : vide → la carte masque la section correspondante.
     outcome: project.outcome,
     // Story 5.11 (AC2) — en aperçu, distinguer les brouillons des projets déjà

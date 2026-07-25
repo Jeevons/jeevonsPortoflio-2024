@@ -26,6 +26,7 @@ import {
   type HighlightDraft,
 } from "./highlights-editor";
 import { ProjectPreview } from "./project-preview";
+import { CoverSelector } from "./cover-selector";
 import { StacksSelector } from "./stacks-selector";
 
 // Story 5.8 — Formulaire de projet, création ET modification (AC2, AC3, AC4).
@@ -77,6 +78,8 @@ type ProjectFormProps = {
     highlights: { id: string; label: string }[];
     /** Story 5.9 — technologies déjà associées (AC2). */
     stacks: { id: string; name: string }[];
+    /** Story 5.12 — image de couverture actuelle, `null` si le projet n'en a pas. */
+    coverId: string | null;
   };
   /** Story 5.9 — technologies proposées au sélecteur (AC2). */
   stackOptions: AdminStackOption[];
@@ -120,6 +123,9 @@ export function ProjectForm({ project, stackOptions }: ProjectFormProps) {
       // du schéma soit satisfait.
       highlights: [],
       stackIds: [],
+      // Story 5.12 — idem : la couverture a son propre état local (ci-dessous),
+      // car le sélecteur gère aussi le téléversement.
+      coverId: null,
     },
   });
 
@@ -132,6 +138,11 @@ export function ProjectForm({ project, stackOptions }: ProjectFormProps) {
   );
   const [stackIds, setStackIds] = useState<string[]>(
     () => project?.stacks.map((stack) => stack.id) ?? [],
+  );
+  // Story 5.12 (AC5) — Couverture sélectionnée. `null` = projet sans image, un
+  // état parfaitement valide.
+  const [coverId, setCoverId] = useState<string | null>(
+    () => project?.coverId ?? null,
   );
 
   // AC3 — Abonnement aux champs qui alimentent l'aperçu : chaque frappe provoque
@@ -430,8 +441,16 @@ export function ProjectForm({ project, stackOptions }: ProjectFormProps) {
           onChange={setStackIds}
         />
 
-        {/* `published` exposé SIMPLEMENT (piège n°6) : la mécanique brouillon /
-          aperçu `?preview=1` est la story 5.11. */}
+        {/* AC5 (5.12) — couverture : téléversement ou reprise d'une image de la
+          bibliothèque, sans quitter le formulaire. */}
+        <CoverSelector
+          value={coverId}
+          onChange={setCoverId}
+          error={state.fieldErrors.coverId}
+        />
+
+        {/* `published` exposé SIMPLEMENT : la mécanique brouillon / aperçu sur
+          la route dédiée `/preview` a été livrée par la story 5.11. */}
         <label className="flex w-fit items-center gap-3 text-sm">
           <input
             type="checkbox"

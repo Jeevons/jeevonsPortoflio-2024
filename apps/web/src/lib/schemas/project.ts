@@ -192,10 +192,24 @@ export const projectSchema = z.object({
   // serveur vérifie de son côté que chaque identifiant existe réellement, car
   // cette liste reste une entrée utilisateur.
   stackIds: z.array(z.string().trim().min(1)),
-  // `published` est exposé en lecture/écriture SIMPLE ici (piège n°6) : la
-  // gestion brouillon/preview (`?preview=1`, visibilité conditionnelle) est la
-  // story 5.11. Une case à cocher absente du POST vaut `false`.
+  // `published` est exposé en lecture/écriture SIMPLE ici : la gestion
+  // brouillon/aperçu (route dédiée `/preview`, visibilité conditionnelle) a été
+  // livrée par la story 5.11. Une case à cocher absente du POST vaut `false`.
   published: z.boolean(),
+  // Story 5.12 (AC5) — Image de couverture, par identifiant de `Media`.
+  //
+  // OPTIONNELLE : un projet sans illustration reste parfaitement valide, et le
+  // site public se contente alors de ne rien afficher. Vide → `null`, comme les
+  // autres champs facultatifs.
+  //
+  // Le sélecteur ne propose que des médias EXISTANTS, mais cette valeur reste
+  // une entrée utilisateur : la Server Action vérifie de son côté que
+  // l'identifiant correspond à un média réel, exactement comme pour `stackIds`.
+  coverId: z
+    .string()
+    .trim()
+    .transform((value) => (value === "" ? null : value))
+    .nullable(),
 });
 
 /** Valeurs validées d'un projet — contrat unique client ↔ serveur. */
@@ -237,6 +251,9 @@ export function projectFormDataToInput(formData: FormData): unknown {
     link: text("link"),
     repoUrl: text("repoUrl"),
     outcome: text("outcome"),
+    // Story 5.12 — Couverture. Champ caché piloté par le sélecteur d'images :
+    // absent ou vide → `null`, c'est-à-dire « ce projet n'a pas d'illustration ».
+    coverId: text("coverId"),
     // Une case NON cochée n'est pas envoyée du tout : absence = `false`. On teste
     // la PRÉSENCE de la clé plutôt que l'égalité à « on », qui est une convention
     // de navigateur : la seule chose qui fasse sens ici est « la case était-elle
