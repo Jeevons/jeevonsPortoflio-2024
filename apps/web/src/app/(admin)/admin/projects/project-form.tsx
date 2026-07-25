@@ -5,6 +5,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
+import { MediaSelector } from "@/components/admin/media-selector";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { ProjectCategory } from "@/generated/prisma/enums";
 import type { AdminStackOption } from "@/lib/admin/projects";
@@ -26,7 +27,6 @@ import {
   type HighlightDraft,
 } from "./highlights-editor";
 import { ProjectPreview } from "./project-preview";
-import { CoverSelector } from "./cover-selector";
 import { StacksSelector } from "./stacks-selector";
 
 // Story 5.8 — Formulaire de projet, création ET modification (AC2, AC3, AC4).
@@ -443,7 +443,12 @@ export function ProjectForm({ project, stackOptions }: ProjectFormProps) {
 
         {/* AC5 (5.12) — couverture : téléversement ou reprise d'une image de la
           bibliothèque, sans quitter le formulaire. */}
-        <CoverSelector
+        <MediaSelector
+          name="coverId"
+          legend="Image de couverture"
+          removeLabel="Retirer la couverture"
+          pickerLabel="Choisir une image de couverture"
+          emptyLabel="Aucune image dans la bibliothèque. Téléversez-en une pour illustrer ce projet."
           value={coverId}
           onChange={setCoverId}
           error={state.fieldErrors.coverId}

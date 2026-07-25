@@ -13,16 +13,16 @@ import { prisma } from "@/lib/db";
 //  - `Project.coverId` EST une vraie relation (5.12), déclarée `onDelete:
 //    SetNull` — la base accepterait donc la suppression et VIDERAIT la
 //    couverture des projets concernés, sans rien signaler ;
-//  - `TimelineEntry.avatarId` est un `String?` SANS relation déclarée (décision
-//    de la story 4.2 : « pas de relation ici, joint par slug »). Aucune
-//    contrainte ne le protège du tout.
+//  - `TimelineEntry.avatarId` est devenu une vraie relation en 5.14, elle aussi
+//    en `onDelete: SetNull` — même conséquence : la base viderait l'illustration
+//    des entrées concernées sans rien signaler.
 // S'en remettre à la base laisserait donc passer les deux cas. La détection est
 // faite ici, explicitement, colonne par colonne.
 //
-// ⚠️ CONÇU POUR ÊTRE ÉTENDU. Les stories 5.14 (avatars du parcours) et 5.17
-// (CV) ajouteront des références à `Media`. Chacune doit ajouter SON test dans
-// `findMediaUsages` — c'est le point unique à compléter, et l'oublier ferait
-// réapparaître exactement le trou que cette story vient boucher.
+// ⚠️ CONÇU POUR ÊTRE ÉTENDU. La story 5.17 (CV) ajoutera une référence à
+// `Media` ; elle devra ajouter SON test dans `findMediaUsages` ET dans
+// `findAllMediaUsages` — c'est le point unique à compléter, et l'oublier ferait
+// réapparaître exactement le trou que cette garde vient boucher.
 
 /** Un contenu qui référence le média, décrit pour être AFFICHÉ tel quel. */
 export type MediaUsage = {

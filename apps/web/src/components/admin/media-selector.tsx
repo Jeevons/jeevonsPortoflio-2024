@@ -2,15 +2,25 @@
 
 import { useEffect, useRef, useState } from "react";
 
-// Story 5.12 (AC1, AC3, AC5) — Sélecteur de l'IMAGE DE COUVERTURE d'un projet.
+// Story 5.12 (AC1, AC3, AC5) — Sélecteur d'IMAGE, téléversement compris.
 //
 // Deux gestes en un seul endroit : téléverser une nouvelle image, ou reprendre
 // une image déjà présente dans la bibliothèque. Les séparer obligerait à quitter
-// le formulaire de projet pour revenir ensuite, en perdant la saisie en cours.
+// le formulaire pour revenir ensuite, en perdant la saisie en cours.
 //
 // ⚠️ Composant CONTRÔLÉ, comme `StacksSelector` (5.9) : l'état de sélection vit
 // dans le formulaire parent, qui alimente déjà l'aperçu live. Le dupliquer ici
 // créerait deux sources de vérité pouvant diverger.
+//
+// ⚠️ Story 5.14 — GÉNÉRALISÉ et DÉPLACÉ ici (il vivait sous `admin/projects/`
+// sous le nom `CoverSelector`). Le parcours a exactement le même besoin :
+// choisir ou téléverser une illustration. Le dupliquer aurait créé deux
+// implémentations d'un même geste, vouées à diverger — et l'infra média de
+// 5.12/5.13 est explicitement conçue pour être réutilisée, pas réécrite.
+//
+// Rien de spécifique à un modèle ne subsiste : le composant ne connaît ni les
+// projets, ni le parcours. Ce qui varie (nom du champ posté, libellés) est
+// passé en props.
 
 /** Vue d'un média telle que la route d'administration la renvoie. */
 export type MediaOption = {
@@ -22,15 +32,38 @@ export type MediaOption = {
   alt: string | null;
 };
 
-type CoverSelectorProps = {
-  /** Média sélectionné, ou `null` : un projet sans illustration est valide. */
+type MediaSelectorProps = {
+  /** Média sélectionné, ou `null` : un contenu sans illustration est valide. */
   value: string | null;
   onChange: (mediaId: string | null) => void;
   /** Erreur serveur portant sur ce champ (média supprimé entre-temps). */
   error?: string;
+  /**
+   * Nom du champ caché posté avec le formulaire (`coverId` pour un projet,
+   * `avatarId` pour une entrée de parcours). C'est la SEULE chose qui rattache
+   * ce composant générique au modèle qui l'utilise.
+   */
+  name: string;
+  /** Titre du `fieldset` (ex. « Image de couverture », « Illustration »). */
+  legend: string;
+  /** Libellé du bouton de retrait, nommant ce qu'on retire. */
+  removeLabel: string;
+  /** Libellé du `radiogroup`, annoncé par les lecteurs d'écran. */
+  pickerLabel: string;
+  /** Invite affichée quand la bibliothèque est vide. */
+  emptyLabel: string;
 };
 
-export function CoverSelector({ value, onChange, error }: CoverSelectorProps) {
+export function MediaSelector({
+  value,
+  onChange,
+  error,
+  name,
+  legend,
+  removeLabel,
+  pickerLabel,
+  emptyLabel,
+}: MediaSelectorProps) {
   const [library, setLibrary] = useState<MediaOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -136,11 +169,11 @@ export function CoverSelector({ value, onChange, error }: CoverSelectorProps) {
 
   return (
     <fieldset className="flex flex-col gap-3 rounded-lg border border-border p-4">
-      <legend className="px-1 text-sm font-medium">Image de couverture</legend>
+      <legend className="px-1 text-sm font-medium">{legend}</legend>
 
       {/* Le formulaire parent poste un FormData : la sélection doit exister en
           tant que champ. Caché car pilotée par la grille ci-dessous. */}
-      <input type="hidden" name="coverId" value={value ?? ""} />
+      <input type="hidden" name={name} value={value ?? ""} />
 
       <p className="text-xs text-muted-foreground">
         Facultative. Formats acceptés : JPEG, PNG, WebP, AVIF, GIF, TIFF — 8 Mo
@@ -160,10 +193,14 @@ export function CoverSelector({ value, onChange, error }: CoverSelectorProps) {
           onChange={(event) => setAltDraft(event.target.value)}
           disabled={uploading}
           placeholder="Ex. : page d'accueil du site, vue sur mobile"
-          aria-describedby="cover-alt-hint"
+          // ⚠️ Identifiant DÉRIVÉ du nom du champ : deux sélecteurs sur une même
+          // page (cas possible dès qu'un formulaire porte deux illustrations)
+          // partageraient sinon le même `id`, ce qui produit un HTML invalide et
+          // fait pointer les deux `aria-describedby` sur le même texte.
+          aria-describedby={`${name}-alt-hint`}
           className="rounded-md border border-border bg-background px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         />
-        <span id="cover-alt-hint" className="text-xs text-muted-foreground">
+        <span id={`${name}-alt-hint`} className="text-xs text-muted-foreground">
           Décrit l&apos;image pour les personnes qui ne la voient pas. Vous
           pourrez le corriger plus tard depuis la bibliothèque d&apos;images.
         </span>
@@ -208,7 +245,7 @@ export function CoverSelector({ value, onChange, error }: CoverSelectorProps) {
             onClick={() => onChange(null)}
             className="rounded-md border border-border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
-            Retirer la couverture
+            {removeLabel}
           </button>
         ) : null}
 
@@ -242,16 +279,13 @@ export function CoverSelector({ value, onChange, error }: CoverSelectorProps) {
       {loading ? (
         <p className="text-sm text-muted-foreground">Chargement…</p>
       ) : library.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          Aucune image dans la bibliothèque. Téléversez-en une pour illustrer ce
-          projet.
-        </p>
+        <p className="text-sm text-muted-foreground">{emptyLabel}</p>
       ) : (
         // Grille de choix en boutons radio : un seul média sélectionnable, et
         // la navigation par flèches est native au clavier (AC5).
         <div
           role="radiogroup"
-          aria-label="Choisir une image de couverture"
+          aria-label={pickerLabel}
           className="grid grid-cols-3 gap-2 sm:grid-cols-4"
         >
           {library.map((item) => {
@@ -265,7 +299,10 @@ export function CoverSelector({ value, onChange, error }: CoverSelectorProps) {
               >
                 <input
                   type="radio"
-                  name="coverPicker"
+                  // Groupe de radios DISTINCT par sélecteur : partager le nom
+                  // entre deux instances les ferait s'exclure mutuellement,
+                  // choisir une illustration désélectionnerait la couverture.
+                  name={`${name}-picker`}
                   className="sr-only"
                   checked={isSelected}
                   onChange={() => onChange(item.id)}

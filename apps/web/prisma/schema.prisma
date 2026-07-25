@@ -168,6 +168,10 @@ model Media {
   // Story 5.13 : c'est cette relation inverse qui permet de DÉTECTER les usages
   // avant une suppression (garde d'intégrité).
   projects    Project[]
+  // Story 5.14 : second usage possible d'un média — l'illustration d'une entrée
+  // de parcours. Comme `projects`, cette relation inverse est ce qui permet à la
+  // garde de 5.13 de refuser la suppression d'une image encore utilisée.
+  timeline    TimelineEntry[]
 }
 
 // Story 4.2 — Parcours (rendu par Testimonials.tsx, id="parcours").
@@ -177,12 +181,35 @@ model TimelineEntry {
   title     String
   place     String
   body      String  @db.Text
-  // avatarId : le modèle Media n'existe qu'en Epic 5. Pas de relation ici ;
-  // l'avatar reste un import statique joint par `slug` dans le conteneur (4.2, décision).
+  // Story 5.14 — ILLUSTRATION de l'entrée. `avatarId` existait depuis 4.2 comme
+  // un `String?` NU : le modèle `Media` n'existait pas encore, et l'avatar était
+  // un import statique joint par `slug` dans le conteneur (décision 4.2).
+  //
+  // `Media` existant depuis 5.12, la colonne est PROMUE en vraie relation par
+  // migration additive (décision Jeevons, story 5.14). Aucune donnée n'est
+  // perdue : `avatarId` valait `null` partout (le seed ne le renseigne pas).
+  //
+  // ⚠️ `onDelete: SetNull` et NON `Cascade`, exactement comme `Project.coverId`
+  // (5.12) : supprimer une image ne doit JAMAIS supprimer les entrées de
+  // parcours qui l'utilisent. La garde applicative de 5.13
+  // (`findMediaUsages`) interdit déjà de supprimer un média référencé ; ce
+  // `SetNull` est la ceinture de sécurité au niveau de la base — l'entrée perd
+  // son illustration, pas son existence.
   avatarId  String?
+  avatar    Media?  @relation(fields: [avatarId], references: [id], onDelete: SetNull)
   startYear Int
+  // `endYear` OPTIONNEL — c'est ce qui exprime « poste toujours en cours »
+  // (5.14, AC1 : « une entrée toujours en cours peut être enregistrée sans
+  // année de fin »). Le schéma partagé impose en plus `endYear >= startYear`
+  // quand la valeur est présente.
   endYear   Int?
   sortOrder Int     @default(0)
+  // ⚠️ `@default(true)` HÉRITÉ de 4.2 (contrairement à `Project` = `false`) : il
+  // sert au SEED, qui crée des entrées déjà publiées. Le formulaire
+  // d'administration, lui, propose « Publiée » DÉCOCHÉE à la création (décision
+  // Jeevons, 5.14) — même geste que pour un projet, pour ne jamais publier par
+  // inadvertance (AC3). Le défaut de la colonne n'est donc jamais atteint
+  // depuis l'admin, qui envoie toujours une valeur explicite.
   published Boolean @default(true)
 
   @@index([published, sortOrder])
