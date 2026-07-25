@@ -127,18 +127,15 @@ export default async function AdminDashboardPage() {
               </p>
               {/* `buttonVariants()` sur un `<Link>` : apparence de bouton, mais
                   vraie sémantique de lien — et aucun `<button>` imbriqué dans un
-                  `<a>` (HTML invalide, AGENTS.md §6). L'écran de création est la
-                  story 5.8 : le lien reste donc désactivé visuellement tant
-                  qu'il n'existe pas, et l'invitation porte le message. */}
-              <span
-                className={cn(
-                  buttonVariants({ variant: "outline" }),
-                  "w-fit cursor-not-allowed opacity-50",
-                )}
-                title="Gestion des projets — écran à venir"
+                  `<a>` (HTML invalide, AGENTS.md §6).
+                  Story 5.8 — l'écran de création existe désormais : le
+                  placeholder désactivé devient le vrai lien annoncé. */}
+              <Link
+                href="/admin/projects/new"
+                className={cn(buttonVariants({ variant: "outline" }), "w-fit")}
               >
-                Créer mon premier projet — à venir
-              </span>
+                Créer mon premier projet
+              </Link>
             </CardContent>
           </Card>
         ) : (
