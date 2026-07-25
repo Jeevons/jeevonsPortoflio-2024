@@ -74,6 +74,22 @@ export default async function AdminProjectsPage({
           <div className="flex flex-wrap gap-2">
             {/* Story 5.10 — Le réordonnancement a son propre écran : il exige la
                 liste COMPLÈTE et non filtrée (voir order/page.tsx). */}
+            {/* Story 5.11 (AC2) — Accès à l'APERÇU des brouillons. Sans ce
+                point d'entrée, la surface d'aperçu existerait sans être
+                atteignable autrement qu'en tapant l'URL à la main.
+                `target="_blank"` : on ne quitte pas l'écran de gestion pour
+                aller voir le rendu — le retour se fait par un simple changement
+                d'onglet. Lien INTERNE, donc `rel="noopener"` suffirait, mais on
+                garde la paire complète imposée par AGENTS.md §6. */}
+            <Link
+              href="/preview"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(buttonVariants({ variant: "outline" }))}
+            >
+              Aperçu du site
+              <span className="sr-only"> (nouvel onglet)</span>
+            </Link>
             <Link
               href="/admin/projects/order"
               className={cn(buttonVariants({ variant: "outline" }))}

@@ -42,6 +42,15 @@ export type ProjectCardData = {
   image?: StaticImageData;
   /** Story 5.9 (AC4) — résultat chiffré. Vide/absent : la section est MASQUÉE. */
   outcome?: string | null;
+  /**
+   * Story 5.11 (AC2) — ce projet est un BROUILLON affiché en mode aperçu.
+   *
+   * ⚠️ Ce drapeau n'a de sens QU'EN APERÇU : la lecture publique ne renvoie
+   * jamais de brouillon, il y vaut donc toujours `false`. Il ne contrôle PAS la
+   * visibilité (c'est la lecture qui le fait, côté serveur) — il ne fait
+   * qu'ÉTIQUETER une carte que Jeevons est seul à voir.
+   */
+  draft?: boolean;
 };
 
 type ProjectCardProps = {
@@ -64,6 +73,17 @@ export const ProjectCard = ({
             <span>&bull;</span>
             <span className="text-3xs md:text-sm">{project.year}</span>
           </div>
+
+          {/* Story 5.11 (AC2) — étiquette « Brouillon » sur les cartes non
+              publiées, visibles uniquement en mode aperçu. Contraste AA sur le
+              fond sombre des cartes (ambre 200 sur ambre 500/15) et texte réel
+              plutôt qu'une pastille de couleur seule : l'information ne repose
+              pas sur la couleur (AGENTS.md §6). */}
+          {project.draft ? (
+            <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-amber-300/40 bg-amber-500/15 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-amber-200">
+              Brouillon — non publié
+            </p>
+          ) : null}
 
           <h3 className="font-serif text-2xl mt-2 md:text-4xl md:mt-5">
             {project.title}

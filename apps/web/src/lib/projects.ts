@@ -44,3 +44,60 @@ export async function getPublishedProjects(category: ProjectCategory) {
 export type PublishedProject = Awaited<
   ReturnType<typeof queryPublishedProjects>
 >[number];
+
+// ---------------------------------------------------------------------------
+// Story 5.11 — Lecture d'APERÇU (AC2). Brouillons INCLUS, JAMAIS cachée.
+// ---------------------------------------------------------------------------
+
+/**
+ * Les projets d'une catégorie, brouillons COMPRIS, pour le mode aperçu.
+ *
+ * ⚠️ PIÈGE CENTRAL (n°1) — cette lecture est délibérément SÉPARÉE du chemin
+ * public ci-dessus, et pour deux raisons cumulatives :
+ *
+ *  1. Elle n'est PAS cachée. `cachedPublishedProjects` est enrobée dans
+ *     `unstable_cache` sous le tag `projects`, partagé par tous les visiteurs et
+ *     agnostique de la session. Y faire transiter un brouillon le rendrait
+ *     servable à n'importe qui jusqu'à la prochaine invalidation — une fuite de
+ *     contenu non publié, c'est-à-dire exactement ce que l'AC1 interdit. Le
+ *     cache public ne doit contenir QUE du publié : c'est l'invariant.
+ *  2. Elle n'a pas de repli statique. `readWithFallback` (4.5) sert
+ *     `src/content/*.ts`, qui ne contient que de l'ancien contenu PUBLIÉ : il
+ *     n'aurait aucun brouillon à montrer et mentirait sur ce qui est en base.
+ *     L'aperçu suppose la base joignable ; si elle ne l'est pas, l'appelant
+ *     retombe sur la lecture publique (donc sur le repli), ce qui est le
+ *     comportement le moins surprenant.
+ *
+ * ⚠️ L'autorisation ne se décide PAS ici : l'appelant DOIT avoir validé la
+ * session via `isPreviewActive` (lib/preview.ts) avant d'appeler cette
+ * fonction. Elle est nommée `…ForPreview` pour que tout appel non gardé saute
+ * aux yeux à la relecture.
+ */
+export async function getProjectsForPreview(category: ProjectCategory) {
+  try {
+    return await queryProjectsForPreview(category);
+  } catch (error) {
+    // Base injoignable EN APERÇU : plutôt que de faire tomber la page entière,
+    // on retombe sur la lecture publique (cachée, avec son repli statique 4.5).
+    // L'aperçu ne montre alors aucun brouillon — acceptable, il en suppose
+    // l'accès à la base — mais le site reste debout (NFR17).
+    const raw = error instanceof Error ? error.message : String(error);
+    console.error(
+      `[preview] Lecture d'aperçu échouée — lecture publique servie. Cause : ${raw.replace(/\s+/g, " ").trim()}`,
+    );
+    return getPublishedProjects(category);
+  }
+}
+
+function queryProjectsForPreview(category: ProjectCategory) {
+  return prisma.project.findMany({
+    // Aucun filtre `published` : l'aperçu montre le contenu tel qu'il SERA une
+    // fois publié (AC2), donc brouillons et projets publiés ensemble, dans
+    // l'ordre d'affichage réel.
+    where: { category },
+    orderBy: { sortOrder: "asc" },
+    include: {
+      highlights: { orderBy: { sortOrder: "asc" } },
+    },
+  });
+}

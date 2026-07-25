@@ -17,6 +17,16 @@ import { TestimonialsSection } from "@/sections/Testimonials";
 // Valeur alignée sur REVALIDATE_SECONDS de lib/cache-tags.ts (3600 = 1 h).
 export const revalidate = 3600;
 
+// ⚠️ Story 5.11 — CETTE PAGE NE CONNAÎT PAS LE MODE APERÇU, délibérément.
+//
+// Lire un `searchParams` ici — même consommé dans un sous-arbre `<Suspense>` —
+// bascule la home ENTIÈRE en rendu dynamique : vérifié au build, `/` passait de
+// `○ (Static, 1h)` à `ƒ (Dynamic)`. Ce serait annuler l'ISR de la story 4.4 pour
+// TOUS les visiteurs au profit d'une fonction que seul l'administrateur utilise.
+//
+// L'aperçu des brouillons vit donc sur une route DÉDIÉE, `/preview` (décision
+// Jeevons, story 5.11), qui réutilise exactement les mêmes sections avec le
+// drapeau `preview`. Cette page-ci reste strictement publique et statique.
 export default function Home() {
   return (
     <div>

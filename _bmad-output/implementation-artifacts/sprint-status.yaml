@@ -41,7 +41,7 @@
 # - Retrospective appends its action items to action_items; sprint-status surfaces open ones
 
 generated: 2026-07-21
-last_updated: 2026-07-25 (Stories 5.9 et 5.10 → review · éditeur enrichi + réordonnancement drag & drop)
+last_updated: 2026-07-25 (Story 5.11 → review · brouillon/publié + aperçu sur route dédiée /preview)
 project: jeevonsPortoflio-2024
 project_key: NOKEY
 tracking_system: file-system
@@ -97,7 +97,7 @@ development_status:
   5-8-gerer-mes-projets: review
   5-9-decrire-finement-un-projet: review
   5-10-choisir-l-ordre-d-affichage-de-mes-projets: review
-  5-11-preparer-un-projet-avant-de-le-publier: ready-for-dev
+  5-11-preparer-un-projet-avant-de-le-publier: review
   5-12-illustrer-mes-projets: ready-for-dev
   5-13-gerer-ma-bibliotheque-d-images: ready-for-dev
   5-14-gerer-mon-parcours: ready-for-dev
