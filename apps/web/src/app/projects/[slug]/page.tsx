@@ -123,16 +123,22 @@ const ProjectPage = async ({ params }: ProjectPageProps) => {
       <main className="container py-24 lg:py-32">
         <ProjectDetailReveal>
           {/* Chemin de retour, en plus du menu : on arrive souvent ici depuis
-              un moteur de recherche, sans être passé par l'accueil. */}
+              un moteur de recherche, sans être passé par l'accueil.
+
+              🛑 `flex` ET NON `inline-flex` : en inline, ce lien partageait la
+              ligne du bloc société • période qui le suit, les deux textes se
+              touchaient et la marge de l'eyebrow restait sans effet (une marge
+              verticale ne pousse pas un élément inline). `w-fit` évite que la
+              zone cliquable ne s'étende sur toute la largeur du conteneur. */}
           <Link
             href="/#projects"
-            className="text-white/60 rounded-control focus-visible:outline-accent-from inline-flex items-center gap-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 hover:text-white"
+            className="rounded-control focus-visible:outline-accent-from flex w-fit items-center gap-2 border border-white/15 px-4 py-2 text-sm text-white/70 transition-colors hover:border-white/30 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4"
           >
             <span aria-hidden="true">&larr;</span>
             <span>Retour aux projets</span>
           </Link>
 
-          <p className="text-gradient-accent mt-8 inline-flex items-baseline gap-2 text-sm font-bold uppercase tracking-widest">
+          <p className="text-gradient-accent mt-10 flex flex-wrap items-baseline gap-2 text-sm font-bold uppercase tracking-widest">
             <span>{project.company}</span>
             <span aria-hidden="true">&bull;</span>
             <span>{project.period}</span>
