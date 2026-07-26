@@ -50,7 +50,8 @@ const NAV_ITEMS: NavItem[] = [
   // Story 5.13 — bibliothèque d'images livrée : l'entrée devient un vrai lien.
   { href: "/admin/media", label: "Médias", icon: ImageIcon, ready: true },
   { href: "/admin/messages", label: "Messages", icon: Mail, ready: false },
-  { href: "/admin/settings", label: "Réglages", icon: Settings, ready: false },
+  // Story 5.16 — écran d'édition des textes du site livré.
+  { href: "/admin/settings", label: "Réglages", icon: Settings, ready: true },
   {
     href: "/admin/settings/security",
     label: "Sécurité",
