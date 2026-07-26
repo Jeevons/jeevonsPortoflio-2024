@@ -1,3 +1,4 @@
+import { getPublicCv } from "@/lib/cv";
 import { getPublicStacks } from "@/lib/projects";
 import { getHobbies } from "@/lib/timeline";
 import {
@@ -13,10 +14,11 @@ import {
 // base (AC3). Elle était CODÉE EN DUR dans la vue client jusqu'ici ; les niveaux
 // saisis dans l'administration n'auraient donc eu aucun effet visible.
 export const AboutSection = async () => {
-  // Deux lectures indépendantes : aucune raison de les enchaîner.
-  const [hobbies, stacks] = await Promise.all([
+  // Trois lectures indépendantes : aucune raison de les enchaîner.
+  const [hobbies, stacks, cv] = await Promise.all([
     getHobbies(),
     getPublicStacks(),
+    getPublicCv(),
   ]);
 
   const hobbyViews: HobbyView[] = hobbies.map((hobby) => ({
@@ -36,5 +38,5 @@ export const AboutSection = async () => {
     iconKey: stack.iconKey,
   }));
 
-  return <AboutClient hobbies={hobbyViews} stacks={stackViews} />;
+  return <AboutClient hobbies={hobbyViews} stacks={stackViews} cv={cv} />;
 };

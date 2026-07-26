@@ -3,7 +3,10 @@ import Link from "next/link";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { getAdminSettings } from "@/lib/admin/settings";
 import { auth } from "@/lib/auth";
+import { CV_PUBLIC_URL, getAdminCv } from "@/lib/cv";
+import { mediaUrl } from "@/lib/media";
 
+import { CvUploader } from "./cv-uploader";
 import { SettingsForm } from "./settings-form";
 
 // Story 5.16 — ÉCRAN DES RÉGLAGES du site (AC1, AC4).
@@ -35,6 +38,7 @@ export default async function AdminSettingsPage({
   const email = session?.user?.email ?? "";
 
   const settings = await getAdminSettings();
+  const cv = await getAdminCv();
 
   // Retour d'action posé par la redirection de la Server Action : la
   // confirmation survit à la redirection, ce qu'un état React ne ferait pas.
@@ -76,6 +80,19 @@ export default async function AdminSettingsPage({
         ) : (
           <SettingsForm values={settings.values} />
         )}
+
+        <CvUploader
+          initialCv={
+            cv
+              ? {
+                  thumbnailUrl: mediaUrl(cv.thumbnailPath),
+                  thumbnailWidth: cv.thumbnailWidth,
+                  thumbnailHeight: cv.thumbnailHeight,
+                }
+              : null
+          }
+          cvUrl={CV_PUBLIC_URL}
+        />
 
         <p className="border-t border-border pt-6 text-sm text-muted-foreground">
           Votre mot de passe et la double authentification se règlent sur{" "}

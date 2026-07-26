@@ -1,6 +1,5 @@
 "use client";
 
-import jeevonsCv from "@/assets/images/jeevons-cv-2024-1.6_resultat.webp";
 import smileMemoji from "@/assets/images/jeevons-avatar-smiling.webp";
 import mapImage from "@/assets/images/map-tours.webp";
 import { Card } from "@/components/Card";
@@ -15,8 +14,11 @@ import Image from "next/image";
 
 // Vue client de la section À propos (Story 4.2). Les hobbies viennent de la base
 // (props depuis le conteneur serveur). Le drag conditionné par useReducedMotion
-// est conservé (pièges n°1). Le reste de la bento (CV, map) reste EN DUR — CV →
-// story 5.17.
+// est conservé (pièges n°1). La map reste EN DUR.
+//
+// Story 5.17 — Le CV vient désormais de la base (piège n°5). `cv` est `null`
+// tant qu'aucun PDF n'a été téléversé (état de départ légitime, pas une
+// panne) : la carte affiche alors un état NEUTRE plutôt qu'un lien mort.
 //
 // Story 5.15 — La TOOLBOX vient elle aussi de la base (AC3). Elle était un
 // tableau `toolboxItems` codé ici avec des imports statiques de SVG ; ce tableau
@@ -40,12 +42,22 @@ export type StackView = {
   iconKey: string | null;
 };
 
+/** CV courant tel que le rendu public le consomme (`lib/cv.ts`, story 5.17). */
+export type CvView = {
+  url: string;
+  thumbnailUrl: string;
+  thumbnailWidth: number;
+  thumbnailHeight: number;
+} | null;
+
 export const AboutClient = ({
   hobbies,
   stacks,
+  cv,
 }: {
   hobbies: HobbyView[];
   stacks: StackView[];
+  cv: CvView;
 }) => {
   const constraintRef = useRef(null);
   const shouldReduceMotion = useReducedMotion();
@@ -72,14 +84,30 @@ export const AboutClient = ({
                 description="Découvrez mon parcours, mes compétences et mes expériences."
                 indication="(Cliquez sur le cv pour l'ouvrir)"
               />
-              <a
-                href="/assets/docs/jeevons-cv-2024-1.6.pdf"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex w-40 mx-auto mt-2 md:mt-0"
-              >
-                <Image src={jeevonsCv} alt="CV image" />
-              </a>
+              {cv ? (
+                <a
+                  href={cv.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex w-40 mx-auto mt-2 md:mt-0"
+                >
+                  {/* Vignette déjà normalisée en WebP par sharp (5.17, comme
+                      les covers 5.12) : `<img>` plutôt que `next/image`,
+                      `width`/`height` explicites réservent la place (anti-CLS). */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={cv.thumbnailUrl}
+                    alt="Première page du CV"
+                    width={cv.thumbnailWidth}
+                    height={cv.thumbnailHeight}
+                  />
+                </a>
+              ) : (
+                // État neutre : aucun CV téléversé pour l'instant (piège n°5).
+                <p className="mx-auto mt-2 max-w-[10rem] text-center text-sm text-muted-foreground md:mt-0">
+                  CV bientôt disponible.
+                </p>
+              )}
             </Card>
             <Card className="h-[380px] md:col-span-3 lg:col-span-2">
               <CardHeader
