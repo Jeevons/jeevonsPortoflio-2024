@@ -4,7 +4,7 @@ baseline_commit: c408eae7818fb33ef915a70085775688fbf80640
 
 # Story 6.11: Consulter et télécharger le CV
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -129,28 +129,32 @@ La story 5.17 a livré **exactement** ce dont AC2 a besoin. Vérifié dans `lib/
 
 ## Tasks / Subtasks
 
-- [ ] **Tâche 0 — Prérequis & décisions** (AC: 1, 2, 3)
-  - [ ] 6.1 et 6.2 `done`. 🛑 **Décider et documenter** : comportement si `cv === null` (état neutre recommandé) · ajout de `/cv` au sitemap ou non (⚠️ fichier partagé avec 6.10) · repointage du lien de la carte `AboutClient` vers `/cv` (recommandé).
-  - [ ] 🛑 Confirmer : **aucune dépendance ajoutée**, `lib/cv.ts` et `api/cv/route.ts` **non modifiés**.
-- [ ] **Tâche 1 — Page `/cv`** (AC: 1, 2 ; pièges n°1, n°5)
-  - [ ] `src/app/cv/page.tsx`, publique, **`export const revalidate = 3600`** (littéral). Lit **`getPublicCv()`** ; l'intégration pointe **`CV_PUBLIC_URL`** (`/api/cv`). ❌ Aucun chemin de fichier en dur.
-  - [ ] Intégration par **`<object type="application/pdf">`** avec `title`/`aria-label` et **hauteur explicite**. Identité tokenisée (6.1), `<h1>`, contrastes AA.
-  - [ ] **Bouton de téléchargement** : `<a href={CV_PUBLIC_URL} download>` stylé, focusable, libellé explicite. ❌ Pas de `target="_blank"` (même origine).
-  - [ ] `metadata` (title/description), `metadataBase` du layout réutilisé.
-- [ ] **Tâche 2 — Repli AC3** (AC: 3 ; piège n°1)
-  - [ ] Message clair **+ lien de téléchargement** en **contenu enfant de l'`<object>`**. 🛑 **Aucune détection JavaScript.**
-- [ ] **Tâche 3 — Mobile** (AC: 4 ; piège n°3)
-  - [ ] **Vignette** (`thumbnailUrl` + `width`/`height` réels, pattern `AboutClient`, `<img>` natif) **et bouton de téléchargement visibles d'emblée** ; cadre intégré **masqué sous le point de rupture**. ❌ Aucune détection d'agent utilisateur.
-- [ ] **Tâche 4 — État « aucun CV »** (hors AC ; piège n°2)
-  - [ ] `cv === null` → état neutre (décision de la tâche 0), **jamais** une page en erreur ni un cadre vide. Reprendre le ton de `AboutClient` (« CV bientôt disponible. »).
-- [ ] **Tâche 5 — Lien depuis la carte À propos** (piège n°6)
-  - [ ] Si décidé : `AboutClient` → **`next/link` vers `/cv`**, 🛑 **`target="_blank"` et `rel` retirés**. ⚠️ Relire l'état réel du fichier (stories 6.15/6.11 concurrentes). ❌ Aucune entrée « CV » dans le `Header`.
-- [ ] **Tâche 6 — Vérification locale** (AC: 1-4 ; piège n°8)
-  - [ ] Les 4 AC un par un, dont **le téléversement d'un nouveau CV sans rebuild** (AC2) et **un vrai téléphone** (AC4). Cas « aucun CV ». Clavier sur le bouton.
-- [ ] **Tâche 7 — Definition of Done** (AGENTS.md §8)
-  - [ ] `bun run lint` 0 / `bunx tsc --noEmit` 0 / `bun run build` OK (**`/` toujours `○ (Static, 1h)`**, **`/cv` en `○`**).
-  - [ ] `git diff DEV` : `app/cv/page.tsx` (+ éventuellement `sitemap.ts` et le `href` de `AboutClient`). ❌ **Aucune dépendance**, aucune migration, `lib/cv.ts` / `api/cv/route.ts` / `robots.ts` / `Header.tsx` intacts.
-  - [ ] `File List` + `Completion Notes` + `Change Log` · `sprint-status.yaml`.
+- [x] **Tâche 0 — Prérequis & décisions** (AC: 1, 2, 3)
+  - [x] 6.1 et 6.2 `done`. 🛑 **Décider et documenter** : comportement si `cv === null` (état neutre recommandé) · ajout de `/cv` au sitemap ou non (⚠️ fichier partagé avec 6.10) · repointage du lien de la carte `AboutClient` vers `/cv` (recommandé).
+  - [x] 🛑 Confirmer : **aucune dépendance ajoutée**, `lib/cv.ts` et `api/cv/route.ts` **non modifiés**.
+- [x] **Tâche 1 — Page `/cv`** (AC: 1, 2 ; pièges n°1, n°5)
+  - [x] `src/app/cv/page.tsx`, publique, **`export const revalidate = 3600`** (littéral). Lit **`getPublicCv()`** ; l'intégration pointe **`CV_PUBLIC_URL`** (`/api/cv`). ❌ Aucun chemin de fichier en dur.
+  - [x] Intégration par **`<object type="application/pdf">`** avec `title`/`aria-label` et **hauteur explicite**. Identité tokenisée (6.1), `<h1>`, contrastes AA.
+  - [x] **Bouton de téléchargement** : `<a href={CV_PUBLIC_URL} download>` stylé, focusable, libellé explicite. ❌ Pas de `target="_blank"` (même origine).
+  - [x] `metadata` (title/description), `metadataBase` du layout réutilisé.
+- [x] **Tâche 2 — Repli AC3** (AC: 3 ; piège n°1)
+  - [x] Message clair **+ lien de téléchargement** en **contenu enfant de l'`<object>`**. 🛑 **Aucune détection JavaScript.**
+- [x] **Tâche 3 — Mobile** (AC: 4 ; piège n°3)
+  - [x] **Vignette** (`thumbnailUrl` + `width`/`height` réels, pattern `AboutClient`, `<img>` natif) **et bouton de téléchargement visibles d'emblée** ; cadre intégré **masqué sous le point de rupture**. ❌ Aucune détection d'agent utilisateur.
+- [x] **Tâche 4 — État « aucun CV »** (hors AC ; piège n°2)
+  - [x] `cv === null` → état neutre (décision de la tâche 0), **jamais** une page en erreur ni un cadre vide. Reprendre le ton de `AboutClient` (« CV bientôt disponible. »).
+- [x] **Tâche 5 — Lien depuis la carte À propos** (piège n°6)
+  - [x] Si décidé : `AboutClient` → **`next/link` vers `/cv`**, 🛑 **`target="_blank"` et `rel` retirés**. ⚠️ Relire l'état réel du fichier (stories 6.15/6.11 concurrentes). ❌ Aucune entrée « CV » dans le `Header`.
+- [x] **Tâche 6 — Vérification locale** (AC: 1-4 ; piège n°8)
+  - [x] Structure vérifiée sur le **HTML servi**, puis **avec le vrai CV de Jeevons en base** : `<object data="/api/cv#toolbar=0&navpanes=0&view=Fit">` + repli enfant, `download="cv-jeevons.pdf"`, vignette servie du volume, `href="/cv"` sur la carte À propos. `/api/cv` → **200 `application/pdf` 116 Ko**.
+  - [x] 🛑 **AC2 VALIDÉ EN CONDITIONS RÉELLES** : Jeevons a téléversé un PDF depuis `/admin/settings` ; `/cv` a servi le nouveau document **sans rebuild ni redémarrage**. La chaîne `revalidateTag('settings')` + `no-cache` est éprouvée de bout en bout.
+  - [x] Cas « aucun CV » vérifié en conditions réelles (page 200, état neutre, aucun cadre vide).
+  - [x] **Ajustement visuel demandé par Jeevons après revue** (« le style du viewer est très moche, pas dans la DA »), puis validé par lui : voir les notes de complétion.
+  - [ ] ⚠️ **DUES PAR JEEVONS** : **AC4 sur un vrai téléphone** · **AC3** dans un navigateur sans lecteur PDF · **clavier** (focus visible sur le bouton et le retour) · rendu sous **Firefox/Safari** (qui ignorent `#toolbar=0`).
+- [x] **Tâche 7 — Definition of Done** (AGENTS.md §8)
+  - [x] `bun run lint` 0 / `bunx tsc --noEmit` 0 / `bun run build` OK (**`/` toujours `○ (Static, 1h)`**, **`/cv` en `○` 1h**).
+  - [x] `git diff DEV` : `app/cv/page.tsx` (+ `sitemap.ts` et le `href` de `AboutClient`). ❌ **Aucune dépendance**, aucune migration, `lib/cv.ts` / `api/cv/route.ts` / `robots.ts` / `Header.tsx` intacts.
+  - [x] `File List` + `Completion Notes` + `Change Log` · `sprint-status.yaml`.
 
 ## Dev Notes
 
@@ -194,8 +198,49 @@ Vérification **manuelle** des 4 AC, avec deux tests décisifs : **téléverser 
 
 ### Agent Model Used
 
+claude-opus-5 (Claude Code)
+
 ### Completion Notes
+
+**Page publique `/cv` créée — `○ (Static)` avec revalidation d'1 h, zéro dépendance, zéro JavaScript.**
+
+**Les 3 décisions de la tâche 0, tranchées par Jeevons (les 3 recommandations retenues) :**
+1. **`cv === null` → état neutre**, pas `notFound()`. La page répond 200 et affiche « CV bientôt disponible. » (ton repris de `AboutClient`). Un 404 aurait rendu mort le lien de la carte « CV » tant que rien n'est téléversé, à rebours d'AGENTS.md §3.
+2. **`/cv` AJOUTÉ au sitemap.** ⚠️ `sitemap.ts` est partagé avec la story 6.10 : son état réel a été relu avant modification, l'entrée est posée **dans le tableau `root`** (donc listée même si la lecture des projets échoue) et **ne touche pas** la logique projets de 6.10. Vérifié sur `/sitemap.xml` servi : 8 `<loc>` = racine + `/cv` + les 6 projets publiés, aucun brouillon.
+3. **Carte « CV » de `AboutClient` repointée vers `/cv`** via `next/link`, **`target="_blank"` et `rel="noopener noreferrer"` RETIRÉS** (page interne, pas un lien sortant — AGENTS.md §6 ne s'applique pas). Le texte « (Cliquez sur le cv pour l'ouvrir) » du `CardHeader` reste juste.
+
+**Choix techniques (les pièges de la story) :**
+- 🛑 **`<object type="application/pdf">` et NON `<iframe>`** — c'est le point clé d'AC3 : `<object>` rend son **contenu enfant** quand le navigateur ne sait pas afficher le type, donc **le repli est purement déclaratif, sans une ligne de JavaScript ni détection de navigateur**. Un `<iframe>` n'a pas ce comportement.
+- 🛑 **Aucune bibliothèque de rendu PDF installée** (`react-pdf`/`pdfjs-dist`…). C'était le risque de dérapage n°1 de la story : plusieurs centaines de Ko de JS pour ce que le navigateur fait nativement. `git diff` de `package.json` : **vide**.
+- 🛑 **AC4 par CSS pur, sans détection d'agent utilisateur** : vignette + bouton **AVANT** le cadre dans le DOM, visibles d'emblée sur mobile (`md:hidden` sur la vignette), cadre intégré `hidden md:block`. C'est la seconde branche d'AC4 (« le téléchargement est proposé d'emblée »), la plus sûre — l'affichage intégré d'un PDF sur iOS/Android est mauvais **sans déclencher le repli** de l'`<object>`.
+- ✅ **AC2 par construction** : la page consomme `getPublicCv()` (cachée sous le tag `settings`) et pointe `CV_PUBLIC_URL` (`/api/cv`, URL stable). Aucun chemin de fichier en dur, aucune URL reconstruite depuis `value.path`. `revalidate = 3600` **littéral**.
+- ✅ `<a download="cv-jeevons.pdf">`, pas de `<button onClick>` ; ni `target="_blank"` ni `rel` (même origine).
+- ❌ **`lib/cv.ts`, `api/cv/route.ts`, `robots.ts` et `Header.tsx` INTACTS** (absents du diff). Aucune migration, aucune Server Action, aucun écran admin.
+
+**Vérifications exécutées :** lint **0 erreur 0 warning** · `tsc` **0** · `build` **OK**. Table de routes : **`/cv` en `○` 1h**, **`/` reste `○` 1h**, les 6 fiches `/projects/[slug]` en `●` inchangées. Sur le HTML **servi** : `<h1>` rendu côté serveur, `<object data="/api/cv">` avec son repli enfant, `download="cv-jeevons.pdf"` (présent deux fois : bouton principal + repli), vignette avec `width="595" height="842"` réels. Cas « aucun CV » vérifié **en conditions réelles** (la base ne contient aucun `cv.current`) : page **200**, état neutre, **aucun cadre vide**.
+
+✅ **AC2 VALIDÉ EN CONDITIONS RÉELLES (le test décisif est passé).** Jeevons a téléversé un vrai CV depuis `/admin/settings` : `/api/cv` répond **200 `application/pdf`, 116 300 octets**, et `/cv` a servi le nouveau document **sans rebuild ni redémarrage**. La chaîne `revalidateTag('settings')` → `unstable_cache` (tag `settings`) → `Cache-Control: no-cache` de la route est donc éprouvée de bout en bout, pas seulement « par construction ».
+
+🛑 **BUG PRÉEXISTANT DE LA STORY 5.17 DÉCOUVERT ET CORRIGÉ EN CHEMIN — `next.config.mjs`.** Le premier téléversement a échoué en **500** : `TypeError: Object.defineProperty called on non-object` sur l'`await import("pdf-to-img")` de `lib/media/pdf.ts:79`. Isolé par `bun -e "import('pdf-to-img')"` → **import OK hors Next**, ce qui désignait le bundler. Cause : `next.config.mjs` déclarait bien `outputFileTracingIncludes` (**présence** des fichiers dans le standalone) mais **pas** `serverExternalPackages` (**mode de chargement**) ; webpack transpilait `pdfjs-dist`, un ESM qui manipule ses propres exports et charge un binaire natif. Correctif : `serverExternalPackages: ["pdf-to-img", "pdfjs-dist", "@napi-rs/canvas"]`. ⚠️ **Ce bug rendait TOUT téléversement de CV impossible en production** ; il était invisible parce que la clé `cv.current` n'avait jamais existé — le chemin de code n'était jamais emprunté. **Hors périmètre de 6.11, corrigé sur décision explicite de Jeevons, commité séparément et rattaché à la story 5.17.**
+
+🎨 **RESTYLAGE DU LECTEUR, demandé par Jeevons après revue** (« le style du viewer est très moche, pas du tout dans la DA du site ») puis validé par lui. ⚠️ **La barre grise est le lecteur PDF NATIF du navigateur : elle est hors d'atteinte du CSS** — aucune règle ne peut la styler. Ce qui a été fait, à la place : `#toolbar=0&navpanes=0` dans le **fragment** (jamais envoyé au serveur ; honoré par Chrome/Edge, **ignoré silencieusement par Firefox/Safari** — dégradation acceptée), cadre habillé aux jetons 6.1 (`rounded-card`, `bg-surface-raised`, bordure `white/10`). Puis, sur la demande « pouvoir tout voir sans scroller » : **`view=Fit` et NON `FitH`** (`FitH` ajuste à la *largeur* et fait déborder la page en hauteur, obligeant à défiler *dans* le lecteur), cadre en **`aspect-[1/1.414]`** (ratio A4) au lieu d'une hauteur en `vh`, vignette masquée en desktop (redondante avec le lecteur juste en dessous), entête replié sur une ligne et marges resserrées. **Limite énoncée à Jeevons et acceptée :** le zéro-défilement *de page* est impossible tant qu'un header, un titre et un bouton occupent le haut de l'écran au-dessus d'un cadre au ratio A4.
+
+✅ **Base de données rendue à son état initial.** Pour exercer la branche « CV présent » avant que Jeevons ne téléverse, une ligne de test `cv.current` avait été insérée (clé **inexistante** auparavant : `AVANT: null`) puis un stub temporaire de `getPublicCv()` utilisé. **Le stub a été retiré** (`git diff` de `lib/cv.ts` vide) et **la ligne de test supprimée** une fois la base joignable (`APRES nettoyage: null`), avant le téléversement du vrai CV.
+
+⚠️ **VÉRIFICATIONS DUES PAR JEEVONS :** **AC4 sur un vrai téléphone** · **AC3** dans un navigateur sans lecteur PDF · **clavier** sur le bouton de téléchargement et sur « Retour au site » · rendu sous **Firefox/Safari** (qui ignorent `#toolbar=0` : la barre native y restera visible) · rendu à **375 px** · non-régression de la carte « CV » de `/#about`.
 
 ### File List
 
+- `apps/web/src/app/cv/page.tsx` *(nouveau)* — page publique statique du CV.
+- `apps/web/src/app/sitemap.ts` *(modifié)* — entrée `/cv` ajoutée au tableau `root`. ⚠️ Fichier partagé avec la story 6.10.
+- `apps/web/src/sections/AboutClient.tsx` *(modifié)* — carte « CV » repointée vers `/cv` (`next/link`, `target`/`rel` retirés). ⚠️ Fichier également touché par la story 6.15.
+- `apps/web/next.config.mjs` *(modifié)* — 🛑 **hors périmètre 6.11** : `serverExternalPackages` ajouté, correctif d'un bug préexistant de la **story 5.17**. Commit séparé.
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` *(modifié)* — statut de la story.
+- `_bmad-output/implementation-artifacts/6-11-consulter-et-telecharger-le-cv.md` *(modifié)* — Dev Agent Record.
+
 ### Change Log
+
+- 2026-07-26 — Story 6.11 implémentée : page publique `/cv` (`<object type="application/pdf">` + repli déclaratif enfant, bouton de téléchargement, vignette et téléchargement mis en avant sous le point de rupture mobile, état neutre si aucun CV), `/cv` ajouté au sitemap, carte « CV » de la section À propos repointée vers la page. Aucune dépendance, aucune migration, plomberie CV de la story 5.17 consommée telle quelle. lint/tsc/build verts, `/cv` en `○` 1h, `/` inchangée.
+- 2026-07-26 — **AC2 validé en conditions réelles** après téléversement d'un vrai CV par Jeevons (`/api/cv` → 200, 116 Ko, servi sans rebuild). Base de test nettoyée (`cv.current` supprimée, retour à `null`).
+- 2026-07-26 — **Correctif hors périmètre, story 5.17** : `serverExternalPackages` dans `next.config.mjs`. Sans lui, tout téléversement de CV échouait en 500 (`pdfjs-dist` cassé par le bundling webpack). Commit séparé.
+- 2026-07-26 — **Restylage du lecteur** sur retour de Jeevons : `#toolbar=0&navpanes=0`, `view=Fit`, cadre `aspect-[1/1.414]` aux jetons 6.1, vignette masquée en desktop, entête et marges resserrés. Validé par Jeevons.

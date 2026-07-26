@@ -18,12 +18,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     process.env.NEXT_PUBLIC_SITE_URL ?? "https://portfolio.doshwork.com";
 
   // L'accueil reste la page principale : sections ancrées, priorité maximale.
+  //
+  // Story 6.11 — `/cv` rejoint les pages statiques du plan du site. Entrée EN
+  // DUR, sans lecture : la page existe toujours (elle affiche un état neutre
+  // tant qu'aucun CV n'est téléversé), donc rien à conditionner ici.
+  // ⚠️ Elle vit dans `root` pour rester listée même si la lecture des projets
+  // échoue — c'est tout l'intérêt du `catch` plus bas.
   const root: MetadataRoute.Sitemap = [
     {
       url: base,
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 1,
+    },
+    {
+      url: `${base}/cv`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.7,
     },
   ];
 

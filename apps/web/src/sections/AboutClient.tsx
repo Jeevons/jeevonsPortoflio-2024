@@ -12,6 +12,7 @@ import { motion, useReducedMotion } from "motion/react";
 import { useRef } from "react";
 
 import Image from "next/image";
+import Link from "next/link";
 
 // Vue client de la section À propos (Story 4.2). Les hobbies viennent de la base
 // (props depuis le conteneur serveur). Le drag conditionné par useReducedMotion
@@ -99,12 +100,21 @@ export const AboutClient = ({
                 indication="(Cliquez sur le cv pour l'ouvrir)"
               />
               {cv ? (
-                <a
-                  href={cv.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex w-40 mx-auto mt-2 md:mt-0"
-                >
+                // Story 6.11 — la carte ne pointe PLUS le PDF brut mais la page
+                // `/cv`, qui l'affiche dans le site avec un bouton de
+                // téléchargement (PLAN §4.3, « au lieu du lien brut actuel »).
+                //
+                // 🛑 `target="_blank"` et `rel="noopener noreferrer"` ONT DISPARU,
+                // et c'est délibéré : `/cv` est une page INTERNE, pas un lien
+                // sortant — la règle AGENTS.md §6 ne s'y applique pas. Et
+                // `next/link` plutôt qu'un `<a>` nu, pour une navigation
+                // client interne.
+                //
+                // ⚠️ `cv.url` (= `/api/cv`) reste consommé par la page `/cv`
+                // elle-même ; ici seul le lien de la carte change. Le texte
+                // « (Cliquez sur le cv pour l'ouvrir) » du `CardHeader` reste
+                // juste : le CV s'ouvre toujours, simplement dans le site.
+                <Link href="/cv" className="flex w-40 mx-auto mt-2 md:mt-0">
                   {/* Vignette déjà normalisée en WebP par sharp (5.17, comme
                       les covers 5.12) : `<img>` plutôt que `next/image`,
                       `width`/`height` explicites réservent la place (anti-CLS). */}
@@ -115,7 +125,7 @@ export const AboutClient = ({
                     width={cv.thumbnailWidth}
                     height={cv.thumbnailHeight}
                   />
-                </a>
+                </Link>
               ) : (
                 // État neutre : aucun CV téléversé pour l'instant (piège n°5).
                 <p className="mx-auto mt-2 max-w-[10rem] text-center text-sm text-muted-foreground md:mt-0">
