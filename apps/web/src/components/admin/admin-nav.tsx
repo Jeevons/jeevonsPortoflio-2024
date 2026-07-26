@@ -45,7 +45,8 @@ const NAV_ITEMS: NavItem[] = [
   },
   // Story 5.14 — écran de gestion du parcours livré.
   { href: "/admin/timeline", label: "Parcours", icon: Route, ready: true },
-  { href: "/admin/stacks", label: "Technologies", icon: Layers, ready: false },
+  // Story 5.15 — écran de gestion des technologies livré.
+  { href: "/admin/stacks", label: "Technologies", icon: Layers, ready: true },
   // Story 5.13 — bibliothèque d'images livrée : l'entrée devient un vrai lien.
   { href: "/admin/media", label: "Médias", icon: ImageIcon, ready: true },
   { href: "/admin/messages", label: "Messages", icon: Mail, ready: false },

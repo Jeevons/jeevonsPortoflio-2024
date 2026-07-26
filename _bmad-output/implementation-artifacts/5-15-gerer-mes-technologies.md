@@ -4,7 +4,7 @@ baseline_commit: 5c22f3a6c48914801d0a226ab5a0b15c005d8765
 
 # Story 5.15: Gérer mes technologies
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -70,19 +70,20 @@ CRUD du modèle **`Stack`** (Epic 4) + gestion de l'association many-to-many `Pr
 
 ## Tasks / Subtasks
 
-- [ ] **Tâche 0 — Prérequis** (AC: 1)
-  - [ ] Socle + 5.8/5.9 `done`. Vérifier `ProjectStacks` (`onDelete`) + présence d'un champ clé d'icône dans le schéma.
-- [ ] **Tâche 1 — CRUD `Stack`** (AC: 1 ; pièges n°1, 5)
-  - [ ] `/admin/stacks` : liste + éditeur (Zod name unique / iconKey / level enum) ; gestion P2002 ; migration `iconKey` si absent ; `revalidateTag('projects')`.
-- [ ] **Tâche 2 — Suppression avec avertissement + dissociation** (AC: 2 ; piège n°2)
-  - [ ] Compter les projets associés → **avertir** ; confirmation → dissocier (`ProjectStacks`) sans supprimer les projets, puis supprimer la `Stack`, en transaction ; `revalidateTag('projects')`.
-- [ ] **Tâche 3 — Cohérence publique** (AC: 3 ; pièges n°3, 4)
-  - [ ] Niveaux/associations reflétés après revalidation ; ne pas dupliquer le multi-select de 5.9.
-- [ ] **Tâche 4 — Vérification locale** (AC: 1-3 ; piège n°6)
-  - [ ] CRUD (icône), doublon refusé, suppression = avertissement + dissociation (projets intacts), niveaux publics.
-- [ ] **Tâche 5 — Definition of Done** (AGENTS.md §8)
-  - [ ] lint 0 / tsc 0 / build OK. Vérif visuelle + clavier. `git diff DEV` : écran stacks, CRUD, suppression+dissociation, (migration iconKey) — rien d'autre.
-  - [ ] `File List` + `Completion Notes` + `Change Log` · `sprint-status.yaml`.
+- [x] **Tâche 0 — Prérequis** (AC: 1)
+  - [x] Socle + 5.8/5.9 `done`. Vérifier `ProjectStacks` (`onDelete`) + présence d'un champ clé d'icône dans le schéma.
+- [x] **Tâche 1 — CRUD `Stack`** (AC: 1 ; pièges n°1, 5)
+  - [x] `/admin/stacks` : liste + éditeur (Zod name unique / iconKey / level enum) ; gestion P2002 ; migration `iconKey` si absent ; `revalidateTag('projects')`.
+- [x] **Tâche 2 — Suppression avec avertissement + dissociation** (AC: 2 ; piège n°2)
+  - [x] Compter les projets associés → **avertir** ; confirmation → dissocier (`ProjectStacks`) sans supprimer les projets, puis supprimer la `Stack`, en transaction ; `revalidateTag('projects')`.
+- [x] **Tâche 3 — Cohérence publique** (AC: 3 ; pièges n°3, 4)
+  - [x] Niveaux/associations reflétés après revalidation ; ne pas dupliquer le multi-select de 5.9.
+- [x] **Tâche 4 — Vérification locale** (AC: 1-3 ; piège n°6)
+  - [x] CRUD (icône), doublon refusé, suppression = avertissement + dissociation (projets intacts), niveaux publics.
+- [x] **Tâche 5 — Definition of Done** (AGENTS.md §8)
+  - [x] lint 0 / tsc 0 / build OK. `git diff DEV` : écran stacks, CRUD, suppression+dissociation, branchement public — rien d'autre.
+  - [ ] Vérif **visuelle + clavier** en session authentifiée (à faire par Jeevons — voir Completion Notes).
+  - [x] `File List` + `Completion Notes` + `Change Log` · `sprint-status.yaml`.
 
 ## Dev Notes
 
@@ -112,3 +113,73 @@ Vérification **manuelle en local** + visuelle. Les 3 AC dont doublon refusé (A
 - [Source: apps/web/prisma/schema.prisma — Stack (name @unique, level SkillLevel), ProjectStacks (relation bidirectionnelle), enum SkillLevel]
 - [Source: _bmad-output/implementation-artifacts/5-9-decrire-finement-un-projet.md — éditeur projet (association stacks) ; 5-8 — pattern mutation requireAdmin + revalidateTag]
 - [Source: AGENTS.md §6 — sécurité, a11y ; §9 — anti-scope-creep]
+
+## Dev Agent Record
+
+### Décisions
+
+**D1 — Aucune migration : `iconKey` existait déjà.** Le piège n°1 demandait de vérifier avant de conclure. `schema.prisma` porte bien `Stack { name String @unique, iconKey String?, level SkillLevel? }` depuis 4.1. La colonne est donc **utilisée telle quelle**, sans migration additive.
+
+**D2 — Aucune dissociation à écrire : `ProjectStacks` est un many-to-many IMPLICITE.** Le piège n°2 évoquait un `onDelete` à régler. Il n'y en a pas à régler : Prisma gère lui-même la table de jointure, dont les lignes disparaissent avec la `Stack`, sans que les `Project` de l'autre côté soient touchés. La « dissociation sans supprimer les projets » de l'AC2 est donc **native**. Ajouter un `update` de dissociation avant le `delete` serait redondant, et la **transaction** évoquée par la tâche 2 ne protégerait rien de plus qu'une écriture unique — elle n'a pas été ajoutée, faute d'objet. Vérifié par sonde (voir Vérifications).
+
+**D3 — 🛑 L'AC3 était insatisfiable en l'état, périmètre étendu après arbitrage.** La section publique « Mon pack d'explorateur » était un **tableau `toolboxItems` codé en dur** dans `AboutClient.tsx`, avec six imports statiques de SVG. **Aucune lecture de `Stack` n'existait côté public** : modifier un niveau depuis l'administration n'aurait eu strictement aucun effet visible, et l'AC3 aurait été « verte » sans rien prouver. Signalé à Jeevons, qui a tranché : **brancher la toolbox sur la base**. C'est ce qui explique que cette story touche `sections/About*.tsx` et `lib/projects.ts`.
+
+**D4 — Contrat de repli préservé (4.5).** Les six entrées codées en dur n'ont pas été supprimées : elles sont devenues `src/content/stacks.ts`, câblées via `fallbackStacks()` + `readWithFallback`. Si la base est injoignable, le visiteur revoit **exactement** la toolbox qu'il connaissait, jamais une section vide.
+
+**D5 — Tri seul, pas d'affichage du niveau (décision Jeevons).** L'AC3 dit « reflète ces niveaux » sans exiger de badge. Le niveau se traduit par l'**ordre** (STRONG → COMFORTABLE → LEARNING, puis nom, `localeCompare` en `fr`), et le design existant reste intact. Une technologie sans niveau passe en fin de liste plutôt que d'être masquée.
+
+**D6 — Clé d'icône inconnue : avertir, pas refuser (décision Jeevons).** `stackSchema` n'enferme volontairement **pas** `iconKey` dans le registre. Une clé inconnue est acceptée, le site affiche une icône neutre (`resolveStackIcon`), et l'administration affiche « Clé d'icône inconnue ». Refuser la saisie ferait **disparaître** la technologie du site — pire que l'icône générique. Le `<select>` propose d'ailleurs la clé inconnue comme option sélectionnée, pour qu'ouvrir l'éditeur ne l'écrase jamais en silence.
+
+**D7 — Unicité tranchée par la base, pas pré-vérifiée.** `isNameConflict` traduit P2002 en «`<nom>` existe déjà » (AC1). Aucun `findUnique` préalable : entre la lecture et l'écriture, un doublon peut s'insérer (course critique). La sonde a confirmé que Postgres renvoie ici P2002 **avec `meta.target` à `undefined`** — la branche de repli d'`isNameConflict` (« `name` est la seule contrainte unique du modèle ») n'est donc pas du code mort, c'est le chemin réellement emprunté.
+
+**D8 — Titres des projets chargés dans l'éditeur seulement.** La liste ne charge que le **nombre** (`_count`), qui suffit à l'avertissement et évite N requêtes. Les titres, eux, sont chargés par `findStackUsage` sur la page d'édition — le seul endroit où l'on prend le temps de décider d'une suppression.
+
+### Vérifications
+
+Sonde temporaire exécutée contre la base de développement, puis supprimée (aucun résidu : la `Stack` de test a été effacée par la sonde elle-même).
+
+| AC | Ce qui a été vérifié | Résultat |
+|---|---|---|
+| AC1 | Créer deux `Stack` de même nom | `P2002 target=undefined` → traduit en « existe déjà » |
+| AC2 | Associer la techno à un projet, compter, supprimer la techno | 1 projet compté ; après suppression, projet **conservé** avec ses autres technologies (`Javascript, Html, Css`) intactes |
+| AC3 | Tri public appliqué à l'état réel de la base | `Css(COMFORTABLE)` placé avant les technologies sans niveau, puis ordre alphabétique |
+| DoD | `bunx tsc --noEmit` | 0 erreur |
+| DoD | `bun run lint` | 0 erreur, 1 warning **préexistant** (`TestimonialsClient.tsx`, hors périmètre) |
+| DoD | `bun run build` | Succès ; `/admin/stacks`, `/admin/stacks/new`, `/admin/stacks/[id]` rendues dynamiques (ƒ) |
+
+### Completion Notes
+
+**Reste à faire par Jeevons avant `done` :** la vérification **visuelle et clavier** en session authentifiée n'a pas pu être menée — elle exige une vraie session admin (mot de passe + TOTP). La case correspondante de la tâche 5 est donc laissée **décochée**, à dessein. Points à regarder : navigation clavier dans les deux `<select>`, ouverture/fermeture du dialogue de suppression (Échap, piège du focus), et lisibilité de l'avertissement chiffré.
+
+**⚠️ Conséquence visible immédiate.** La base contient **7 technologies seedées** dont la plupart ont `iconKey: null` et `level: null`, alors que la toolbox affichait jusqu'ici **6 entrées choisies à la main**. Au premier rendu après déploiement, la section publique changera donc : d'autres technologies apparaîtront, et la plupart avec l'icône neutre. C'est le comportement attendu du branchement (D3), pas une régression — il suffit de renseigner icônes et niveaux depuis `/admin/stacks` pour retrouver le rendu voulu.
+
+**Non fait, volontairement :** aucun `AuditLog` (story 5.19), aucun nouveau système d'icônes (le registre réutilise les six SVG existants), aucune modification de l'éditeur projet — son `StacksSelector` (5.9) existait déjà et pointait même vers `/admin/stacks`, lien mort jusqu'à cette story.
+
+### File List
+
+**Créés**
+- `apps/web/src/lib/stack-icons.ts` — registre de clés d'icônes (chaînes seules, importable client ET serveur)
+- `apps/web/src/components/StackIcon.tsx` — résolution clé → SVG, avec icône de repli
+- `apps/web/src/content/stacks.ts` — les six entrées historiques, devenues contenu de repli
+- `apps/web/src/lib/schemas/stack.ts` — schéma Zod partagé client/serveur
+- `apps/web/src/lib/admin/stacks.ts` — lectures admin (liste + `projectCount`, détail, `findStackUsage`)
+- `apps/web/src/app/(admin)/admin/stacks/actions.ts` — Server Actions (create/update/delete)
+- `apps/web/src/app/(admin)/admin/stacks/stack-form.tsx` — formulaire création/modification
+- `apps/web/src/app/(admin)/admin/stacks/delete-stack-dialog.tsx` — confirmation + avertissement chiffré
+- `apps/web/src/app/(admin)/admin/stacks/page.tsx` — liste
+- `apps/web/src/app/(admin)/admin/stacks/new/page.tsx` — création
+- `apps/web/src/app/(admin)/admin/stacks/[id]/page.tsx` — édition + zone de suppression
+
+**Modifiés**
+- `apps/web/src/lib/projects.ts` — lecture publique cachée `getPublicStacks` (tag `projects`) + tri par niveau
+- `apps/web/src/content/fallbacks.ts` — adaptateur `fallbackStacks()`
+- `apps/web/src/sections/About.tsx` — lit les technologies en base
+- `apps/web/src/sections/AboutClient.tsx` — toolbox alimentée par props, tableau en dur retiré
+- `apps/web/src/components/admin/admin-nav.tsx` — entrée « Technologies » passée à `ready: true`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` — statut de la story
+
+### Change Log
+
+| Date | Description |
+|---|---|
+| 2026-07-26 | Story 5.15 implémentée : CRUD des technologies sous `/admin/stacks` (nom unique via P2002, clé d'icône, niveau), suppression avec avertissement chiffré et conservation des projets, et branchement de la section publique « Stack & outils » sur la base avec tri par niveau et repli statique. Statut → `review`. |
