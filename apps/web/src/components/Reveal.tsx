@@ -162,6 +162,19 @@ export const Reveal = ({
 
   return (
     <MotionTag
+      // 🛑 `key` INDEXÉE SUR `armed` — SANS ELLE, RIEN NE SE RÉVÈLE.
+      //
+      // `motion` calcule son état visuel de départ via `useConstant` (voir
+      // `motion/utils/use-visual-state.mjs`) : `initial` n'est lu QU'AU MONTAGE
+      // et mémorisé définitivement. Passer de `initial={false}` à
+      // `initial={{ opacity: 0 }}` sur un élément déjà monté est donc
+      // silencieusement IGNORÉ — l'élément reste à `opacity: 1` et `whileInView`
+      // l'anime de 1 vers 1, soit aucun effet visible.
+      //
+      // Changer la `key` force React à démonter puis remonter l'élément, ce qui
+      // fait ré-évaluer `useConstant` avec le `initial` armé. Le coût est nul :
+      // cela n'arrive qu'une fois, avant peinture, sur les éléments hors écran.
+      key={armed ? "armed" : "idle"}
       // `as` est contraint aux trois balises ci-dessus ; le `ref` de `motion`
       // est typé par balise, d'où cette réconciliation locale.
       ref={ref as React.Ref<never>}
