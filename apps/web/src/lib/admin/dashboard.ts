@@ -78,20 +78,65 @@ export type RecentMessage = {
 };
 
 /**
+ * Compte les messages NON LUS (piège n°6, 5.18 — carte « messages » du
+ * dashboard, référencée par 5.7 en état gracieux avant que `ContactMessage`
+ * n'existe). `null` si la lecture échoue : même discipline que
+ * `ProjectCounts.available`, un 0 muet mentirait pendant une panne.
+ */
+export async function getUnreadMessageCount(): Promise<number | null> {
+  try {
+    return await prisma.contactMessage.count({ where: { read: false } });
+  } catch (error) {
+    const raw = error instanceof Error ? error.message : String(error);
+    console.error(
+      `[admin] Compte de messages non lus indisponible. Cause : ${raw.replace(/\s+/g, " ").trim()}`,
+    );
+    return null;
+  }
+}
+
+const EXCERPT_LENGTH = 100;
+
+function excerpt(body: string): string {
+  if (body.length <= EXCERPT_LENGTH) return body;
+  return `${body.slice(0, EXCERPT_LENGTH).trimEnd()}…`;
+}
+
+/**
  * Les cinq derniers messages reçus (AC1).
  *
- * ⚠️ Renvoie TOUJOURS un tableau vide aujourd'hui : le modèle `ContactMessage`
- * appartient à la story 5.18 et n'existe pas encore au schéma. Le créer ici
- * serait du scope-creep (périmètre verrouillé de la story).
- *
- * L'AC dit « les cinq derniers messages reçus, S'IL EN EXISTE » : l'état vide
- * est donc conforme. Cette fonction est le POINT DE BRANCHEMENT unique de 5.18 —
- * son corps sera remplacé par un `prisma.contactMessage.findMany({ take: 5,
- * orderBy: { createdAt: "desc" } })`, et la carte se remplira sans qu'une seule
- * ligne d'interface change (`RecentMessage` est déjà le contrat attendu).
+ * Story 5.18 — le point de branchement annoncé par 5.7 : `ContactMessage`
+ * existe désormais. Même discipline que le reste du dashboard (pas de cache,
+ * échec traité localement) — voir l'en-tête du fichier.
  */
 export async function getRecentMessages(): Promise<RecentMessage[]> {
-  return [];
+  try {
+    const rows = await prisma.contactMessage.findMany({
+      take: 5,
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        body: true,
+        createdAt: true,
+      },
+    });
+
+    return rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      email: row.email,
+      excerpt: excerpt(row.body),
+      receivedAt: row.createdAt,
+    }));
+  } catch (error) {
+    const raw = error instanceof Error ? error.message : String(error);
+    console.error(
+      `[admin] Derniers messages indisponibles. Cause : ${raw.replace(/\s+/g, " ").trim()}`,
+    );
+    return [];
+  }
 }
 
 /** Fréquentation des 7 derniers jours, ou l'absence de mesure. */
