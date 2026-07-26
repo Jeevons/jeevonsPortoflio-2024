@@ -75,15 +75,32 @@ type ProjectCardProps = {
   project: ProjectCardData;
   className?: string;
   style?: React.CSSProperties;
-};
+  /**
+   * Story 6.8 — Élément racine de la carte. Par défaut un `<div>` ordinaire.
+   *
+   * 🛑 CE PARAMÈTRE EXISTE POUR NE PAS AJOUTER DE NŒUD ENVELOPPANT. Les cartes
+   * sont `sticky` ; un `transform` sur un ANCÊTRE casserait leur empilement.
+   * L'inclinaison doit donc s'appliquer au nœud qui porte DÉJÀ `sticky` — d'où
+   * la possibilité, pour l'appelant client, de faire rendre cette racine par un
+   * `motion.div` plutôt que par un `div`.
+   *
+   * ⚠️ CELA NE REND PAS CE FICHIER CLIENT. Il ne fait que transmettre ce qu'on
+   * lui donne : la vue reste pure, sans état ni effet, et `project-preview.tsx`
+   * comme le site public continuent de l'utiliser sans rien passer ici — auquel
+   * cas le rendu est stritement identique à avant (décision 5.9 préservée).
+   */
+  as?: React.ElementType;
+} & Omit<React.ComponentPropsWithoutRef<"div">, "style" | "className">;
 
 export const ProjectCard = ({
   project,
   className,
   style,
+  as,
+  ...rest
 }: ProjectCardProps) => {
   return (
-    <Card className={className} style={style}>
+    <Card className={className} style={style} as={as} {...rest}>
       <div className="lg:grid lg:grid-cols-2 lg:gap-16">
         <div className="lg:pb-16">
           <div className="inline-flex items-baseline gap-2 font-bold uppercase tracking-widest text-sm text-gradient-accent">
@@ -148,7 +165,13 @@ export const ProjectCard = ({
               target="_blank"
               rel="noopener noreferrer"
               aria-label={`Visiter le site du projet ${project.title} (nouvel onglet)`}
-              className="bg-white text-surface-sunken h-12 w-full md:w-auto px-6 rounded-control font-semibold inline-flex items-center justify-center gap-2 mt-8 hover:scale-110 transform transition duration-300 ease-in-out"
+              /* Story 6.8 (AC1) — L'AGRANDISSEMENT AU SURVOL A ÉTÉ RETIRÉ :
+                 l'inclinaison 3D et le halo de la carte le remplacent. C'était
+                 le seul `hover:scale` du périmètre carte projet.
+
+                 ❌ `href`, `target`, `rel` et `aria-label` sont INTOUCHÉS : ils
+                 sont le résultat de la story 1.4, les modifier l'annulerait. */
+              className="bg-white text-surface-sunken h-12 w-full md:w-auto px-6 rounded-control font-semibold inline-flex items-center justify-center gap-2 mt-8"
             >
               <span>Visiter le site</span>
               <ArrowUpRightIcon aria-hidden="true" className="size-4" />

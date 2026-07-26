@@ -1,10 +1,10 @@
 ---
-baseline_commit: c408eae7818fb33ef915a70085775688fbf80640
+baseline_commit: 6e8666a
 ---
 
 # Story 6.8: Explorer les cartes de projet
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -106,26 +106,29 @@ Remplacer un survol brutal par un **tilt 3D** et un **halo radial** sur les cart
 
 ## Tasks / Subtasks
 
-- [ ] **Tâche 0 — Prérequis & inventaire** (AC: 1 ; pièges n°1, n°3)
-  - [ ] 6.1 et 6.2 `done`. Recenser les `hover:scale` **dans le périmètre carte projet**. 🛑 **Décider et documenter** : enveloppe client (recommandé) vs `ProjectCard` client. Vérifier les appelants (`ProjectList`, `project-preview.tsx`).
-- [ ] **Tâche 1 — Tilt 3D sans casser le `sticky`** (AC: 1, 2 ; pièges n°2, n°5)
-  - [ ] `perspective` + `rotateX/rotateY` placés de façon à **préserver `position: sticky`**. `useMotionValue`/`useSpring` de `motion`. Mesure au `pointerenter`. 🛑 **Tester l'empilement au défilement à chaque itération.**
-- [ ] **Tâche 2 — Halo radial suivant le curseur** (AC: 1 ; pièges n°2, n°5)
-  - [ ] `radial-gradient` piloté par variables CSS, dégradé d'accent tokenisé (6.1). Contenu par l'`overflow-hidden` de `Card`. Aucun nœud captant les clics.
-- [ ] **Tâche 3 — Retrait de l'ancien agrandissement** (AC: 1 ; piège n°3)
-  - [ ] Retirer `hover:scale-110` du bouton « Visiter le site ». ❌ **Ne pas toucher** à `href`/`target`/`rel`/`aria-label` (story 1.4).
-- [ ] **Tâche 4 — Mise en évidence clavier & tactile** (AC: 3 ; piège n°4)
-  - [ ] `:focus-within` + état tactile (`hover: none`). Contraste AA, signal **non chromatique**. ❌ Pas de `tabIndex` sur la carte. Couvrir le cas **carte sans lien**.
-- [ ] **Tâche 5 — Mouvement réduit & pointeur** (AC: 4 ; piège n°5)
-  - [ ] `useReducedMotion` → aucun listener, aucun `transform`, aucun halo (test **JavaScript**, pas seulement CSS). Détection `(hover: hover) and (pointer: fine)`, défaut désactivé.
-- [ ] **Tâche 6 — Non-régression** (pièges n°1, n°2, n°6)
-  - [ ] Empilement `sticky` intact · aperçu `/admin/projects/[id]` intact · `Card.tsx` **non modifié** (ou modification justifiée) · cartes de parcours et hobbies inchangées.
-- [ ] **Tâche 7 — Vérification locale** (AC: 1-4 ; piège n°7)
-  - [ ] Les 4 AC un par un, **clavier seul**, **niveaux de gris**, émulation tactile, reduced-motion, défilement complet de la section projets.
-- [ ] **Tâche 8 — Definition of Done** (AGENTS.md §8)
-  - [ ] `bun run lint` 0 / `bunx tsc --noEmit` 0 / `bun run build` OK (**marqueur `○ (Static)` de `/`**). Vérification visuelle **avec et sans** reduced-motion.
-  - [ ] `git diff DEV` : carte projet uniquement. ❌ Aucune donnée, aucun écran admin modifié, **aucune dépendance**.
-  - [ ] `File List` + `Completion Notes` + `Change Log` · `sprint-status.yaml`.
+- [x] **Tâche 0 — Prérequis & inventaire** (AC: 1 ; pièges n°1, n°3)
+  - [x] 6.1 et 6.2 `done`. Recensement : le **seul** `hover:scale` du périmètre est celui du bouton « Visiter le site » (`ProjectCard.tsx:151`). 🛑 **Décision : ni l'option 1 ni l'option 2 — troisième voie** (transform sur le nœud `sticky` lui-même), voir Completion Notes. Appelants vérifiés : `ProjectList` (public) et `project-preview.tsx` (admin, **inchangé**).
+- [x] **Tâche 1 — Tilt 3D sans casser le `sticky`** (AC: 1, 2 ; pièges n°2, n°5)
+  - [x] `rotateX/rotateY` + `transformPerspective` appliqués **au nœud qui porte déjà `sticky`**, **aucun nœud enveloppant ajouté**. `useMotionValue`/`useSpring`. Mesure au `pointerenter` (les cartes sont `sticky` : leur position change au défilement).
+  - [x] Vérifié sur le HTML servi : `sticky`, `project-card-highlight` et les classes de `Card` sont sur **un seul et même nœud**.
+- [x] **Tâche 2 — Halo radial suivant le curseur** (AC: 1 ; pièges n°2, n°5)
+  - [x] `radial-gradient` piloté par variables CSS (`--glow-x/-y/-opacity`), `hsl(var(--accent-from) / 0.14)` (token 6.1). `pointer-events-none`. `z-0` : **au-dessus** du grain (`-z-10`), **en dessous** du liseré `after:` (`z-10`).
+- [x] **Tâche 3 — Retrait de l'ancien agrandissement** (AC: 1 ; piège n°3)
+  - [x] `hover:scale-110 transform transition duration-300 ease-in-out` retiré. ❌ `href`/`target`/`rel`/`aria-label` **intouchés** (story 1.4) — vérifié au diff.
+- [x] **Tâche 4 — Mise en évidence clavier & tactile** (AC: 3 ; piège n°4)
+  - [x] `.project-card-highlight:focus-within::after` + `@media (hover: none)`. Signal **non chromatique** (liseré 2px → 3px). ❌ Aucun `tabIndex` ajouté. Cas **carte sans lien** couvert par la règle tactile.
+  - [ ] ⚠️ Contrôle **en niveaux de gris** et **au clavier seul** : à faire par Jeevons.
+- [x] **Tâche 5 — Mouvement réduit & pointeur** (AC: 4 ; piège n°5)
+  - [x] `useReducedMotion` **et** `useFinePointer` (hook déjà créé en 6.6) : dans les deux cas la carte est rendue **nue**, sans listener ni `transform` ni halo. Test **JavaScript**, pas CSS.
+- [x] **Tâche 6 — Non-régression** (pièges n°1, n°2, n°6)
+  - [x] `project-preview.tsx` **absent du diff** : l'aperçu admin importe `ProjectCard` nu, donc sans tilt ni halo. `ProjectCard` **reste sans `"use client"`** (décision 5.9 intacte).
+  - [x] `Card.tsx` **modifié**, de façon volontairement **inerte par défaut** — justification en Completion Notes. Vérifié sur le HTML servi : les cartes de parcours et de hobbies rendent exactement les mêmes classes qu'avant.
+  - [ ] ⚠️ Empilement `sticky` **au défilement** : vérifié structurellement (aucun ancêtre porteur de `transform`), **contrôle visuel à faire par Jeevons**.
+- [ ] **Tâche 7 — Vérification locale** (AC: 1-4 ; piège n°7) — ⚠️ **NON EXÉCUTÉE** (manuelle)
+- [x] **Tâche 8 — Definition of Done** (AGENTS.md §8)
+  - [x] `bun run lint` **0 erreur** (1 warning **préexistant**, `TestimonialsClient.tsx:79` → story 6.9) / `bunx tsc --noEmit` **0** / `bun run build` **OK**, `/` en **`○ (Static)`, Revalidate `1h`**.
+  - [x] ❌ Aucune donnée, **aucun écran admin modifié**, **aucune dépendance**.
+  - [x] `File List` + `Completion Notes` + `Change Log` · `sprint-status.yaml`.
 
 ## Dev Notes
 
@@ -168,8 +171,51 @@ Vérification **manuelle** des 4 AC : survol (tilt + halo, plus aucun `hover:sca
 
 ### Agent Model Used
 
+claude-opus-5 (Claude Code)
+
 ### Completion Notes
+
+**🛑 Décision structurante : une TROISIÈME voie, écartant les deux options de la story.** La story demandait de trancher entre (1) une enveloppe client — « recommandé » — et (2) rendre `ProjectCard` client. **Les deux sacrifient une décision déjà prise**, et le code le montre :
+
+- **Option 1 impossible telle quelle.** `ProjectList.tsx:77` passe `sticky` **dans le `className` de `ProjectCard`**, donc sur la racine de `Card`. Une enveloppe en deviendrait l'**ancêtre** et porterait la `perspective` → empilement cassé. L'autre variante (déplacer `sticky` sur l'enveloppe) a été **explicitement écartée par écrit en story 6.4** (`ProjectList.tsx`, cas (b)) : elle insère un niveau d'empilement entre le conteneur et le `relative z-0` de `Card`, et l'ordre de superposition des cartes qui se chevauchent peut changer.
+- **Option 2 refusée.** Elle casse la décision 5.9, écrite dans le fichier (« AUCUN `"use client"` ici, et c'est délibéré »).
+
+✅ **Retenu** : l'inclinaison est appliquée **au nœud qui porte déjà `sticky`**, via un paramètre `as` qui laisse l'appelant client faire rendre cette racine par un `motion.div`. **Aucun nœud enveloppant n'est ajouté.** Un élément peut être `sticky` *et* porter un `transform` — ce qui casse l'adhérence, c'est un `transform` sur un **ancêtre**. La `perspective` est exprimée par `transformPerspective`, dans la même déclaration que les rotations, donc sans parent porteur. `ProjectCard` **reste une vue pure sans `"use client"`**, et `project-preview.tsx` **n'est pas modifié** (absent du diff) : l'aperçu admin garde la carte, sans tilt ni halo — cohérent pour un aperçu statique.
+
+**Vérifié sur le HTML servi**, et non supposé : `sticky`, `project-card-highlight` et les classes de `Card` sont sur **un seul et même nœud**. Aucun ancêtre ne porte de `transform`.
+
+**`Card.tsx` a été modifié — justification.** La story l'interdit *« si l'effet peut vivre au-dessus »*. Il ne le pouvait pas : le halo doit se glisser **entre** le grain (`-z-10`) et le liseré `after:` (`z-10`), deux couches internes à `Card`. Les deux ajouts sont donc **inertes par défaut** : `as` vaut `div` si on ne passe rien, et le calque de halo ne peint rien tant que `--glow-opacity` n'est pas défini (0 par défaut). Les cartes de parcours et de hobbies ne définissent jamais ces variables — **vérifié sur le HTML servi : elles rendent exactement les mêmes classes qu'avant**.
+
+**Observation au passage (comportement PRÉEXISTANT, pas une régression).** `twMerge` considère `relative` et `sticky` comme deux utilitaires de position en conflit et supprime le premier : les cartes projet rendent donc `sticky` **sans** `relative`. C'était déjà le cas avant cette story. Sans effet ici — `sticky` est lui-même une valeur positionnée, le halo et le liseré `absolute` s'y ancrent correctement. Les cartes non-`sticky` conservent `relative`.
+
+**AC3 est traité en CSS, délibérément.** Tilt et halo sont pilotés au pointeur : au clavier et sur tactile, la carte n'aurait **aucun** retour visuel. La mise en évidence ne dépend donc d'aucun JavaScript. `:focus-within` s'appuie sur le lien **contenu** dans la carte (❌ aucun `tabIndex` ajouté). ⚠️ Cas décisif traité : une carte dont `project.link` est vide **ne contient aucun élément focusable**, `:focus-within` ne s'y déclencherait jamais — d'où la règle `@media (hover: none)` à mise en évidence **permanente**, qui couvre les deux cas. Le signal est **non chromatique** (liseré 2px → 3px), donc lisible en niveaux de gris.
+
+**AC2 est porté par le ressort.** Le retour au repos remet simplement les valeurs à zéro ; l'amortissement de `useSpring` fait le reste — la carte ne « claque » pas à plat.
+
+**AC4 est coupé en JavaScript.** La règle CSS globale de 6.2 ne traite que les *transitions* : elle n'empêcherait pas un `transform` piloté en JS. Sous mouvement réduit **ou** sans pointeur fin, le composant rend la carte **nue** : aucun listener, aucun `transform`, aucun halo.
+
+**⚠️ Vérifications manuelles NON exécutées, dues par Jeevons** (aucun navigateur sans interface avant l'Epic 7) — les deux premières sont les **non-régressions obligatoires** de la story :
+- 🛑 **Empilement `sticky`** : faire défiler la section projets et vérifier que les cartes s'empilent toujours. Vérifié structurellement, mais c'est la régression la plus probable et elle ne se voit qu'au défilement.
+- 🛑 **Aperçu `/admin/projects/[id]`** : la carte s'affiche correctement, sans tilt (story 5.9 AC3).
+- **AC1/AC2** : survol → inclinaison + halo suivant le curseur ; sortie → retour amorti. Vérifier aussi que l'`overflow-hidden` de `Card` n'**écrête** pas les bords pendant l'inclinaison.
+- **AC3** : **clavier seul** (Tab jusqu'à « Visiter le site »), **contrôle en niveaux de gris**, émulation **tactile**, et une carte **sans lien**.
+- **AC4** : reduced-motion → ni inclinaison ni halo.
 
 ### File List
 
+**Créés**
+- `apps/web/src/components/ProjectCardInteractive.tsx` — inclinaison 3D + halo (AC1, AC2, AC4)
+
+**Modifiés**
+- `apps/web/src/components/ProjectList.tsx` — consomme `ProjectCardInteractive` ; `sticky` reste exactement où il était
+- `apps/web/src/components/ProjectCard.tsx` — paramètre `as` (racine polymorphe) ; retrait du `hover:scale-110` du bouton. **Toujours sans `"use client"`**
+- `apps/web/src/components/Card.tsx` — paramètre `as` + calque de halo, **tous deux inertes par défaut**
+- `apps/web/src/app/globals.css` — `.project-card-highlight` : `:focus-within` et `@media (hover: none)` (AC3)
+
+**Non modifié, volontairement** : `apps/web/src/app/(admin)/admin/projects/project-preview.tsx` (non-régression 5.9 AC3).
+
 ### Change Log
+
+| Date | Version | Description |
+| --- | --- | --- |
+| 2026-07-26 | 0.1 | Inclinaison 3D + halo radial sur les cartes projet, agrandissement au survol retiré, mise en évidence clavier/tactile. `sticky` et décision 5.9 préservés. Status → `review`. Non-régressions visuelles (empilement, aperçu admin) restant dues. |

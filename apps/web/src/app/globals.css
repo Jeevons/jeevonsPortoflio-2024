@@ -285,3 +285,35 @@ html {
     scroll-behavior: auto !important;
   }
 }
+
+/* Story 6.8 (AC3) — MISE EN ÉVIDENCE SANS POINTEUR.
+   ==================================================================
+   🛑 L'AC LA PLUS FACILE À MANQUER. L'inclinaison et le halo sont pilotés par
+   `pointermove` : au clavier et sur écran tactile, la carte n'aurait
+   STRICTEMENT aucun retour visuel. Cette règle est le seul mécanisme qui
+   satisfait AC3, et elle vit en CSS précisément pour ne dépendre d'aucun
+   JavaScript.
+
+   ✅ `:focus-within` — le focus vient du lien « Visiter le site » CONTENU dans
+   la carte. ❌ Surtout PAS de `tabIndex` sur la carte elle-même : ce serait
+   ajouter un arrêt de tabulation sur un élément non interactif.
+
+   🛑 LE SIGNAL N'EST PAS CHROMATIQUE. Le liseré passe de 2px à 3px et gagne en
+   opacité : l'information est portée par l'ÉPAISSEUR autant que par la teinte
+   (AGENTS.md §6, WCAG 1.4.1) — vérifiable en niveaux de gris. */
+.project-card-highlight:focus-within::after {
+  outline-width: 3px;
+  outline-color: hsl(var(--accent-from) / 0.9);
+}
+
+/* ⚠️ LE CAS QUI REND `:focus-within` INSUFFISANT À LUI SEUL : une carte dont
+   `project.link` est vide ne rend AUCUN bouton, donc ne contient aucun élément
+   focusable — `:focus-within` ne s'y déclencherait jamais. Sur les appareils
+   sans survol, la mise en évidence est donc PERMANENTE, ce qui couvre aussi
+   bien les cartes avec lien que celles sans. */
+@media (hover: none) {
+  .project-card-highlight::after {
+    outline-width: 3px;
+    outline-color: hsl(var(--accent-from) / 0.55);
+  }
+}
