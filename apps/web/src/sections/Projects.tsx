@@ -30,6 +30,9 @@ export const ProjectsSection = async ({
     : await getPublishedProjects("FLAGSHIP");
 
   const projects: Project[] = dbProjects.map((project) => ({
+    // Story 6.10 — le slug était lu en base mais n'atteignait pas la carte :
+    // il porte désormais le lien vers la fiche détaillée.
+    slug: project.slug,
     company: project.company,
     year: project.period,
     title: project.title,

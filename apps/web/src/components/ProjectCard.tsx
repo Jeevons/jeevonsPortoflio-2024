@@ -2,6 +2,7 @@ import ArrowUpRightIcon from "@/assets/icons/arrow-up-right.svg";
 import CheckCircleIcon from "@/assets/icons/check-circle.svg";
 import { Card } from "@/components/Card";
 import Image, { type StaticImageData } from "next/image";
+import Link from "next/link";
 
 // Story 5.9 (AC3) — CARTE DE PROJET, extraite de `ProjectList` pour être
 // réutilisable.
@@ -69,6 +70,14 @@ export type ProjectCardData = {
    * qu'ÉTIQUETER une carte que Jeevons est seul à voir.
    */
   draft?: boolean;
+  /**
+   * Story 6.10 — identifiant d'URL, pour le lien vers la fiche détaillée.
+   *
+   * ⚠️ Optionnel : il n'était pas transmis jusqu'ici (les sections lisaient
+   * `slug` en base sans le passer à la carte). Sans lui, le lien « Voir le
+   * projet » n'est simplement pas rendu.
+   */
+  slug?: string;
 };
 
 type ProjectCardProps = {
@@ -90,6 +99,22 @@ type ProjectCardProps = {
    * cas le rendu est stritement identique à avant (décision 5.9 préservée).
    */
   as?: React.ElementType;
+  /**
+   * Story 6.10 (AC6) — Rendre le lien « Voir le projet » vers `/projects/[slug]`.
+   *
+   * 🛑 OPTIONNEL, ET DÉSACTIVÉ PAR DÉFAUT — c'est le point important. Ce
+   * composant est PARTAGÉ avec l'aperçu de l'éditeur admin (décision 5.9) :
+   * activer le lien partout ferait pointer l'aperçu vers la fiche publique d'un
+   * projet peut-être NON PUBLIÉ, donc vers un 404 en plein aperçu. Seul
+   * `ProjectList` (site public) passe cette prop.
+   *
+   * ⚠️ Le lien est un `<a>` DISTINCT, jamais un lien couvrant en
+   * `after:absolute inset-0` : la carte contient déjà le lien externe
+   * « Visiter le site » (imbriquer un lien dans un lien est du HTML invalide,
+   * interdit par AGENTS.md §6), et `Card` utilise déjà son pseudo-élément
+   * `after:` pour le liseré de la story 1.8.
+   */
+  detailLink?: boolean;
 } & Omit<React.ComponentPropsWithoutRef<"div">, "style" | "className">;
 
 export const ProjectCard = ({
@@ -97,6 +122,7 @@ export const ProjectCard = ({
   className,
   style,
   as,
+  detailLink = false,
   ...rest
 }: ProjectCardProps) => {
   return (
@@ -159,6 +185,23 @@ export const ProjectCard = ({
           {/* AC4 — le lien est optionnel : sans URL, on ne rend pas un bouton
               qui pointerait vers la page courante (`href=""`), ce qui était le
               comportement du code d'origine quand `project.link` valait `""`. */}
+          {/* Story 6.10 (AC6) — LIEN VERS LA FICHE DÉTAILLÉE.
+              🛑 Un lien DISTINCT, placé à côté du bouton externe et jamais
+              autour de lui : imbriquer un lien dans un lien est du HTML
+              invalide (AGENTS.md §6). Rendu uniquement quand `detailLink` est
+              demandé ET que le slug est connu — l'aperçu admin ne passe ni
+              l'un ni l'autre. */}
+          {detailLink && project.slug ? (
+            <Link
+              href={`/projects/${project.slug}`}
+              aria-label={`Voir le détail du projet ${project.title}`}
+              className="rounded-control focus-visible:outline-accent-from mt-8 inline-flex h-12 w-full items-center justify-center gap-2 border border-white/20 px-6 font-semibold hover:border-white/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 md:mr-4 md:w-auto"
+            >
+              <span>Voir le projet</span>
+              <span aria-hidden="true">&rarr;</span>
+            </Link>
+          ) : null}
+
           {project.link ? (
             <a
               href={project.link}

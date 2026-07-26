@@ -59,6 +59,8 @@ type ProjectCardInteractiveProps = {
   project: ProjectCardData;
   className?: string;
   style?: React.CSSProperties;
+  /** Story 6.10 — transmis tel quel à `ProjectCard` (lien vers la fiche). */
+  detailLink?: boolean;
 };
 
 /**
@@ -73,6 +75,7 @@ export const ProjectCardInteractive = ({
   project,
   className,
   style,
+  detailLink,
 }: ProjectCardInteractiveProps) => {
   const shouldReduceMotion = useReducedMotion();
   const hasFinePointer = useFinePointer();
@@ -122,7 +125,12 @@ export const ProjectCardInteractive = ({
     // n'empêcherait pas un `transform` piloté en JavaScript de s'appliquer.
     // C'est donc ce test explicite, et lui seul, qui satisfait AC4.
     return (
-      <ProjectCard project={project} className={className} style={style} />
+      <ProjectCard
+        project={project}
+        className={className}
+        style={style}
+        detailLink={detailLink}
+      />
     );
   }
 
@@ -162,6 +170,7 @@ export const ProjectCardInteractive = ({
     <ProjectCard
       project={project}
       className={className}
+      detailLink={detailLink}
       as={motion.div}
       onPointerEnter={handlePointerEnter}
       onPointerMove={handlePointerMove}

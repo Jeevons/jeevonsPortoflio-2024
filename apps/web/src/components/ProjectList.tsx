@@ -84,9 +84,15 @@ export const ProjectList = ({
 
                ⚠️ L'aperçu admin (`project-preview.tsx`) importe `ProjectCard`
                NU, sans cette enveloppe : il reste donc sans tilt ni halo. */
+            /* Story 6.10 (AC6) — LE LIEN VERS LA FICHE EST ACTIVÉ ICI, ET
+               SEULEMENT ICI. `project-preview.tsx` (aperçu admin) importe
+               `ProjectCard` nu, sans cette prop : son aperçu ne pointe donc
+               jamais vers `/projects/[slug]`, qui renverrait un 404 sur un
+               projet encore en brouillon. */
             <ProjectCardInteractive
               key={project.title}
               project={project}
+              detailLink
               className="project-card-highlight px-8 pt-8 pb-0  md:pt-12 m:px-10 lg:pt-16 lg:px-20 sticky"
               // Décalage croissant : les cartes s'empilent en défilant.
               style={{
