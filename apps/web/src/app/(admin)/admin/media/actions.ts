@@ -2,6 +2,7 @@
 
 import { revalidateTag } from "next/cache";
 
+import { resolveAuditUserId, writeAudit } from "@/lib/admin/audit";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import { deleteMedia, updateMediaAlt } from "@/lib/media";
 import { findMediaUsages, usagesRefusalMessage } from "@/lib/media/usages";
@@ -47,8 +48,10 @@ export async function deleteMediaAction(
   _prev: MediaActionState,
   formData: FormData,
 ): Promise<MediaActionState> {
+  let email: string | null | undefined;
   try {
-    await requireAdmin();
+    const session = await requireAdmin();
+    email = session.user?.email;
   } catch (error) {
     if (error instanceof UnauthorizedError) {
       return { status: "error", message: SESSION_EXPIRED };
@@ -70,6 +73,16 @@ export async function deleteMediaAction(
     }
 
     await deleteMedia(id);
+
+    const userId = await resolveAuditUserId(email);
+    if (userId) {
+      await writeAudit({
+        userId,
+        action: "DELETE",
+        entity: "Media",
+        entityId: id,
+      });
+    }
   } catch (error) {
     const raw = error instanceof Error ? error.message : String(error);
     console.error(
@@ -98,8 +111,10 @@ export async function updateMediaAltAction(
   _prev: MediaActionState,
   formData: FormData,
 ): Promise<MediaActionState> {
+  let email: string | null | undefined;
   try {
-    await requireAdmin();
+    const session = await requireAdmin();
+    email = session.user?.email;
   } catch (error) {
     if (error instanceof UnauthorizedError) {
       return { status: "error", message: SESSION_EXPIRED };
@@ -118,6 +133,17 @@ export async function updateMediaAltAction(
 
   try {
     await updateMediaAlt(id, alt);
+
+    const userId = await resolveAuditUserId(email);
+    if (userId) {
+      await writeAudit({
+        userId,
+        action: "UPDATE",
+        entity: "Media",
+        entityId: id,
+        diff: { alt: { after: alt } },
+      });
+    }
   } catch (error) {
     const raw = error instanceof Error ? error.message : String(error);
     console.error(

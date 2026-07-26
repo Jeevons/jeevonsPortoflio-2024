@@ -1,3 +1,4 @@
+import { resolveAuditUserId, writeAudit } from "@/lib/admin/audit";
 import { createMedia, listMedia, mediaUrl } from "@/lib/media";
 import { MAX_UPLOAD_BYTES, TOO_LARGE_MESSAGE } from "@/lib/media/process";
 import { requireAdminApi } from "@/lib/require-admin";
@@ -67,6 +68,17 @@ export async function POST(request: Request) {
     // pas un format d'image accepté. Le message vient de la validation serveur
     // et nomme la cause (AC4).
     return Response.json({ error: result.message }, { status: 415 });
+  }
+
+  const userId = await resolveAuditUserId(guard.user?.email);
+  if (userId) {
+    await writeAudit({
+      userId,
+      action: "CREATE",
+      entity: "Media",
+      entityId: result.media.id,
+      diff: { path: { after: result.media.path }, alt: { after: alt } },
+    });
   }
 
   // ⚠️ Pas de `revalidateTag` ici, volontairement : une image fraîchement

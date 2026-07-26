@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { requireAdmin } from "@/lib/require-admin";
+import { resolveAuditUserId, writeAudit } from "@/lib/admin/audit";
 import { prisma } from "@/lib/db";
 import { encryptTotpSecret, decryptTotpSecret } from "@/lib/crypto/totp-secret";
 import {
@@ -152,6 +153,19 @@ export async function confirmEnrollmentAction(
     data: { totpEnabledAt: new Date(), recoveryCodes: stored },
   });
 
+  // Story 5.19 (piège n°2) — diff FIXE, sans valeur : `User` n'a délibérément
+  // aucune entrée dans `ENTITY_FIELDS`, donc `buildDiff` ne peut pas y être
+  // appelé. Ce marqueur ne révèle ni secret ni code.
+  const auditUserId = await resolveAuditUserId(email);
+  if (auditUserId) {
+    await writeAudit({
+      userId: auditUserId,
+      action: "UPDATE",
+      entity: "User",
+      diff: { totpEnabled: true },
+    });
+  }
+
   // La décision de redirection (guard du layout) lit la base : on rafraîchit.
   revalidatePath("/admin", "layout");
 
@@ -202,6 +216,18 @@ export async function regenerateRecoveryCodesAction(
   }
 
   const plain = await replaceRecoveryCodes(email);
+
+  // Story 5.19 — traçable SANS jamais enregistrer les codes (voir la note de
+  // tête de fonction) : marqueur fixe, comme pour l'activation 2FA.
+  const auditUserId = await resolveAuditUserId(email);
+  if (auditUserId) {
+    await writeAudit({
+      userId: auditUserId,
+      action: "UPDATE",
+      entity: "User",
+      diff: { recoveryCodesRegenerated: true },
+    });
+  }
 
   // L'écran de sécurité affiche le décompte restant : il doit refléter le
   // nouveau jeu au prochain rendu.

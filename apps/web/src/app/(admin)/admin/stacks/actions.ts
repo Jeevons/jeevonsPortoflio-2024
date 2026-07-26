@@ -3,6 +3,7 @@
 import { revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { buildDiff, resolveAuditUserId, writeAudit } from "@/lib/admin/audit";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import { prisma } from "@/lib/db";
 import { requireAdmin, UnauthorizedError } from "@/lib/require-admin";
@@ -89,10 +90,13 @@ const MISSING_STACK_ERROR =
 async function guardAndValidate(
   formData: FormData,
 ): Promise<
-  { ok: true; data: StackInput } | { ok: false; state: StackFormState }
+  | { ok: true; data: StackInput; email: string | null | undefined }
+  | { ok: false; state: StackFormState }
 > {
+  let email: string | null | undefined;
   try {
-    await requireAdmin();
+    const session = await requireAdmin();
+    email = session.user?.email;
   } catch (error) {
     if (error instanceof UnauthorizedError) {
       return {
@@ -126,7 +130,7 @@ async function guardAndValidate(
     };
   }
 
-  return { ok: true, data: parsed.data };
+  return { ok: true, data: parsed.data, email };
 }
 
 /**
@@ -149,6 +153,17 @@ export async function createStackAction(
       select: { id: true },
     });
     createdId = created.id;
+
+    const userId = await resolveAuditUserId(guard.email);
+    if (userId) {
+      await writeAudit({
+        userId,
+        action: "CREATE",
+        entity: "Stack",
+        entityId: createdId,
+        diff: buildDiff("Stack", undefined, guard.data),
+      });
+    }
   } catch (error) {
     if (isNameConflict(error)) {
       return {
@@ -196,11 +211,27 @@ export async function updateStackAction(
   }
 
   try {
+    const before = await prisma.stack.findUnique({
+      where: { id },
+      select: { name: true, iconKey: true, level: true },
+    });
+
     await prisma.stack.update({
       where: { id },
       data: guard.data,
       select: { id: true },
     });
+
+    const userId = await resolveAuditUserId(guard.email);
+    if (userId) {
+      await writeAudit({
+        userId,
+        action: "UPDATE",
+        entity: "Stack",
+        entityId: id,
+        diff: buildDiff("Stack", before ?? undefined, guard.data),
+      });
+    }
   } catch (error) {
     if (isNameConflict(error)) {
       return {
@@ -256,8 +287,10 @@ export async function deleteStackAction(
   _prevState: DeleteStackState,
   formData: FormData,
 ): Promise<DeleteStackState> {
+  let email: string | null | undefined;
   try {
-    await requireAdmin();
+    const session = await requireAdmin();
+    email = session.user?.email;
   } catch (error) {
     if (error instanceof UnauthorizedError) {
       return { status: "error", message: SESSION_EXPIRED };
@@ -273,6 +306,16 @@ export async function deleteStackAction(
 
   try {
     await prisma.stack.delete({ where: { id }, select: { id: true } });
+
+    const userId = await resolveAuditUserId(email);
+    if (userId) {
+      await writeAudit({
+        userId,
+        action: "DELETE",
+        entity: "Stack",
+        entityId: id,
+      });
+    }
   } catch (error) {
     // P2025 : déjà supprimée ailleurs. Ce n'est pas une panne — on le dit sans
     // alarmer.

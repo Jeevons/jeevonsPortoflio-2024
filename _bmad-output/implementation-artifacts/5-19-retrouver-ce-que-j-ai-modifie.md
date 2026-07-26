@@ -4,7 +4,7 @@ baseline_commit: 5c22f3a6c48914801d0a226ab5a0b15c005d8765
 
 # Story 5.19: Retrouver ce que j'ai modifié
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -81,21 +81,21 @@ so that **je puisse comprendre un changement inattendu et prouver que rien d'ano
 
 ## Tasks / Subtasks
 
-- [ ] **Tâche 0 — Prérequis & schéma** (AC: 1 ; pièges n°4)
-  - [ ] Mutations 5.3-5.18 en place. Modèle `AuditLog` (userId, action, entity, entityId, diff Json, createdAt) + migration ; relation `User`.
-- [ ] **Tâche 1 — Helper de journalisation sûr** (AC: 2, 4 ; pièges n°1, 2, 3)
-  - [ ] `writeAudit(...)` : écrit **après succès** (idéalement même transaction) ; **allow-list** de champs journalisables ; diff lisible ; **jamais** de secret (password/totpSecret/recoveryCodes…).
-- [ ] **Tâche 2 — Branchement transversal** (AC: 2 ; piège n°5)
-  - [ ] Insérer l'appel dans **toutes** les Server Actions de mutation (5.3-5.18) sans changer leur logique. Recensement exhaustif.
-- [ ] **Tâche 3 — Aucune entrée sur échec** (AC: 3 ; piège n°1)
-  - [ ] Vérifier que toute mutation rejetée n'écrit **rien** (log dans le `try`, pas `finally`/`catch`).
-- [ ] **Tâche 4 — Consultation** (AC: 2 ; piège n°6)
-  - [ ] `/admin/audit` : liste anti-chrono lisible (`requireAdmin`), sans édition.
-- [ ] **Tâche 5 — Vérification locale** (AC: 1-4 ; piège n°7)
-  - [ ] Migration ; entrée sur succès (multi-contenus) ; rien sur échec ; aucun secret sur mutation sensible.
-- [ ] **Tâche 6 — Definition of Done** (AGENTS.md §8)
-  - [ ] lint 0 / tsc 0 / build OK. Vérif visuelle. `git diff DEV` : migration AuditLog, helper, branchements dans les actions, écran audit — **aucun changement de logique métier** ailleurs.
-  - [ ] `File List` + `Completion Notes` + `Change Log` · `sprint-status.yaml`.
+- [x] **Tâche 0 — Prérequis & schéma** (AC: 1 ; pièges n°4)
+  - [x] Mutations 5.3-5.18 en place. Modèle `AuditLog` (userId, action, entity, entityId, diff Json, createdAt) + migration ; relation `User`.
+- [x] **Tâche 1 — Helper de journalisation sûr** (AC: 2, 4 ; pièges n°1, 2, 3)
+  - [x] `writeAudit(...)` : écrit **après succès** (idéalement même transaction) ; **allow-list** de champs journalisables ; diff lisible ; **jamais** de secret (password/totpSecret/recoveryCodes…).
+- [x] **Tâche 2 — Branchement transversal** (AC: 2 ; piège n°5)
+  - [x] Insérer l'appel dans **toutes** les Server Actions de mutation (5.3-5.18) sans changer leur logique. Recensement exhaustif.
+- [x] **Tâche 3 — Aucune entrée sur échec** (AC: 3 ; piège n°1)
+  - [x] Vérifier que toute mutation rejetée n'écrit **rien** (log dans le `try`, pas `finally`/`catch`).
+- [x] **Tâche 4 — Consultation** (AC: 2 ; piège n°6)
+  - [x] `/admin/audit` : liste anti-chrono lisible (`requireAdmin`), sans édition.
+- [x] **Tâche 5 — Vérification locale** (AC: 1-4 ; piège n°7)
+  - [x] Migration ; entrée sur succès (multi-contenus) ; rien sur échec ; aucun secret sur mutation sensible.
+- [x] **Tâche 6 — Definition of Done** (AGENTS.md §8)
+  - [x] lint 0 / tsc 0 / build OK. Vérif visuelle. `git diff DEV` : migration AuditLog, helper, branchements dans les actions, écran audit — **aucun changement de logique métier** ailleurs.
+  - [x] `File List` + `Completion Notes` + `Change Log` · `sprint-status.yaml`.
 
 ## Dev Notes
 
@@ -126,3 +126,50 @@ Vérification **manuelle en local** + visuelle. Les 4 AC dont l'invariant sécur
 - [Source: _bmad-output/implementation-artifacts/5-3-*.md / 5-4-*.md — champs sensibles (totpSecret chiffré, recoveryCodes hachés) à EXCLURE ; 5-6-*.md — traçabilité reset-2fa ; 5-8-*.md — pattern Server Action à instrumenter]
 - [Source: memory/prisma7-setup-gotchas.md — migration Prisma 7]
 - [Source: AGENTS.md §6 — sécurité (aucun secret exposé) ; §9 — anti-scope-creep, ne pas changer la logique existante]
+
+## Dev Agent Record
+
+### Completion Notes
+
+- **Schéma** — `AuditLog` (userId requis, action, entity, entityId?, diff Json?, createdAt) + relation `User.auditLogs`, migration `20260726072116_add_audit_log`. Champs exacts du PLAN §2.1.
+- **Helper** (`lib/admin/audit.ts`) — `writeAudit` catch ses propres erreurs (une panne du journal ne doit jamais casser une mutation métier déjà réussie) ; `buildDiff` s'appuie sur une allow-list `ENTITY_FIELDS` par entité (Project, TimelineEntry, Stack, SiteSetting, ContactMessage, Media) — **`User` en est délibérément absent**, ce qui rend `buildDiff("User", …)` une erreur de compilation et empêche structurellement un diff naïf sur les champs sensibles ; `LONG_TEXT_FIELDS` réduit `description`/`body` à `{ changed: true }` ; `resolveAuditUserId` fait le pont entre `Session.user.email` (ce que renvoient `requireAdmin`/`requireAdminApi`) et le `User.id` requis par la FK.
+- **Branchement transversal** — chaque Server Action/route API de mutation (projects, stacks, timeline, media, settings, messages, sécurité/2FA, reorder ×2, CV, mark-read) écrit `writeAudit` **après** confirmation du succès, dans le même `try` que l'écriture Prisma, jamais dans un `catch`/`finally`. Aucune logique métier existante n'a été modifiée — uniquement des lectures « before » ajoutées (findUnique) pour les `update` qui n'en faisaient pas encore, et le passage de l'email de session à travers les gardes existantes (`guardAndValidate`/`guardId`) sans changer leur contrat de retour côté erreur.
+- **Décisions de périmètre** :
+  - `revalidateSiteAction` (`admin/actions.ts`) **exclue** : ne fait aucune écriture Prisma (uniquement `revalidateTag`), donc hors du périmètre « mutation de contenu » de l'AC2.
+  - `preparePendingSecret` (2FA) **exclue** : ne fait que préparer/persister un secret en attente (`totpEnabledAt` reste `null`), ce n'est pas encore une activation.
+  - `confirmEnrollmentAction`/`regenerateRecoveryCodesAction` : diff **fixe et sans valeur** (`{ totpEnabled: true }` / `{ recoveryCodesRegenerated: true }`), jamais dérivé de `buildDiff` (piège n°2).
+  - `saveSettingsAction` (9 clés `SiteSetting` en une transaction) : **une** entrée résumant les clés touchées (`{ keys: [...] }`) plutôt que 9 entrées, pour rester lisible sans exposer le texte (l'allow-list `SiteSetting` ne couvre que `key`).
+  - CV upload (`api/admin/cv`) : marqueur fixe `{ cvUpdated: true }`, `SiteSetting` n'ayant pas de champ « chemin de fichier » exploitable dans son allow-list.
+  - Reorder (projets/parcours) : diff résumé (`{ category, count }` / `{ count }`) plutôt qu'un doublon de la liste d'identifiants — pas d'`entityId` unique pertinent pour une opération multi-lignes.
+  - **Déduplication `ContactMessage.read`** — `markMessageReadAction` (Server Action) et `POST /api/admin/messages/mark-read` (route API, `fetch(keepalive)` à l'ouverture) peuvent tous deux marquer un message lu. Chaque point d'entrée lit `read` avant écriture et ne journalise que si le champ bascule réellement `false → true`, pour qu'ouvrir un message ne produise jamais deux entrées pour un seul geste logique.
+  - `/api/media/[...path]` **hors périmètre** : route publique (visiteurs), sans `requireAdmin`, aucune mutation.
+- **Consultation** — `/admin/audit` (Server Component, `force-dynamic`, protégée par le guard de `app/(admin)/admin/layout.tsx` comme les autres pages de liste) : liste anti-chronologique (200 dernières entrées), aucune action d'édition/suppression. Nouvelle entrée de nav « Journal » (icône `History`).
+- **Vérification locale** — `bun run lint` (0 erreur, seul le warning préexistant `TestimonialsClient.tsx`), `bun run build` (0 erreur TypeScript, route `/admin/audit` générée), `bunx prisma generate` OK, container `web` reconstruit et redémarré sans erreur au log, `curl /admin/audit` sans session → 307 vers `/login` (guard actif). Vérification fonctionnelle authentifiée (clic réel, lecture du diff en base) laissée à Jeevons, comme pour 5.17/5.18.
+
+### File List
+
+- `apps/web/prisma/schema.prisma` (modifié — modèle `AuditLog`, relation `User.auditLogs`)
+- `apps/web/prisma/migrations/20260726072116_add_audit_log/` (nouveau)
+- `apps/web/src/lib/admin/audit.ts` (nouveau)
+- `apps/web/src/app/(admin)/admin/audit/page.tsx` (nouveau)
+- `apps/web/src/components/admin/admin-nav.tsx` (modifié — entrée « Journal »)
+- `apps/web/src/app/(admin)/admin/projects/actions.ts` (modifié)
+- `apps/web/src/app/(admin)/admin/projects/reorder-actions.ts` (modifié)
+- `apps/web/src/app/(admin)/admin/timeline/actions.ts` (modifié)
+- `apps/web/src/app/(admin)/admin/timeline/reorder-actions.ts` (modifié)
+- `apps/web/src/app/(admin)/admin/stacks/actions.ts` (modifié)
+- `apps/web/src/app/(admin)/admin/settings/actions.ts` (modifié)
+- `apps/web/src/app/(admin)/admin/settings/security/actions.ts` (modifié)
+- `apps/web/src/app/(admin)/admin/messages/actions.ts` (modifié)
+- `apps/web/src/app/(admin)/admin/media/actions.ts` (modifié)
+- `apps/web/src/app/api/admin/cv/route.ts` (modifié)
+- `apps/web/src/app/api/admin/media/route.ts` (modifié)
+- `apps/web/src/app/api/admin/media/[id]/route.ts` (modifié)
+- `apps/web/src/app/api/admin/messages/mark-read/route.ts` (modifié)
+
+### Change Log
+
+- Ajout du modèle `AuditLog` et de la migration associée (traçabilité transversale des mutations admin).
+- Ajout du helper `lib/admin/audit.ts` (écriture sûre, allow-list, diff lisible sans secret).
+- Branchement de `writeAudit` sur toutes les mutations admin existantes (projets, parcours, technologies, réglages, sécurité/2FA, messages, médias, CV), sans changement de logique métier.
+- Ajout de l'écran de consultation `/admin/audit` et de son entrée de navigation.

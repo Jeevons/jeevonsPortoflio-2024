@@ -3,6 +3,7 @@
 import { revalidateTag } from "next/cache";
 import { z } from "zod";
 
+import { resolveAuditUserId, writeAudit } from "@/lib/admin/audit";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import { prisma } from "@/lib/db";
 import { requireAdmin, UnauthorizedError } from "@/lib/require-admin";
@@ -75,7 +76,7 @@ export async function reorderTimelineAction(input: {
   try {
     // Une Server Action est un endpoint POST à part entière : le guard de
     // layout ne la protège pas.
-    await requireAdmin();
+    const session = await requireAdmin();
 
     const parsed = reorderSchema.safeParse(input);
     if (!parsed.success) {
@@ -119,6 +120,16 @@ export async function reorderTimelineAction(input: {
     // AC2 — « l'ordre est persisté ET reflété sur le site public ». Sans cette
     // invalidation, le nouvel ordre n'y apparaîtrait qu'au bout d'une heure.
     revalidateTag(CACHE_TAGS.timeline, { expire: 0 });
+
+    const userId = await resolveAuditUserId(session.user?.email);
+    if (userId) {
+      await writeAudit({
+        userId,
+        action: "UPDATE",
+        entity: "TimelineEntry",
+        diff: { reordered: { count: orderedIds.length } },
+      });
+    }
 
     return { status: "success" };
   } catch (error) {
