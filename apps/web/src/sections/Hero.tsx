@@ -4,6 +4,7 @@ import StartIcon from "@/assets/icons/star.svg";
 import grainImage from "@/assets/images/grain.jpg";
 import memojiImage from "@/assets/images/jeevons-avatar-coding.webp";
 import { HeroOrbit } from "@/components/HeroOrbit";
+import { MagneticLink } from "@/components/MagneticLink";
 import { Reveal } from "@/components/Reveal";
 import { getHeroSettings } from "@/lib/settings";
 import Image from "next/image";
@@ -143,15 +144,25 @@ export const HeroSection = async () => {
             Les CTA sont eux aussi souvent visibles d'emblée ; ils bénéficient
             donc de la même protection, et se révèlent uniquement sur les écrans
             courts où ils tombent sous la ligne de flottaison. */}
+        {/* Story 6.6 (AC1) — LES DEUX CTA SONT LES SEULS ÉLÉMENTS MAGNÉTIQUES
+            DU SITE. L'AC parle d'« un bouton d'action », pas de tout ce qui est
+            cliquable : les entrées de menu relèvent de la story 6.5, les cartes
+            projet de la 6.8, et l'administration n'est concernée par aucune.
+
+            🛑 `MagneticLink` REND UN VRAI `<a href>` — mêmes ancres, mêmes
+            classes qu'avant. Le décalage est un `transform` de quelques pixels,
+            piloté par le seul `pointermove` : un visiteur au clavier n'en génère
+            aucun, les CTA restent donc parfaitement immobiles sous le focus
+            (AC5). */}
         <Reveal className="flex flex-col md:flex-row justify-center items-center mt-8 gap-4 z-30">
-          <a
+          <MagneticLink
             href="#projects"
             className="bg-surface inline-flex items-center gap-2 border border-white/15 px-6 h-12 rounded-control"
           >
             <span className="font-semibold">Explorez mon travail</span>
             <ArrowDown className="size-4" />
-          </a>
-          <a
+          </MagneticLink>
+          <MagneticLink
             href="#about"
             className="inline-flex items-center gap-2 border border-white bg-white text-surface rounded-control h-12 px-6"
           >
@@ -159,7 +170,7 @@ export const HeroSection = async () => {
             <span className="font-semibold text-center">
               Faisons connaissance
             </span>
-          </a>
+          </MagneticLink>
         </Reveal>
       </div>
     </section>

@@ -1,10 +1,10 @@
 ---
-baseline_commit: c408eae7818fb33ef915a70085775688fbf80640
+baseline_commit: 6e8666a33715d6a2c0af3236394a0debb43a1a33
 ---
 
 # Story 6.6: Rendre les éléments interactifs vivants
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -106,23 +106,23 @@ Deux effets de pointeur, tous deux **purement décoratifs** : un **déplacement 
 
 ## Tasks / Subtasks
 
-- [ ] **Tâche 0 — Prérequis & détection du pointeur** (AC: 3 ; piège n°1)
-  - [ ] 6.1 et 6.2 `done`. Détection `(hover: hover) and (pointer: fine)`, **défaut = désactivé**, activation après montage. Aucune détection par largeur d'écran.
-- [ ] **Tâche 1 — Boutons magnétiques** (AC: 1, 5 ; pièges n°3, n°4, n°5)
-  - [ ] CTA du hero **uniquement**. `<a>` conservés, `href` intacts. `useMotionValue`/`useSpring` de `motion`, `transform` seul, amplitude ~8 px. Listeners attachés/détachés au survol, nettoyés au démontage.
-- [ ] **Tâche 2 — Curseur personnalisé** (AC: 2 ; pièges n°1, n°4, n°6)
-  - [ ] Point + halo, dégradé d'accent tokenisé (6.1). 🛑 `pointer-events: none` + `aria-hidden="true"`. Un seul listener global. `cursor: none` **conditionné** à la détection, jamais global.
-  - [ ] Grossissement du halo par `closest("a, button, input, textarea, select, [role='button']")` sur `pointerover`. `z-index` vérifié contre header, barre de progression et cartes `sticky`.
-- [ ] **Tâche 3 — Mouvement réduit** (AC: 4 ; piège n°2)
-  - [ ] `useReducedMotion` → curseur custom **non rendu du tout**, **aucun `cursor: none`**, aucun décalage magnétique. Réactif à un changement de réglage sans rechargement.
-- [ ] **Tâche 4 — Non-régression clavier & tactile** (AC: 3, 5 ; pièges n°1, n°3)
-  - [ ] Aucun `preventDefault`, aucun `touch-action: none`. Vérifier que tous les contrôles du site restent cliquables curseur custom actif.
-- [ ] **Tâche 5 — Vérification locale** (AC: 1-5 ; piège n°7)
-  - [ ] Les 5 AC un par un : émulation tactile, reduced-motion, **clavier seul**, et le **test de clic** curseur actif.
-- [ ] **Tâche 6 — Definition of Done** (AGENTS.md §8)
-  - [ ] `bun run lint` 0 / `bunx tsc --noEmit` 0 / `bun run build` OK (**marqueur `○ (Static)` de `/`**). Vérification visuelle **avec et sans** reduced-motion, **et en émulation tactile**.
-  - [ ] `git diff DEV` : hero CTA + composant curseur uniquement. ❌ Aucun fichier `/admin`, aucune donnée, **aucune dépendance**.
-  - [ ] `File List` + `Completion Notes` + `Change Log` · `sprint-status.yaml`.
+- [x] **Tâche 0 — Prérequis & détection du pointeur** (AC: 3 ; piège n°1)
+  - [x] 6.1 et 6.2 `done`. Détection `(hover: hover) and (pointer: fine)`, **défaut = désactivé**, activation après montage. Aucune détection par largeur d'écran.
+- [x] **Tâche 1 — Boutons magnétiques** (AC: 1, 5 ; pièges n°3, n°4, n°5)
+  - [x] CTA du hero **uniquement**. `<a>` conservés, `href` intacts. `useMotionValue`/`useSpring` de `motion`, `transform` seul, amplitude ~8 px. Listeners attachés/détachés au survol, nettoyés au démontage.
+- [x] **Tâche 2 — Curseur personnalisé** (AC: 2 ; pièges n°1, n°4, n°6)
+  - [x] Point + halo, dégradé d'accent tokenisé (6.1). 🛑 `pointer-events: none` + `aria-hidden="true"`. Un seul listener global. `cursor: none` **conditionné** à la détection, jamais global.
+  - [x] Grossissement du halo par `closest("a, button, input, textarea, select, [role='button']")` sur `pointerover`. `z-index` vérifié contre header, barre de progression et cartes `sticky`.
+- [x] **Tâche 3 — Mouvement réduit** (AC: 4 ; piège n°2)
+  - [x] `useReducedMotion` → curseur custom **non rendu du tout**, **aucun `cursor: none`**, aucun décalage magnétique. Réactif à un changement de réglage sans rechargement.
+- [x] **Tâche 4 — Non-régression clavier & tactile** (AC: 3, 5 ; pièges n°1, n°3)
+  - [x] Aucun `preventDefault`, aucun `touch-action: none`. Vérifié statiquement ; le test de clic manuel reste à faire (tâche 5).
+- [ ] **Tâche 5 — Vérification locale** (AC: 1-5 ; piège n°7) — 🛑 **EN ATTENTE DE JEEVONS**
+  - [ ] Les 5 AC un par un : émulation tactile, reduced-motion, **clavier seul**, et le **test de clic** curseur actif. **Non exécutée** : aucun navigateur headless dans le dépôt (Playwright n'arrive qu'en Epic 7) et la story prescrit une vérification manuelle. Détail dans les Completion Notes.
+- [x] **Tâche 6 — Definition of Done** (AGENTS.md §8)
+  - [x] `bun run lint` 0 erreur / `bunx tsc --noEmit` 0 / `bun run build` OK (**`/` = `○ (Static)`, Revalidate 1h**). ⚠️ Vérification visuelle **déléguée à Jeevons** (tâche 5).
+  - [x] `git diff DEV` : hero CTA + composant curseur uniquement. ❌ Aucun fichier `/admin`, aucune donnée, **aucune dépendance**.
+  - [x] `File List` + `Completion Notes` + `Change Log` · `sprint-status.yaml`.
 
 ## Dev Notes
 
@@ -163,8 +163,60 @@ Vérification **manuelle** des 5 AC sur trois configurations : **souris** (AC1, 
 
 ### Agent Model Used
 
+claude-opus-5
+
 ### Completion Notes
+
+**Deux effets de pointeur décoratifs, et trois garde-fous qui comptent davantage.**
+
+**AC1 — Boutons magnétiques.** `MagneticLink` rend un `motion.a` : les deux CTA du hero restent de vrais `<a href="#projects">` / `<a href="#about">`, avec leurs classes d'origine inchangées. Amplitude plafonnée à 8 px (`MAX_OFFSET`), décalage proportionnel à l'écart au centre, retour au repos par `useSpring`. `getBoundingClientRect()` est appelé au `pointerenter` seulement — jamais dans le `pointermove`. Les listeners sont portés par React sur l'élément : ils vivent et meurent avec lui, sans `useEffect` à nettoyer.
+
+**AC2 — Curseur personnalisé.** Point + halo en `fixed`, pilotés par un **unique** listener `pointermove` sur `window`, via `useMotionValue`/`useSpring` — aucun rendu React par mouvement de souris. Le halo grossit (`scale` 1,6) au survol d'un élément interactif, détecté par `closest("a, button, input, textarea, select, [role='button']")` sur `pointerover` : aucun fichier tiers à retoucher, et les éléments ajoutés plus tard sont couverts d'office. Couleurs par les tokens 6.1 (`.bg-gradient-accent`, `bg-accent-from`). `z-[60]`, au-dessus du header (`z-10`), de la barre de progression 6.5 (`z-20`) et des CTA révélés (`z-30`).
+
+**AC3 — Tactile.** `useFinePointer()` (`lib/pointer.ts`) interroge `(hover: hover) and (pointer: fine)` — la capacité de pointage, jamais la largeur d'écran. Implémenté avec `useSyncExternalStore` : son `getServerSnapshot` renvoie `false`, ce qui fait du « défaut désactivé » une propriété structurelle plutôt qu'un état initial qu'un effet viendrait corriger. **Vérifié sur le HTML servi en production : 0 occurrence de `cursor: none`, 0 nœud de curseur.** Aucun curseur fantôme possible sur mobile.
+
+**AC4 — Mouvement réduit.** `CustomCursor` est scindé en deux : le composant exporté décide, `ActiveCursor` porte tout l'état et n'est monté que si l'effet doit s'appliquer. Sous mouvement réduit, il ne rend **rien** — pas de nœud DOM, et surtout **pas de `cursor: none`**, puisque cette règle est posée par un `useEffect` d'`ActiveCursor` sur `document.documentElement` et retirée par son nettoyage. Le curseur système redevient donc celui du navigateur, avec ses formes contextuelles. ⚠️ La règle CSS globale de 6.2 n'aurait pas suffi : elle neutralise les *transitions*, elle ne fait pas disparaître un composant — un curseur simplement « plus rapide » aurait laissé le curseur système masqué et échoué l'AC4.
+
+**AC5 — Clavier.** Aucun `preventDefault`, aucun `touch-action`. `pointer-events: none` est en dur sur le conteneur du curseur, et `aria-hidden="true"` le rend inexistant pour les technologies d'assistance. Le magnétisme n'est piloté que par `pointermove` : un utilisateur clavier n'en génère aucun, les CTA restent strictement immobiles sous le focus.
+
+**🛑 Vérifications manuelles NON EXÉCUTÉES — elles restent à la charge de Jeevons.** Le dépôt ne contient aucun navigateur headless (Playwright n'arrive qu'en Epic 7) et la story prescrit explicitement une vérification manuelle sur trois configurations. Quatre des cinq AC ne sont donc **pas** validés par observation directe. Reste à faire, par ordre d'importance :
+
+1. 🛑 **Test de clic, curseur actif** — cliquer un lien du menu, un bouton, le champ de contact. Un seul clic qui ne passe pas signifierait que `pointer-events: none` a échoué, et rendrait **tout le site incliquable**. C'est le test décisif d'AC5.
+2. 🛑 **Mouvement réduit** — le curseur doit redevenir `text` sur un paragraphe et `pointer` sur un lien (AC4).
+3. **Émulation tactile** — aucun curseur custom, curseur système présent, taps normaux (AC3).
+4. **Souris** — décalage de quelques pixels sur les CTA, halo qui grossit sur les éléments interactifs (AC1, AC2).
+5. **Clavier seul** — Tab sur les deux CTA, focus visible, `Entrée` vers `#projects` / `#about`.
+
+**Contrôles automatisés passés.** `bun run lint` 0 erreur · `bunx tsc --noEmit` 0 · `bun run build` succès avec **`/` = `○ (Static)`, Revalidate 1h** (garde-fou de `page.tsx:20-29` tenu). Sur le serveur de production local : `/` HTTP 200 sans `cursor: none` ni nœud de curseur dans le HTML, CTA avec `href` et classes intacts et **sans `style` de transform résiduel**, `/preview` HTTP 200, `/admin` HTTP 307 (redirection normale). Aucune dépendance ajoutée.
+
+**Deux écarts par rapport à la lettre de la story, assumés.**
+- Le contexte donnait les CTA aux lignes 127-142 de `Hero.tsx` ; ils sont en réalité aux lignes 147-162, désormais enveloppés dans `<Reveal>` (story 6.4). Aucune conséquence : `MagneticLink` s'y substitue à l'identique.
+- Le `baseline_commit` des stories 6.6 à 6.10 pointait sur `c408eae`, antérieur au merge de 6.1. Remis à `6e8666a`, le HEAD de `DEV` au démarrage.
+
+**Dette signalée, hors périmètre.** `TestimonialsClient.tsx:79` émet un warning ESLint (`react-hooks/exhaustive-deps`, dépendance `autoScroll` manquante) — **préexistant**, vérifié par `git stash` sur l'arbre propre. Non corrigé ici : ce fichier relève de la story 6.9.
 
 ### File List
 
+**Créés**
+- `apps/web/src/lib/pointer.ts` — `useFinePointer()`, détection `(hover: hover) and (pointer: fine)` par `useSyncExternalStore`, défaut désactivé.
+- `apps/web/src/components/MagneticLink.tsx` — CTA magnétique (AC1, AC5), dégradé en `<a>` nu hors conditions.
+- `apps/web/src/components/CustomCursor.tsx` — curseur personnalisé (AC2), scindé décision / `ActiveCursor`.
+
+**Modifiés**
+- `apps/web/src/sections/Hero.tsx` — les deux CTA passent par `MagneticLink`. Reste un Server Component `async`.
+- `apps/web/src/app/page.tsx` — montage de `<CustomCursor />` (site public uniquement, pas dans `layout.tsx`).
+- `_bmad-output/implementation-artifacts/6-6-rendre-les-elements-interactifs-vivants.md` — `baseline_commit`, statut, tâches, Dev Agent Record.
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` — statut de la story.
+
 ### Change Log
+
+| Date | Changement |
+|---|---|
+| 2026-07-26 | `baseline_commit` recalé sur `6e8666a` (HEAD de `DEV`), statut `ready-for-dev` → `in-progress`. |
+| 2026-07-26 | AC3 — `lib/pointer.ts` : détection du pointeur fin, défaut désactivé garanti par `getServerSnapshot`. |
+| 2026-07-26 | AC1/AC5 — `MagneticLink` sur les deux CTA du hero, amplitude 8 px, `<a href>` préservés. |
+| 2026-07-26 | AC2 — `CustomCursor` monté dans `page.tsx` : point + halo, `pointer-events: none`, `aria-hidden`, tokens 6.1, `z-[60]`. |
+| 2026-07-26 | AC4 — `cursor: none` posé et retiré par `ActiveCursor` lui-même ; aucune règle globale, composant absent sous mouvement réduit. |
+| 2026-07-26 | Correctif — centrage du point et du halo par marges négatives : `x`/`y` de `motion` écrivent déjà dans `transform`, un `translateX: -50%` leur aurait disputé la même propriété. |
+| 2026-07-26 | Lint — `useSyncExternalStore` et scission du curseur pour supprimer deux `setState` synchrones en effet (`react-hooks/set-state-in-effect`). |
+| 2026-07-26 | Statut `in-progress` → `review`. ⚠️ Vérifications manuelles des AC1-AC5 non exécutées, déléguées à Jeevons (voir Completion Notes). |

@@ -41,7 +41,7 @@
 # - Retrospective appends its action items to action_items; sprint-status surfaces open ones
 
 generated: 2026-07-21
-last_updated: 2026-07-26 (Stories 6.1 à 6.5 → review : tokens de design · socle mouvement réduit + runbook · typographie fluide zoom-safe · reveal au scroll sans jamais masquer le contenu · barre de progression + header adaptatif + scroll-spy (`side-projects` replié sur `projets`, aucune entrée ajoutée) — ⚠️ les cinq partagent la branche 6.1, sur décision explicite de Jeevons ; `/` reste Static+ISR, vérifié au build)
+last_updated: 2026-07-26 (Story 6.6 → review : boutons magnétiques ~8 px + curseur personnalisé desktop, tous deux absents sous mouvement réduit et sur tactile ; lint/tsc/build verts, `/` reste Static+ISR. ⚠️ VÉRIFICATIONS MANUELLES DES 5 AC NON EXÉCUTÉES — pas de navigateur headless avant l'Epic 7, elles restent à la charge de Jeevons (test décisif : cliquer un lien avec le curseur custom actif). Story 6.7 → in-progress. ⚠️ Les stories 6.6 à 6.10 partagent la branche 6.6, un commit par story, sur décision explicite de Jeevons. Précédemment : stories 6.1 à 6.5 → review — tokens de design · socle mouvement réduit + runbook · typographie fluide zoom-safe · reveal au scroll sans jamais masquer le contenu · barre de progression + header adaptatif + scroll-spy (`side-projects` replié sur `projets`, aucune entrée ajoutée) ; ces cinq-là partagent la branche 6.1 ; `/` reste Static+ISR, vérifié au build)
 project: jeevonsPortoflio-2024
 project_key: NOKEY
 tracking_system: file-system
@@ -114,8 +114,8 @@ development_status:
   6-3-rendre-les-titres-et-les-textes-agreables-a-lire: review
   6-4-decouvrir-le-contenu-a-mesure-que-je-defile: review
   6-5-situer-ma-progression-dans-la-page: review
-  6-6-rendre-les-elements-interactifs-vivants: ready-for-dev
-  6-7-etre-accueilli-par-une-page-d-accueil-marquante: ready-for-dev
+  6-6-rendre-les-elements-interactifs-vivants: review
+  6-7-etre-accueilli-par-une-page-d-accueil-marquante: in-progress
   6-8-explorer-les-cartes-de-projet: ready-for-dev
   6-9-suivre-le-parcours-de-jeevons: ready-for-dev
   6-10-consulter-un-projet-en-detail: ready-for-dev

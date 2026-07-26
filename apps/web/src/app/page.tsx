@@ -1,3 +1,4 @@
+import { CustomCursor } from "@/components/CustomCursor";
 import { AboutSection } from "@/sections/About";
 import { ContactSection } from "@/sections/Contact";
 import { Footer } from "@/sections/Footer";
@@ -33,6 +34,12 @@ export default function Home() {
     // (`text-wrap: balance` sur les titres, `pretty` sur les paragraphes). Posé
     // ici et non sur `body` : l'admin partage le même layout racine.
     <div className="site-public">
+      {/* Story 6.6 (AC2) — Curseur personnalisé, monté ICI et non dans
+          `layout.tsx` : le layout racine est partagé avec `/admin` et `/login`,
+          hors périmètre. Composant client sans props, il ne bascule pas la page
+          en rendu dynamique — `/` reste `○ (Static, 1h)`, vérifié au build
+          (garde-fou documenté plus haut). */}
+      <CustomCursor />
       <Header />
       <HeroSection />
       <ProjectsSection />
