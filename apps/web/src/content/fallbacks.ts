@@ -11,9 +11,10 @@ import "server-only";
 
 import { projectsContent } from "@/content/projects";
 import { settingsContent } from "@/content/settings";
+import { stacksContent } from "@/content/stacks";
 import { hobbiesContent, timelineContent } from "@/content/timeline";
 import type { ProjectCategory } from "@/generated/prisma/enums";
-import type { PublishedProject } from "@/lib/projects";
+import type { PublicStack, PublishedProject } from "@/lib/projects";
 import type { HobbyData, TimelineEntryData } from "@/lib/timeline";
 
 // Date figée pour les champs createdAt/updatedAt du repli (valeur stable, non
@@ -93,6 +94,22 @@ export function fallbackHobbies(): HobbyData[] {
       posLeft: h.posLeft,
       posTop: h.posTop,
       sortOrder: h.sortOrder,
+    }));
+}
+
+// Story 5.15 — Technologies de repli, au shape de getPublicStacks. Ce sont les
+// six entrées que la toolbox publique affichait EN DUR avant cette story : si la
+// base est injoignable, le visiteur revoit exactement le site qu'il connaissait,
+// jamais une section vide.
+export function fallbackStacks(): PublicStack[] {
+  return stacksContent
+    .slice()
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map((s) => ({
+      id: `fallback-${s.iconKey}`,
+      name: s.name,
+      iconKey: s.iconKey,
+      level: s.level,
     }));
 }
 

@@ -43,12 +43,15 @@ const NAV_ITEMS: NavItem[] = [
     icon: FolderKanban,
     ready: true,
   },
-  { href: "/admin/timeline", label: "Parcours", icon: Route, ready: false },
-  { href: "/admin/stacks", label: "Technologies", icon: Layers, ready: false },
+  // Story 5.14 — écran de gestion du parcours livré.
+  { href: "/admin/timeline", label: "Parcours", icon: Route, ready: true },
+  // Story 5.15 — écran de gestion des technologies livré.
+  { href: "/admin/stacks", label: "Technologies", icon: Layers, ready: true },
   // Story 5.13 — bibliothèque d'images livrée : l'entrée devient un vrai lien.
   { href: "/admin/media", label: "Médias", icon: ImageIcon, ready: true },
   { href: "/admin/messages", label: "Messages", icon: Mail, ready: false },
-  { href: "/admin/settings", label: "Réglages", icon: Settings, ready: false },
+  // Story 5.16 — écran d'édition des textes du site livré.
+  { href: "/admin/settings", label: "Réglages", icon: Settings, ready: true },
   {
     href: "/admin/settings/security",
     label: "Sécurité",

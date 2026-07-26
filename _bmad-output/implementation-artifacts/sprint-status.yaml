@@ -41,7 +41,7 @@
 # - Retrospective appends its action items to action_items; sprint-status surfaces open ones
 
 generated: 2026-07-21
-last_updated: 2026-07-26 (Story 5.13 → review · bibliothèque /admin/media, garde d'intégrité des usages, remplacement propagé, suppression base+fichier)
+last_updated: 2026-07-26 (Story 5.16 → review · écran /admin/settings, validation serveur URL/e-mail, upsert transactionnel par clé, revalidateTag settings)
 project: jeevonsPortoflio-2024
 project_key: NOKEY
 tracking_system: file-system
@@ -100,9 +100,9 @@ development_status:
   5-11-preparer-un-projet-avant-de-le-publier: review
   5-12-illustrer-mes-projets: review
   5-13-gerer-ma-bibliotheque-d-images: review
-  5-14-gerer-mon-parcours: ready-for-dev
-  5-15-gerer-mes-technologies: ready-for-dev
-  5-16-modifier-les-textes-de-mon-site: ready-for-dev
+  5-14-gerer-mon-parcours: review
+  5-15-gerer-mes-technologies: review
+  5-16-modifier-les-textes-de-mon-site: review
   5-17-mettre-a-jour-mon-cv: ready-for-dev
   5-18-lire-les-messages-qu-on-m-envoie: ready-for-dev
   5-19-retrouver-ce-que-j-ai-modifie: ready-for-dev

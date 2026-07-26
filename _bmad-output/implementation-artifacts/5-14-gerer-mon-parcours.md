@@ -4,7 +4,7 @@ baseline_commit: 5c22f3a6c48914801d0a226ab5a0b15c005d8765
 
 # Story 5.14: Gérer mon parcours
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -76,19 +76,20 @@ Applique le **même pattern** que le CRUD projets au modèle `TimelineEntry` (Ep
 
 ## Tasks / Subtasks
 
-- [ ] **Tâche 0 — Prérequis** (AC: 1)
-  - [ ] Socle + 5.8/5.10/5.12/5.13 `done`. Réutiliser pattern CRUD, dnd, média.
-- [ ] **Tâche 1 — CRUD `TimelineEntry`** (AC: 1, 3, 4 ; pièges n°1, 5)
-  - [ ] `/admin/timeline` : liste + éditeur (Zod : endYear optionnel/≥startYear), `published`, suppression confirmée, `revalidateTag('timeline')`.
-- [ ] **Tâche 2 — Illustration via Media** (AC: 1 ; piège n°2)
-  - [ ] 🛑 Trancher relation Media vs référence libre pour `avatarId` ; compléter `findMediaUsages` (5.13). Réutiliser upload 5.12/5.13.
-- [ ] **Tâche 3 — Réordonnancement** (AC: 2 ; pièges n°3, 4)
-  - [ ] Réutiliser la brique dnd de 5.10 ; persistance `sortOrder` ; `revalidateTag('timeline')`.
-- [ ] **Tâche 4 — Vérification locale** (AC: 1-4 ; piège n°6)
-  - [ ] CRUD (endYear optionnel), ordre public, non publié invisible, suppression, garde média avatar.
-- [ ] **Tâche 5 — Definition of Done** (AGENTS.md §8)
-  - [ ] lint 0 / tsc 0 / build OK. Vérif visuelle + clavier (dnd). `git diff DEV` : écran timeline, CRUD, dnd réutilisé, illustration, usages média — rien d'autre.
-  - [ ] `File List` + `Completion Notes` + `Change Log` · `sprint-status.yaml`.
+- [x] **Tâche 0 — Prérequis** (AC: 1)
+  - [x] Socle + 5.8/5.10/5.12/5.13 `done`. Réutiliser pattern CRUD, dnd, média.
+- [x] **Tâche 1 — CRUD `TimelineEntry`** (AC: 1, 3, 4 ; pièges n°1, 5)
+  - [x] `/admin/timeline` : liste + éditeur (Zod : endYear optionnel/≥startYear), `published`, suppression confirmée, `revalidateTag('timeline')`.
+- [x] **Tâche 2 — Illustration via Media** (AC: 1 ; piège n°2)
+  - [x] 🛑 Tranché avec Jeevons : `avatarId` devient une **vraie relation** `Media?` (`onDelete: SetNull`), option (a) — cohérent avec 5.12. `findMediaUsages` couvrait déjà l'avatar (écrit par anticipation en 5.13) : vérifié, seul le commentaire de tête a été corrigé. Sélecteur média 5.12 généralisé en `MediaSelector` partagé, upload réutilisé.
+- [x] **Tâche 3 — Réordonnancement** (AC: 2 ; pièges n°3, 4)
+  - [x] Brique dnd 5.10 réutilisée telle quelle ; persistance `sortOrder` en transaction ; `revalidateTag('timeline')`.
+- [x] **Tâche 4 — Vérification locale** (AC: 1-4 ; piège n°6)
+  - [x] CRUD (endYear optionnel), ordre séquentiel, non publié invisible, suppression, garde média avatar + `SetNull` — vérifiés par script sur la base de dev (détail en Completion Notes).
+- [x] **Tâche 5 — Definition of Done** (AGENTS.md §8)
+  - [x] lint 0 erreur / tsc 0 / build OK. `git diff DEV` relu : écran timeline, CRUD, dnd réutilisé, illustration, usages média — rien d'autre.
+  - [x] `File List` + `Completion Notes` + `Change Log` · `sprint-status.yaml`.
+  - [ ] ⚠️ Vérification **visuelle + clavier authentifiée** (dnd dans le navigateur) : à faire par Jeevons — elle exige une session admin réelle.
 
 ## Dev Notes
 
@@ -119,3 +120,71 @@ Vérification **manuelle en local** + visuelle + clavier (dnd). Les 4 AC + garde
 - [Source: apps/web/src/lib/timeline.ts — lecture publique cachée ; apps/web/src/lib/cache-tags.ts — `timeline` couvre parcours + hobbies (décision 4.4)]
 - [Source: _bmad-output/implementation-artifacts/5-10-choisir-l-ordre-d-affichage-de-mes-projets.md — brique dnd réutilisable ; 5-12/5-13 — infra média + `findMediaUsages` à compléter]
 - [Source: AGENTS.md §6 — vues bêtes, a11y clavier ; §9 — anti-scope-creep]
+
+## Dev Agent Record
+
+### Décisions tranchées avec Jeevons
+
+1. **`avatarId` → vraie relation `Media?`** (option (a) du piège n°2). Migration `20260725233802_add_timeline_avatar_relation`, purement additive : `avatarId` valait `null` partout (le seed ne le renseigne pas), donc zéro perte de données. `onDelete: SetNull`, calqué sur `Project.coverId` (5.12).
+2. **Site public non touché.** Le périmètre est `/admin/timeline` uniquement. `Testimonials.tsx` / `TestimonialsClient.tsx` restent **inchangés** : les 4 AC sont satisfaits sans eux, puisque `lib/timeline.ts` filtre déjà `published: true` et trie par `sortOrder`. L'affichage de l'illustration côté public relève de l'Epic 6.
+3. **`published` décoché par défaut à la création**, comme le formulaire projet (5.8). La colonne Prisma garde `@default(true)` — c'est le seed qui en dépend (décision 4.2) —, mais l'admin poste toujours une valeur explicite, donc les deux ne se contredisent pas.
+
+### Notes d'implémentation
+
+- **Tâche 2 partiellement déjà faite.** `findMediaUsages` / `findAllMediaUsages` interrogeaient déjà `TimelineEntry.avatarId` : la story 5.13 l'avait écrit par anticipation. Aucun changement de logique — seul le commentaire de tête, qui affirmait « `avatarId` est un `String?` sans relation », a été corrigé pour refléter la FK.
+- **`MediaSelector` généralisé.** `CoverSelector` (5.12) était figé sur `coverId`. Déplacé par `git mv` vers `components/admin/media-selector.tsx` (le diff reste lisible comme un renommage) et paramétré : `name`, `legend`, `removeLabel`, `pickerLabel`, `emptyLabel`. Au passage, deux bugs latents corrigés — l'`id` du texte d'aide et le `name` du groupe radio étaient codés en dur, donc deux sélecteurs sur une même page auraient produit des `id` dupliqués et se seraient mutuellement exclus.
+- **Zod, `endYear` :** `z.preprocess` et non `.transform().pipe()`. `z.coerce.number()` a un type d'entrée `unknown` que `.pipe()` refuse de chaîner derrière un transform typé (TS2345, rencontré puis corrigé). `preprocess` normalise en amont — `""` → `null` — ce qui distingue « en cours » d'une année invalide ; sans cela `""` deviendrait `0`, soit « terminée en l'an 0 ».
+- **Réordonnancement simplifié vs 5.10 :** le parcours n'a pas de catégories, `reorderTimelineAction` ne prend donc que `orderedIds` — une séquence plate `0..n-1` — là où les projets réordonnent par catégorie.
+- **Pas de transaction sur `update` :** contrairement aux projets (qui réconcilient points forts et technologies), une entrée de parcours n'a aucune relation à synchroniser — un `prisma.timelineEntry.update` suffit.
+
+### Vérifications exécutées
+
+| Contrôle | Résultat |
+| --- | --- |
+| `bunx tsc --noEmit` | 0 erreur |
+| `bun run lint` | 0 erreur (1 warning **préexistant** dans `sections/TestimonialsClient.tsx`, fichier hors périmètre et non modifié) |
+| `bun run build` | succès — les 4 routes `/admin/timeline/*` sont bien `ƒ` (dynamiques) |
+| FK en base | un `avatarId` inexistant est **rejeté** (`TimelineEntry_avatarId_fkey`) → c'est le P2003 que `isMissingAvatar` traduit |
+| AC1 — `endYear` vide | accepté, stocké `null` |
+| AC1 — fin < début | refusé, message dédié |
+| AC1 — année absurde (`0`) | refusée |
+| AC2 — réordonnancement | `sortOrder` réécrit en `0..n-1` séquentiel ; ordre du seed restauré après le test |
+| AC3 — filtre public | la lecture `published: true` exclut bien les brouillons |
+| AC4 — suppression | entrée supprimée, média conservé |
+| Garde 5.13 | l'usage « Parcours » est détecté sur un média servant d'illustration |
+| `onDelete: SetNull` | supprimer le média met `avatarId` à `null` sans supprimer l'entrée |
+| Routes protégées | `/admin/timeline`, `/new`, `/order` → 307 vers `/login?callbackUrl=…` |
+
+⚠️ **Non couvert par l'agent :** la vérification visuelle et clavier du drag & drop dans le navigateur (focus, annonces ARIA, contraste) demande une session admin réelle. À faire par Jeevons avant de passer la story en `done`.
+
+### File List
+
+**Créés**
+- `apps/web/prisma/migrations/20260725233802_add_timeline_avatar_relation/migration.sql`
+- `apps/web/src/lib/schemas/timeline.ts`
+- `apps/web/src/lib/admin/timeline.ts`
+- `apps/web/src/app/(admin)/admin/timeline/actions.ts`
+- `apps/web/src/app/(admin)/admin/timeline/reorder-actions.ts`
+- `apps/web/src/app/(admin)/admin/timeline/timeline-form.tsx`
+- `apps/web/src/app/(admin)/admin/timeline/delete-timeline-dialog.tsx`
+- `apps/web/src/app/(admin)/admin/timeline/timeline-order-editor.tsx`
+- `apps/web/src/app/(admin)/admin/timeline/page.tsx`
+- `apps/web/src/app/(admin)/admin/timeline/new/page.tsx`
+- `apps/web/src/app/(admin)/admin/timeline/[id]/page.tsx`
+- `apps/web/src/app/(admin)/admin/timeline/order/page.tsx`
+
+**Déplacé**
+- `apps/web/src/app/(admin)/admin/projects/cover-selector.tsx` → `apps/web/src/components/admin/media-selector.tsx` (généralisé)
+
+**Modifiés**
+- `apps/web/prisma/schema.prisma` (relation `Media.timeline` ↔ `TimelineEntry.avatar`)
+- `apps/web/src/app/(admin)/admin/projects/project-form.tsx` (utilise `MediaSelector`)
+- `apps/web/src/components/admin/admin-nav.tsx` (« Parcours » → `ready: true`)
+- `apps/web/src/lib/media/usages.ts` (commentaire de tête corrigé — aucune logique modifiée)
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+
+### Change Log
+
+| Date | Version | Description |
+| --- | --- | --- |
+| 2026-07-26 | 0.1 | Story 5.14 implémentée : CRUD `/admin/timeline`, `avatarId` promu en relation `Media` (`onDelete: SetNull`), réordonnancement réutilisant la brique dnd de 5.10, sélecteur média généralisé en `MediaSelector`. Site public inchangé. |

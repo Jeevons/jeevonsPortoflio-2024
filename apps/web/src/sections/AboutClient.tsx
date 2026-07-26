@@ -1,54 +1,29 @@
 "use client";
 
 import jeevonsCv from "@/assets/images/jeevons-cv-2024-1.6_resultat.webp";
-import ChromeIcon from "@/assets/icons/chrome.svg";
-import CssIcon from "@/assets/icons/css3.svg";
-import GithubIcon from "@/assets/icons/github.svg";
-import HtmlIcon from "@/assets/icons/html5.svg";
-import ReactIcon from "@/assets/icons/react.svg";
-import JavascripIcon from "@/assets/icons/square-js.svg";
 import smileMemoji from "@/assets/images/jeevons-avatar-smiling.webp";
 import mapImage from "@/assets/images/map-tours.webp";
 import { Card } from "@/components/Card";
 import { CardHeader } from "@/components/CardHeader";
 import { SectionHeader } from "@/components/SectionHeader";
+import { resolveStackIcon } from "@/components/StackIcon";
 import { ToolboxItems } from "@/components/ToolboxItems";
 import { motion, useReducedMotion } from "motion/react";
 import { useRef } from "react";
 
 import Image from "next/image";
 
-// Vue client de la section À propos (Story 4.2). Seuls les hobbies viennent de
-// la base (props depuis le conteneur serveur). Le drag conditionné par
-// useReducedMotion est conservé (pièges n°1). Le reste de la bento (CV, toolbox,
-// map) reste EN DUR — hors périmètre 4.2 (CV → Epic 5, toolbox → Epic 6/5).
-
-const toolboxItems = [
-  {
-    title: "Javascript",
-    iconType: JavascripIcon,
-  },
-  {
-    title: "HTML",
-    iconType: HtmlIcon,
-  },
-  {
-    title: "CSS",
-    iconType: CssIcon,
-  },
-  {
-    title: "Github",
-    iconType: GithubIcon,
-  },
-  {
-    title: "React",
-    iconType: ReactIcon,
-  },
-  {
-    title: "Chrome Dev Tools",
-    iconType: ChromeIcon,
-  },
-];
+// Vue client de la section À propos (Story 4.2). Les hobbies viennent de la base
+// (props depuis le conteneur serveur). Le drag conditionné par useReducedMotion
+// est conservé (pièges n°1). Le reste de la bento (CV, map) reste EN DUR — CV →
+// story 5.17.
+//
+// Story 5.15 — La TOOLBOX vient elle aussi de la base (AC3). Elle était un
+// tableau `toolboxItems` codé ici avec des imports statiques de SVG ; ce tableau
+// a migré vers `src/content/stacks.ts`, où il sert désormais de REPLI quand la
+// base est injoignable (4.5). Les icônes sont résolues par `resolveStackIcon`,
+// qui retombe sur une icône neutre plutôt que de masquer une technologie dont la
+// clé est inconnue (décision Jeevons).
 
 export type HobbyView = {
   slug: string;
@@ -58,9 +33,29 @@ export type HobbyView = {
   posTop: string;
 };
 
-export const AboutClient = ({ hobbies }: { hobbies: HobbyView[] }) => {
+/** Une technologie telle que la toolbox l'affiche. Volontairement minimale. */
+export type StackView = {
+  id: string;
+  name: string;
+  iconKey: string | null;
+};
+
+export const AboutClient = ({
+  hobbies,
+  stacks,
+}: {
+  hobbies: HobbyView[];
+  stacks: StackView[];
+}) => {
   const constraintRef = useRef(null);
   const shouldReduceMotion = useReducedMotion();
+
+  // ⚠️ L'ORDRE EST CELUI DU SERVEUR (niveau décroissant, puis nom) : on ne
+  // retrie pas ici, sous peine de perdre la seule traduction visible de l'AC3.
+  const toolboxItems = stacks.map((stack) => ({
+    title: stack.name,
+    iconType: resolveStackIcon(stack.iconKey),
+  }));
   return (
     <section className="py-20 lg:py-28" id="about">
       <div className="container">
