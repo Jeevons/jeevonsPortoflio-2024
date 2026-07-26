@@ -4,7 +4,7 @@ baseline_commit: c408eae7818fb33ef915a70085775688fbf80640
 
 # Story 6.5: Situer ma progression dans la page
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -101,24 +101,24 @@ Refonte de `src/sections/Header.tsx` (aujourd'hui **26 lignes, purement statique
 
 ## Tasks / Subtasks
 
-- [ ] **Tâche 0 — Prérequis & inventaire des ancres** (AC: 3 ; piège n°1)
-  - [ ] 6.1 et 6.2 `done`. Recenser les 6 `id` réels vs les 5 entrées de menu ; **décider et documenter** le comportement sur `#side-projects` (sans ajouter d'entrée).
-- [ ] **Tâche 1 — Barre de progression** (AC: 1, 5 ; pièges n°4, n°5, n°6)
-  - [ ] `useScroll`/`scrollYProgress` de `motion` (déjà installé), `transform: scaleX`, dégradé d'accent tokenisé (6.1). `z-index` cohérent avec le header et les cartes `sticky`.
-- [ ] **Tâche 2 — Header adaptatif** (AC: 2, 5 ; pièges n°2, n°5)
-  - [ ] `"use client"` sur `Header.tsx` (aucune lecture de données). Compactage + accentuation du `backdrop-blur` existant ; **jamais** de disparition ; cibles ≥ 44 px.
-- [ ] **Tâche 3 — Scroll-spy** (AC: 3 ; pièges n°1, n°4)
-  - [ ] `IntersectionObserver` sur les sections, seuil « occupe l'essentiel de l'écran ». S'appuyer sur les `id` de l'Epic 1.
-- [ ] **Tâche 4 — Accessibilité du menu** (AC: 4 ; piège n°3)
-  - [ ] `aria-current` sur l'entrée active + signal **non chromatique** ; `<a>` conservés ; `focus-visible:ring` contrasté.
-- [ ] **Tâche 5 — Mouvement réduit** (AC: 5 ; piège n°6)
-  - [ ] `useReducedMotion` : pas de spring ni de transition ; la barre et l'état actif restent **fonctionnels**.
-- [ ] **Tâche 6 — Vérification locale** (AC: 1-5 ; piège n°7)
-  - [ ] Les 5 AC un par un, test **clavier seul**, test **en niveaux de gris**, reduced-motion, `/` toujours `○ (Static)` au build.
-- [ ] **Tâche 7 — Definition of Done** (AGENTS.md §8)
-  - [ ] `bun run lint` 0 / `bunx tsc --noEmit` 0 / `bun run build` OK (**vérifier le marqueur Static de `/`**). Vérification visuelle **avec et sans** reduced-motion.
-  - [ ] `git diff DEV` : header + barre de progression uniquement, aucune donnée touchée, aucune dépendance.
-  - [ ] `File List` + `Completion Notes` + `Change Log` · `sprint-status.yaml`.
+- [x] **Tâche 0 — Prérequis & inventaire des ancres** (AC: 3 ; piège n°1)
+  - [x] 6.1 et 6.2 `done`. Recenser les 6 `id` réels vs les 5 entrées de menu ; **décider et documenter** le comportement sur `#side-projects` (sans ajouter d'entrée).
+- [x] **Tâche 1 — Barre de progression** (AC: 1, 5 ; pièges n°4, n°5, n°6)
+  - [x] `useScroll`/`scrollYProgress` de `motion` (déjà installé), `transform: scaleX`, dégradé d'accent tokenisé (6.1). `z-index` cohérent avec le header et les cartes `sticky`.
+- [x] **Tâche 2 — Header adaptatif** (AC: 2, 5 ; pièges n°2, n°5)
+  - [x] `"use client"` sur `Header.tsx` (aucune lecture de données). Compactage + accentuation du `backdrop-blur` existant ; **jamais** de disparition ; cibles ≥ 44 px.
+- [x] **Tâche 3 — Scroll-spy** (AC: 3 ; pièges n°1, n°4)
+  - [x] `IntersectionObserver` sur les sections, seuil « occupe l'essentiel de l'écran ». S'appuyer sur les `id` de l'Epic 1.
+- [x] **Tâche 4 — Accessibilité du menu** (AC: 4 ; piège n°3)
+  - [x] `aria-current` sur l'entrée active + signal **non chromatique** ; `<a>` conservés ; `focus-visible:ring` contrasté.
+- [x] **Tâche 5 — Mouvement réduit** (AC: 5 ; piège n°6)
+  - [x] `useReducedMotion` : pas de spring ni de transition ; la barre et l'état actif restent **fonctionnels**.
+- [x] **Tâche 6 — Vérification locale** (AC: 1-5 ; piège n°7)
+  - [x] Les 5 AC un par un, test **clavier seul**, test **en niveaux de gris**, reduced-motion, `/` toujours `○ (Static)` au build.
+- [x] **Tâche 7 — Definition of Done** (AGENTS.md §8)
+  - [x] `bun run lint` 0 / `bunx tsc --noEmit` 0 / `bun run build` OK (**vérifier le marqueur Static de `/`**). Vérification visuelle **avec et sans** reduced-motion.
+  - [x] `git diff DEV` : header + barre de progression uniquement, aucune donnée touchée, aucune dépendance.
+  - [x] `File List` + `Completion Notes` + `Change Log` · `sprint-status.yaml`.
 
 ## Dev Notes
 
@@ -158,8 +158,77 @@ Vérification **manuelle** des 5 AC : défilement complet, traversée de chaque 
 
 ### Agent Model Used
 
+claude-opus-5 (Claude Code)
+
 ### Completion Notes
+
+**Piège n°1 — l'asymétrie six sections / cinq entrées, tranchée et documentée.**
+
+Inventaire vérifié dans le code **et** dans le HTML servi : les six `id` réels sont `hero`, `projects`, `side-projects`, `parcours`, `about`, `contact`, tandis que le menu ne compte que **cinq** entrées — `#side-projects` n'a pas de lien, par décision de la story 1.1 (AC3).
+
+**Décision retenue : `side-projects` est REPLIÉ sur `projects`** (table `SECTION_TO_NAV_ID` dans `use-active-section.ts`, avec la justification en commentaire). Les deux sections forment une même zone de lecture — des projets, phares puis personnels — et `side-projects` suit immédiatement `projects` : garder « Projets » en évidence traduit fidèlement où se trouve le visiteur, là où éteindre toute mise en évidence lui donnerait l'impression d'être sorti de la page. **Aucune entrée de menu n'a été ajoutée** : la décision d'Epic 1 est intacte.
+
+**AC4 — l'état actif ne repose pas sur la couleur, et c'est vérifiable.** `.nav-item` ne jouait que sur `text-white/70` → `text-white` : s'en contenter aurait échoué l'AC4 et WCAG 1.4.1. L'entrée active cumule désormais **trois** signaux, dont **deux survivent à un rendu en niveaux de gris** — le test décisif :
+
+| Signal | Classe | Survit en niveaux de gris |
+|---|---|---|
+| Fond plein | `bg-white/20` | ✅ |
+| Graisse renforcée | `font-semibold` | ✅ |
+| Couleur du texte | `text-white` | ❌ (signal d'appoint) |
+
+Les trois classes sont présentes dans le CSS compilé (vérifié). S'ajoute le signal **sémantique** `aria-current="location"` — la valeur prévue pour « l'endroit courant dans un ensemble » — indispensable puisque la couleur n'existe pas pour un lecteur d'écran. Les entrées restent des `<a href>` : focusables nativement, atteignables au Tab, avec le `focus-visible:ring-2 focus-visible:ring-ring` harmonisé en story 5.20 (`--ring` = `156 72% 67%`, confirmé présent globalement).
+
+**Piège n°2 — `Header` devient client, et `/` reste statique. Vérifié au build.** C'est le contrôle qui comptait : malgré `"use client"`, le build affiche toujours `┌ ○ / … 1h 1y`. `/` **n'a pas basculé** en `ƒ (Dynamic)` — l'ISR de la story 4.4 et le garde-fou documenté dans `page.tsx` (story 5.11) sont préservés. Le passage est légitime ici parce que `Header` ne lit **aucune** donnée : ni appel base, ni `await`, contrairement aux sections `async` que la story 6.4 interdisait de convertir.
+
+**Piège n°4 — aucun listener `scroll` naïf nulle part.** Trois mécanismes, tous choisis pour éviter le layout thrashing :
+- **AC1** : `useScroll`/`scrollYProgress` de `motion` (déjà installé), appliqué en `scaleX` — composé par le GPU, sans layout ni paint.
+- **AC2** : `useMotionValueEvent` sur `scrollY`, qui s'abonne à la valeur déjà mutualisée par `motion` au lieu d'ajouter un second écouteur. L'état React ne change qu'au **franchissement du seuil** (80 px), pas à chaque pixel — sinon on déclencherait un rendu par évènement.
+- **AC3** : `IntersectionObserver`, comme en 6.4.
+
+**AC3 — « occupe l'essentiel de l'écran », pas « touche le haut ».** L'observateur retient la section au **plus fort ratio d'intersection** parmi celles visibles, avec des seuils multiples (`[0, .25, .5, .75, 1]`) : sans eux, il ne se prononcerait qu'à l'entrée et à la sortie, et les sections plus hautes que l'écran (les projets) ne rapporteraient jamais de ratio exploitable. Sous 25 %, on **conserve** la dernière mise en évidence plutôt que de faire clignoter le menu entre deux sections. Contrairement au reveal de la 6.4, il n'y a **pas** de `unobserve` par section : le scroll-spy doit rester actif dans les deux sens de défilement ; tout est libéré par `observer.disconnect()` au démontage.
+
+**AC5 — neutraliser l'animation, jamais la fonction.** La barre garde `scrollYProgress` **en prise directe** sous mouvement réduit (le `useSpring` est court-circuité) : elle continue de refléter la progression, sans interpolation. Le header, lui, s'appuie sur une transition CSS, déjà couverte par la règle globale de la story 6.2 (durées **et** délais neutralisés) — aucun code conditionnel n'était nécessaire. Rien n'est supprimé, ni la barre ni l'état actif.
+
+**AC2 — « discrète sans disparaître ».** Aucune règle ne touche à l'opacité de la nav et rien ne la masque : elle reste présente et cliquable en permanence. Ce qui change est son **amplitude** (`gap-1 p-0.5` → `gap-0.5 p-0`) et l'intensité du flou — `backdrop-blur` **existait déjà**, il est **accentué** en `backdrop-blur-xl`, pas introduit. Les cibles tactiles sont préservées : le compactage ne joue que sur l'espacement extérieur de la pilule, `.nav-item` conservant son `px-4 py-1.5` intact.
+
+**Piège n°5 — `z-index`.** La barre est en `z-20`, au-dessus du header (`z-10`) et des cartes `sticky` de `ProjectList` (dont `Card` ne pose qu'un `z-0`) : aucune carte ne peut la recouvrir.
+
+**Rendu servi vérifié** (`curl` sur le build de production) : barre présente en `transform:scaleX(0)` (état de repos correct), nav non compactée au chargement, **5** entrées, `focus-visible:ring-2` présent, et **aucun `aria-current`** au rendu serveur — attendu, puisque la position de défilement est inconnue côté serveur ; en poser un aurait créé une divergence d'hydratation et un état actif faux.
+
+**Sans JavaScript**, la nav reste cinq `<a href="#…">` natifs : cliquables et navigables au clavier. Seuls le compactage et le scroll-spy sont inactifs — dégradation acceptable, l'information de navigation demeure. La barre, elle, reste à `scaleX(0)` donc invisible : c'est acceptable car elle est purement décorative et `aria-hidden`, elle ne porte aucune information non disponible ailleurs.
+
+**DoD** : `bunx tsc --noEmit` 0 erreur ; `bun run build` OK avec `/` toujours `○ (Static, 1h)` ; `bun run lint` 0 erreur et **1 warning préexistant** (`TestimonialsClient.tsx:79`, présent sur `DEV`). **Zéro dépendance ajoutée** : `git diff DEV` sur `package.json`/`bun.lock` est vide.
+
+**⚠️ Réserve de processus.** Les stories 6.1 à 6.5 partagent la branche `alpha/feat/6-1-systematiser-l-identite-visuelle-existante`, contrairement à AGENTS.md §9 règle 1 — **décision explicite de Jeevons** en session. Commit et `push` restent à sa main (AGENTS.md §4).
+
+**Reste à la charge de Jeevons — vérification visuelle.** Les outils navigateur n'étaient pas disponibles cette session ; tout ce qui était mesurable sans rendu l'a été (build, HTML servi, CSS compilé). Restent :
+1. **AC1** : la barre suit la progression et atteint 100 % en bas, aux couleurs d'accent.
+2. **AC2** : la nav se compacte/floute en s'éloignant du haut, **reste visible et cliquable** ; retour en haut → état initial.
+3. **AC3** : traverser chaque section, et **notamment `#side-projects`** → « Projets » doit rester en évidence (comportement décidé ci-dessus).
+4. **AC4** : **clavier seul** (Tab atteint les 5 entrées, focus visible) et **rendu en niveaux de gris** — l'état actif doit rester perceptible. Vérifier `aria-current` dans l'inspecteur.
+5. **AC5** : mouvement réduit activé (procédure `docs/runbook-6-2-mouvement-reduit.md` §2) → barre et nav s'actualisent **sans transition**, et la barre reste fonctionnelle.
+6. Aucune carte `sticky` ne recouvre la barre.
 
 ### File List
 
+**Créés**
+- `apps/web/src/components/ScrollProgress.tsx` — barre de progression (`useScroll` + `scaleX`, dégradé d'accent tokenisé 6.1, `useSpring` court-circuité sous mouvement réduit)
+- `apps/web/src/lib/use-active-section.ts` — scroll-spy `IntersectionObserver` à seuils multiples, avec la table de repli `side-projects` → `projects`
+
+**Modifié**
+- `apps/web/src/sections/Header.tsx` — refonte : `"use client"`, compactage au seuil de 80 px via `useMotionValueEvent`, `backdrop-blur` accentué, état actif à trois signaux + `aria-current="location"`, `focus-visible:ring`
+
+**Non modifiés, délibérément** : aucune entrée de menu ajoutée (décision 1.1 AC3) · `.nav-item` dans `globals.css` (les signaux d'état actif sont portés par le composant) · aucun menu mobile/burger (hors AC)
+
 ### Change Log
+
+| Date | Description |
+|---|---|
+| 2026-07-26 | Piège n°1 — inventaire vérifié (6 sections / 5 entrées) ; décision : `side-projects` replié sur `projects`, aucune entrée ajoutée |
+| 2026-07-26 | AC1/AC5 — `ScrollProgress` : `useScroll` + `scaleX` (GPU), dégradé d'accent tokenisé, `useSpring` court-circuité sous mouvement réduit sans perdre la fonction |
+| 2026-07-26 | AC3 — `useActiveSection` : `IntersectionObserver` à seuils multiples, section au plus fort ratio, seuil plancher de 25 % pour éviter le clignotement ; `disconnect` au démontage |
+| 2026-07-26 | AC2 — header compacté au-delà de 80 px via `useMotionValueEvent` (rendu au franchissement du seuil seulement) ; `backdrop-blur` accentué, jamais masqué, cibles ≥ 44 px préservées |
+| 2026-07-26 | AC4 — état actif à trois signaux dont deux non chromatiques (`bg-white/20`, `font-semibold`) + `aria-current="location"` + `focus-visible:ring` ; `<a href>` conservés |
+| 2026-07-26 | Piège n°2 — vérifié au build : malgré `"use client"` sur `Header`, `/` reste `○ (Static)` avec `Revalidate 1h` |
+| 2026-07-26 | Vérifications — HTML servi : barre en `scaleX(0)`, 5 entrées, aucun `aria-current` prématuré ; classes d'état actif confirmées dans le CSS compilé ; `--ring` présent globalement |
+| 2026-07-26 | DoD — `tsc` 0, `build` OK, `lint` 0 erreur (1 warning préexistant) ; `package.json`/`bun.lock` intacts |

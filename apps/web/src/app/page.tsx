@@ -29,7 +29,10 @@ export const revalidate = 3600;
 // drapeau `preview`. Cette page-ci reste strictement publique et statique.
 export default function Home() {
   return (
-    <div>
+    // Story 6.3 — `site-public` porte les règles typographiques du site public
+    // (`text-wrap: balance` sur les titres, `pretty` sur les paragraphes). Posé
+    // ici et non sur `body` : l'admin partage le même layout racine.
+    <div className="site-public">
       <Header />
       <HeroSection />
       <ProjectsSection />

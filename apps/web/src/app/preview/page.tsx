@@ -56,7 +56,9 @@ export default async function PreviewPage() {
   const preview = await isPreviewAllowed();
 
   return (
-    <div>
+    // Story 6.3 — même marqueur typographique que la home : l'aperçu doit
+    // rendre exactement ce que verra un visiteur.
+    <div className="site-public">
       {preview ? <PreviewBanner /> : null}
       <Header />
       <HeroSection />

@@ -6,6 +6,7 @@ import schoolIcon5 from "@/assets/images/jeevons-avatar-lynx.webp";
 import schoolIcon3 from "@/assets/images/mmi-icon.webp";
 import schoolIcon2 from "@/assets/images/university-icon.webp";
 import { Card } from "@/components/Card";
+import { Reveal } from "@/components/Reveal";
 import { SectionHeader } from "@/components/SectionHeader";
 import { useReducedMotion } from "motion/react";
 import Image, { type StaticImageData } from "next/image";
@@ -103,12 +104,23 @@ export const TestimonialsClient = ({
   return (
     <section className="py-16 lg:py-24" id="parcours">
       <div className="container">
-        <SectionHeader
-          eyebrow="Mon parcours"
-          title="Découvrez d'où je viens"
-          description="Et où j'aimerai aller !"
-          indication="Survolez / Cliquez sur une carte pour l'arrêter"
-        />
+        {/* Story 6.4 (piège n°5) — SEULE L'ENTÊTE est révélée ici.
+
+            ⚠️ Le carrousel ci-dessous est piloté par un auto-scroll qui écrit
+            dans `scrollContainerRef.current.scrollLeft`, dans un conteneur
+            `overflow-x-auto`. Y ajouter une révélation ferait cohabiter deux
+            mécanismes sur le même élément, et un `transform` sur un conteneur
+            de défilement se combine mal avec la position de défilement. La
+            story impose de « composer avec l'existant, pas le remplacer » : on
+            laisse donc le carrousel intact. */}
+        <Reveal>
+          <SectionHeader
+            eyebrow="Mon parcours"
+            title="Découvrez d'où je viens"
+            description="Et où j'aimerai aller !"
+            indication="Survolez / Cliquez sur une carte pour l'arrêter"
+          />
+        </Reveal>
 
         <div
           className="scroll mt-12 lg:mt-20 flex overflow-x-auto [mask-image:linear-gradient(to_right,transparent,black_10%,black_95%,transparent)] py-4 -my-4"

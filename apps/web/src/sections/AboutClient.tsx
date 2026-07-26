@@ -4,6 +4,7 @@ import smileMemoji from "@/assets/images/jeevons-avatar-smiling.webp";
 import mapImage from "@/assets/images/map-tours.webp";
 import { Card } from "@/components/Card";
 import { CardHeader } from "@/components/CardHeader";
+import { Reveal } from "@/components/Reveal";
 import { SectionHeader } from "@/components/SectionHeader";
 import { resolveStackIcon } from "@/components/StackIcon";
 import { ToolboxItems } from "@/components/ToolboxItems";
@@ -71,13 +72,26 @@ export const AboutClient = ({
   return (
     <section className="py-20 lg:py-28" id="about">
       <div className="container">
-        <SectionHeader
-          eyebrow="A propos de moi"
-          title="Un aperçu de mon univers"
-          description="Ce que j'aime faire, et ce qui me motive."
-        />
+        {/* Story 6.4 — révélation de l'entête. */}
+        <Reveal>
+          <SectionHeader
+            eyebrow="A propos de moi"
+            title="Un aperçu de mon univers"
+            description="Ce que j'aime faire, et ce qui me motive."
+          />
+        </Reveal>
         <div className="mt-20 flex flex-col gap-8">
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-5 lg:grid-cols-3">
+          {/* Story 6.4 (AC1, piège n°5) — CASCADE SUR LES DEUX RANGÉES, pas sur
+              chaque carte.
+
+              ⚠️ Les `Card` portent des `md:col-span-*` : les envelopper
+              individuellement appliquerait le span au wrapper et non à la
+              carte, ce qui casserait la grille. On révèle donc les rangées,
+              décalées l'une par rapport à l'autre (`index`). */}
+          <Reveal
+            index={0}
+            className="grid grid-cols-1 gap-8 md:grid-cols-5 lg:grid-cols-3"
+          >
             <Card className="h-[380px] md:col-span-2 lg:col-span-1">
               <CardHeader
                 title="CV"
@@ -126,8 +140,11 @@ export const AboutClient = ({
                 itemsWrapperClassName="animate-move-right [animation-duration:50s]"
               />
             </Card>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-8 lg:grid-cols-3">
+          </Reveal>
+          <Reveal
+            index={1}
+            className="grid grid-cols-1 md:grid-cols-5 gap-8 lg:grid-cols-3"
+          >
             <Card className="h-[380px] p-0 flex flex-col md:col-span-3 lg:col-span-2">
               <CardHeader
                 title="Quand je ne code pas"
@@ -140,7 +157,7 @@ export const AboutClient = ({
                 {hobbies.map((hobby) => (
                   <motion.div
                     key={hobby.title}
-                    className="inline-flex items-center gap-3 bg-gradient-to-r from-emerald-300 to-sky-400 rounded-full py-1.5 px-6 absolute"
+                    className="inline-flex items-center gap-3 bg-gradient-accent rounded-full py-1.5 px-6 absolute"
                     style={{ left: hobby.posLeft, top: hobby.posTop }}
                     drag={!shouldReduceMotion}
                     dragConstraints={constraintRef}
@@ -148,7 +165,7 @@ export const AboutClient = ({
                       shouldReduceMotion ? { duration: 0 } : undefined
                     }
                   >
-                    <span className="font-medium text-gray-950">
+                    <span className="font-medium text-surface-sunken">
                       {hobby.title}
                     </span>
                     <span aria-hidden="true">{hobby.emoji}</span>
@@ -162,9 +179,9 @@ export const AboutClient = ({
                 alt="Map"
                 className="h-full w-full object-cover object-left-top"
               />
-              <div className="absolute flex items-center justify-center top-32 left-1/2 -translate-x-1/2 -translate-y-1/2 size-20 rounded-full   after:content-[''] after:absolute after:inset-0 after:outline after:outline-2 after:outline-offset-2 after:rounded-full after:outline-gray-950/30">
-                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-emerald-300 to-sky-400 -z-20 animate-ping [animation-duration:2s]"></div>
-                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-emerald-300 to-sky-400 -z-10"></div>
+              <div className="absolute flex items-center justify-center top-32 left-1/2 -translate-x-1/2 -translate-y-1/2 size-20 rounded-full   after:content-[''] after:absolute after:inset-0 after:outline after:outline-2 after:outline-offset-2 after:rounded-full after:outline-surface-sunken/30">
+                <div className="absolute inset-0 rounded-full bg-gradient-accent -z-20 animate-ping [animation-duration:2s]"></div>
+                <div className="absolute inset-0 rounded-full bg-gradient-accent -z-10"></div>
                 <Image
                   src={smileMemoji}
                   alt="Smiling Memoji"
@@ -172,7 +189,7 @@ export const AboutClient = ({
                 />
               </div>
             </Card>
-          </div>
+          </Reveal>
         </div>
       </div>
     </section>

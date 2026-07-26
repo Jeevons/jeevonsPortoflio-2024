@@ -26,6 +26,19 @@ const config: Config = {
         sans: "var(--font-sans)",
         serif: "var(--font-serif)",
       },
+      // Story 6.3 (AC1) — Échelle typographique fluide, définie en `clamp()`
+      // dans `globals.css`.
+      //
+      // ⚠️ CLÉS NOUVELLES uniquement (`display-1`…`display-4`). Redéfinir
+      // `3xl`/`5xl`/`6xl` déborderait sur l'admin, qui utilise `text-3xl`
+      // (`components/admin/stat-card.tsx`) — d'où l'avertissement « extension
+      // uniquement » ci-dessous, qui vaut aussi pour `fontSize`.
+      fontSize: {
+        "display-1": "var(--text-display-1)",
+        "display-2": "var(--text-display-2)",
+        "display-3": "var(--text-display-3)",
+        "display-4": "var(--text-display-4)",
+      },
       // Story 5.7 — Tokens shadcn/ui, définis en HSL dans `globals.css`.
       // `<alpha-value>` est le placeholder Tailwind : il rend `bg-card/50`
       // fonctionnel, ce qu'un simple `var(--card)` ne permettrait pas.
@@ -67,11 +80,33 @@ const config: Config = {
           DEFAULT: "hsl(var(--card) / <alpha-value>)",
           foreground: "hsl(var(--card-foreground) / <alpha-value>)",
         },
+
+        // Story 6.1 — Tokens du SITE PUBLIC (définis dans `globals.css`).
+        //
+        // ⚠️ Ces surfaces sont VOLONTAIREMENT distinctes de `background`/`card`
+        // ci-dessus : ces derniers ne portent pas les valeurs publiques
+        // (gray-900/gray-800), cf. le commentaire détaillé dans `globals.css`.
+        // Les réutiliser ici changerait le rendu du site — ce que l'AC2 interdit.
+        surface: {
+          DEFAULT: "hsl(var(--surface) / <alpha-value>)",
+          raised: "hsl(var(--surface-raised) / <alpha-value>)",
+          sunken: "hsl(var(--surface-sunken) / <alpha-value>)",
+        },
+        // Bornes du dégradé d'accent, la signature visuelle du site.
+        // Nommées `accent-from`/`accent-to` et non `accent-*` pour ne pas
+        // entrer en collision avec le `accent` shadcn déjà défini plus haut.
+        "accent-from": "hsl(var(--accent-from) / <alpha-value>)",
+        "accent-to": "hsl(var(--accent-to) / <alpha-value>)",
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        // Story 6.1 — rayons du site public. Ajout par extension : les rayons
+        // Tailwind par défaut (`rounded-3xl`, `rounded-full`…) restent intacts.
+        card: "var(--radius-card)",
+        control: "var(--radius-control)",
+        badge: "var(--radius-badge)",
       },
       animation: {
         "ping-large": "ping-large 1s cubic-bezier(0, 0, 0.2, 1) infinite",

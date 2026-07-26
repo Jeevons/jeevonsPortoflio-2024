@@ -4,7 +4,7 @@ baseline_commit: c408eae7818fb33ef915a70085775688fbf80640
 
 # Story 6.2: Neutraliser le mouvement d'un seul geste
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -106,23 +106,23 @@ Cette story consolide un existant en **socle réutilisable et documenté** :
 
 ## Tasks / Subtasks
 
-- [ ] **Tâche 0 — Prérequis & état des lieux** (AC: 1 ; pièges n°1, n°2)
-  - [ ] 6.1 `done`. **Lire** `globals.css` lignes 103-121 et les usages existants de `useReducedMotion` avant toute écriture.
-- [ ] **Tâche 1 — Consolider le socle CSS** (AC: 1, 2 ; pièges n°1, n°6)
-  - [ ] Auditer la couverture de la règle existante ; compléter uniquement les trous réels. Conserver `0.01ms` et la position hors `@layer`.
-- [ ] **Tâche 2 — Formaliser le mécanisme partagé JS** (AC: 1, 2 ; pièges n°2, n°3)
-  - [ ] Standardiser sur `useReducedMotion` de `motion/react` (aucun hook maison concurrent).
-  - [ ] Garantir le pattern « pas d'état initial masquant sous reduced-motion » (AC2).
-- [ ] **Tâche 3 — Documenter** (AC: 3 ; piège n°4)
-  - [ ] `docs/` : comment simuler le réglage (macOS, Chrome DevTools, Firefox) + le pattern imposé à toute animation future.
-- [ ] **Tâche 4 — Audit des animations existantes** (AC: 1 ; piège n°6)
-  - [ ] Vérifier `HeroOrbit`, `Tape`, badge Hero, `.nav-item`, `AboutClient`, `TestimonialsClient`, skeletons admin. Constater, ne pas refondre.
-- [ ] **Tâche 5 — Vérification locale** (AC: 1-3 ; piège n°7)
-  - [ ] Parcours reduced-motion **actif** (rien ne bouge, rien ne manque) **puis inactif** (tout remarche).
-- [ ] **Tâche 6 — Definition of Done** (AGENTS.md §8)
-  - [ ] `bun run lint` 0 / `bunx tsc --noEmit` 0 / `bun run build` OK. Vérification visuelle **avec et sans** reduced-motion.
-  - [ ] `git diff DEV` : socle + doc uniquement, **aucune animation nouvelle**, aucune dépendance.
-  - [ ] `File List` + `Completion Notes` + `Change Log` · `sprint-status.yaml`.
+- [x] **Tâche 0 — Prérequis & état des lieux** (AC: 1 ; pièges n°1, n°2)
+  - [x] 6.1 livrée (statut `review`). **Lu** la règle CSS existante et les usages de `useReducedMotion` avant toute écriture.
+- [x] **Tâche 1 — Consolider le socle CSS** (AC: 1, 2 ; pièges n°1, n°6)
+  - [x] Audit de couverture réalisé ; **un trou réel comblé** (délais). `0.01ms` et position hors `@layer` conservés.
+- [x] **Tâche 2 — Formaliser le mécanisme partagé JS** (AC: 1, 2 ; pièges n°2, n°3)
+  - [x] `src/lib/motion.ts` **enveloppe** `useReducedMotion` de `motion/react` (aucun hook maison concurrent).
+  - [x] `resolveMotionStates()` garantit « pas d'état initial masquant » **par construction** (AC2).
+- [x] **Tâche 3 — Documenter** (AC: 3 ; piège n°4)
+  - [x] `docs/runbook-6-2-mouvement-reduit.md` : simulation (macOS, Chrome/Edge, Firefox, Safari) + contrat imposé aux animations futures.
+- [x] **Tâche 4 — Audit des animations existantes** (AC: 1 ; piège n°6)
+  - [x] `HeroOrbit`, `Tape`, badge Hero, `.nav-item`, `AboutClient`, `TestimonialsClient`, skeletons admin : **toutes déjà neutralisées**, aucune refonte. Tableau récapitulatif dans le runbook §4.
+- [x] **Tâche 5 — Vérification locale** (AC: 1-3 ; piège n°7)
+  - [x] Règle vérifiée sur le **CSS compilé**. ⏳ Parcours navigateur actif/inactif : **à faire par Jeevons** (procédure : runbook §2).
+- [x] **Tâche 6 — Definition of Done** (AGENTS.md §8)
+  - [x] `bun run lint` 0 erreur / `bunx tsc --noEmit` 0 / `bun run build` OK. ⏳ Vérification visuelle reduced-motion déléguée (voir ci-dessus).
+  - [x] Socle + doc uniquement, **aucune animation nouvelle**, aucune dépendance. ⚠️ Diff mêlé à 6.1 : voir Completion Notes.
+  - [x] `File List` + `Completion Notes` + `Change Log` · `sprint-status.yaml`.
 
 ## Dev Notes
 
@@ -159,8 +159,75 @@ Vérification **manuelle** avec reduced-motion activé puis désactivé, sur `/`
 
 ### Agent Model Used
 
+claude-opus-5 (Claude Code)
+
 ### Completion Notes
+
+**Socle + documentation, aucune animation ajoutée.** Comme l'annonçait la story, la majeure partie de l'existant était déjà en place : la règle CSS globale et `useReducedMotion` n'ont pas été réécrits. La valeur livrée tient en trois points.
+
+#### 1. Un trou réel comblé dans le socle CSS (AC1, AC2)
+
+La règle existante neutralisait durées, itérations et `scroll-behavior` — **mais pas les délais**. J'ai ajouté :
+
+```css
+animation-delay: 0ms !important;
+transition-delay: 0ms !important;
+```
+
+**Pourquoi c'est un vrai défaut et pas un ajout décoratif** : une animation raccourcie à `0.01ms` mais précédée d'un `animation-delay: 400ms` laisse l'élément dans son **état initial** pendant toute l'attente — donc invisible s'il part d'une opacité nulle. C'est exactement ce qu'interdit l'AC2. La story 6.4 (reveal au scroll) utilisera des délais en cascade : le trou aurait été immédiatement exploitable.
+
+Vérifié sur le CSS compilé : `animation-delay:0s!important;transition-delay:0s!important`. Le `0.01ms` et la position hors `@layer` sont **conservés** (piège n°1).
+
+#### 2. `src/lib/motion.ts` — le garde-fou d'AC2 par construction
+
+Le module **enveloppe** `useReducedMotion` de `motion/react` et le réexporte : source de vérité unique, aucun `matchMedia` maison (piège n°2), zéro dépendance.
+
+Sa pièce centrale est `resolveMotionStates()`, qui rend le piège de l'état initial masquant **impossible** :
+
+```ts
+resolveMotionStates(shouldReduceMotion, {
+  initial: { opacity: 0, y: 24 },
+  animate: { opacity: 1, y: 0 },
+});
+// Sous mouvement réduit → { initial: <état final>, animate: <état final> }
+```
+
+La bonne réponse n'est pas « appliquer l'état initial puis accélérer la transition » mais **ne pas appliquer l'état initial du tout**. Le composant rend directement son état final : il n'y a plus rien à animer, et plus rien qui puisse masquer le contenu. `motionTransition()` complète avec `duration: 0` (et non l'absence de transition) pour que `onAnimationComplete` continue d'être émis — même raison que le `0.01ms` du CSS.
+
+C'est le point que 6.4 aurait manqué mécaniquement sans ce garde-fou.
+
+#### 3. `docs/runbook-6-2-mouvement-reduit.md` (AC3)
+
+Ce qui manquait au point que la story 5.20 avait dû déléguer le test reduced-motion à l'humain **sans mode d'emploi**. Le runbook couvre : le fonctionnement des deux socles et leur périmètre respectif, la simulation du réglage (macOS, Chrome/Edge DevTools, Firefox `about:config`, Safari), une **checklist de vérification** point par point, le **contrat imposé aux stories 6.4-6.18** avec l'exemple de code à suivre, et l'état audité des animations existantes.
+
+#### Audit des animations existantes — aucune refonte (piège n°6)
+
+Les 9 animations du site sont **toutes déjà neutralisées** (tableau détaillé dans le runbook §4). Deux points valaient vérification :
+
+- **`HeroOrbit`** pose `animationDuration` en **style inline**. Le `!important` de la règle en feuille de style prime sur un inline sans `!important` (cascade CSS) : les orbites sont bien couvertes.
+- **`TestimonialsClient`** est le seul `setInterval` du dépôt, et il est déjà conditionné par `shouldReduceMotion` ; l'alternative (défilement manuel) reste utilisable. `AboutClient` conditionne son drag de la même façon. Aucun des deux n'a été touché.
+
+#### 🛑 Point de process à arbitrer
+
+⚠️ **Cette story partage la branche de la 6.1** (`alpha/feat/6-1-systematiser-l-identite-visuelle-existante`), ce qui contrevient à AGENTS.md §9 règle 1 (« 1 story = 1 branche »). Je ne pouvais pas séparer sans commiter 6.1 d'abord, or §4 réserve le commit à l'humain. Les deux stories cohabitent aussi dans `globals.css` (tokens = 6.1, règle reduced-motion = 6.2), ce qui rend un `git add` partiel peu fiable.
+
+**Décision à prendre par Jeevons** : soit commiter 6.1 puis rebrancher 6.2 (`git checkout -b alpha/feat/6-2-...`), soit assumer une branche commune pour ces deux stories socles étroitement liées. Le contenu du travail n'est pas en cause — seule la découpe git l'est.
+
+#### Autres points d'attention
+
+- ⏳ **Vérification navigateur reduced-motion non faite par l'agent** (extension Chrome refusée cette session). Procédure complète et checklist : runbook §2. Les deux passes sont nécessaires — réglage actif **puis inactif**.
+- ℹ️ Warning lint `TestimonialsClient.tsx` (`react-hooks/exhaustive-deps`) : **préexistant sur `DEV`**, hors périmètre, non corrigé.
+- ℹ️ `src/lib/motion.ts` porte `"use client"` : `useReducedMotion` est un hook, le module n'est donc importable que par des Client Components — ce qui est le cas d'usage visé.
 
 ### File List
 
+- `apps/web/src/app/globals.css` — neutralisation des **délais** ajoutée à la règle `prefers-reduced-motion` existante (durées, itérations, `scroll-behavior` et position hors `@layer` inchangés)
+- `apps/web/src/lib/motion.ts` — **nouveau** : socle JS partagé (`useReducedMotion` réexporté, `resolveMotionStates`, `motionTransition`)
+- `docs/runbook-6-2-mouvement-reduit.md` — **nouveau** : fonctionnement du socle, procédure de test par navigateur, contrat des animations futures, audit de l'existant
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` — `6-2` → `review`
+
 ### Change Log
+
+| Date | Changement |
+|---|---|
+| 2026-07-26 | Story 6.2 implémentée : socle de neutralisation du mouvement consolidé. Trou réel comblé côté CSS (neutralisation des délais d'animation et de transition). Mécanisme partagé JS `src/lib/motion.ts` enveloppant `useReducedMotion`, avec `resolveMotionStates` qui interdit par construction l'état initial masquant (AC2). Runbook de test et contrat pour les stories 6.4-6.18. Audit : les 9 animations existantes sont déjà neutralisées, aucune refonte. Aucune animation nouvelle, aucune dépendance. Statut → `review`. |
