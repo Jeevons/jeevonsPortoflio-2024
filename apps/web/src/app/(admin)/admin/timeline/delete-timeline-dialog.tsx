@@ -1,8 +1,9 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
+import { useConfirmDialog } from "@/components/admin/use-confirm-dialog";
 
 import {
   deleteTimelineEntryAction,
@@ -33,7 +34,7 @@ export function DeleteTimelineDialog({
   entryId,
   entryTitle,
 }: DeleteTimelineDialogProps) {
-  const dialogRef = useRef<HTMLDialogElement | null>(null);
+  const { dialogRef, open, close } = useConfirmDialog();
   const [state, formAction, pending] = useActionState(
     deleteTimelineEntryAction,
     initialState,
@@ -46,16 +47,11 @@ export function DeleteTimelineDialog({
     if (state.status === "error") {
       dialogRef.current?.showModal();
     }
-  }, [state]);
+  }, [state, dialogRef]);
 
   return (
     <>
-      <Button
-        type="button"
-        variant="destructive"
-        size="sm"
-        onClick={() => dialogRef.current?.showModal()}
-      >
+      <Button type="button" variant="destructive" size="sm" onClick={open}>
         Supprimer
       </Button>
 
@@ -94,11 +90,7 @@ export function DeleteTimelineDialog({
         ) : null}
 
         <div className="mt-6 flex justify-end gap-3">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => dialogRef.current?.close()}
-          >
+          <Button type="button" variant="ghost" onClick={close}>
             Annuler
           </Button>
 

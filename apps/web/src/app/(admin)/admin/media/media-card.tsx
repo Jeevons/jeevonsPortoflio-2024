@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { useConfirmDialog } from "@/components/admin/use-confirm-dialog";
 import type { AdminMedia } from "@/lib/admin/media";
 import { cn } from "@/lib/utils";
 
@@ -34,7 +35,11 @@ const DATE_FORMAT = new Intl.DateTimeFormat("fr-FR", {
 
 export function MediaCard({ media }: { media: AdminMedia }) {
   const router = useRouter();
-  const deleteDialogRef = useRef<HTMLDialogElement | null>(null);
+  const {
+    dialogRef: deleteDialogRef,
+    open: openDeleteDialog,
+    close: closeDeleteDialog,
+  } = useConfirmDialog();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [replacing, setReplacing] = useState(false);
@@ -53,10 +58,10 @@ export function MediaCard({ media }: { media: AdminMedia }) {
   // c'est donc ici qu'on ferme le dialogue et qu'on rafraîchit la liste.
   useEffect(() => {
     if (deleteState.status === "success") {
-      deleteDialogRef.current?.close();
+      closeDeleteDialog();
       router.refresh();
     }
-  }, [deleteState, router]);
+  }, [deleteState, router, closeDeleteDialog]);
 
   async function handleReplace(file: File) {
     setReplacing(true);
@@ -208,7 +213,7 @@ export function MediaCard({ media }: { media: AdminMedia }) {
               ? `Image utilisée par ${usages.length} contenu(s) — détachez-la d'abord.`
               : undefined
           }
-          onClick={() => deleteDialogRef.current?.showModal()}
+          onClick={openDeleteDialog}
         >
           Supprimer
         </Button>
@@ -242,11 +247,7 @@ export function MediaCard({ media }: { media: AdminMedia }) {
         ) : null}
 
         <div className="mt-6 flex justify-end gap-3">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => deleteDialogRef.current?.close()}
-          >
+          <Button type="button" variant="ghost" onClick={closeDeleteDialog}>
             Annuler
           </Button>
           <form action={deleteFormAction}>

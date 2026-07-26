@@ -1,8 +1,9 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
+import { useConfirmDialog } from "@/components/admin/use-confirm-dialog";
 
 import { deleteProjectAction, type DeleteProjectState } from "./actions";
 
@@ -36,7 +37,7 @@ export function DeleteProjectDialog({
   projectId,
   projectTitle,
 }: DeleteProjectDialogProps) {
-  const dialogRef = useRef<HTMLDialogElement | null>(null);
+  const { dialogRef, open, close } = useConfirmDialog();
   const [state, formAction, pending] = useActionState(
     deleteProjectAction,
     initialState,
@@ -50,16 +51,11 @@ export function DeleteProjectDialog({
     if (state.status === "error") {
       dialogRef.current?.showModal();
     }
-  }, [state]);
+  }, [state, dialogRef]);
 
   return (
     <>
-      <Button
-        type="button"
-        variant="destructive"
-        size="sm"
-        onClick={() => dialogRef.current?.showModal()}
-      >
+      <Button type="button" variant="destructive" size="sm" onClick={open}>
         Supprimer
       </Button>
 
@@ -95,11 +91,7 @@ export function DeleteProjectDialog({
         <div className="mt-6 flex justify-end gap-3">
           {/* `formMethod="dialog"` sur un bouton d'un formulaire imbriqué serait
               ambigu : on ferme donc par un handler explicite, hors du form. */}
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => dialogRef.current?.close()}
-          >
+          <Button type="button" variant="ghost" onClick={close}>
             Annuler
           </Button>
 
