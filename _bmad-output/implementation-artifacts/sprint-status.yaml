@@ -41,7 +41,7 @@
 # - Retrospective appends its action items to action_items; sprint-status surfaces open ones
 
 generated: 2026-07-21
-last_updated: 2026-07-26 (Stories 6.16-6.18 créées → ready-for-dev · bandeau piloté au défilement + aurora de fond, easter egg clavier, optimisation des images et purge des assets morts — Epic 6 entièrement contextualisé)
+last_updated: 2026-07-26 (Stories 6.1 à 6.5 → review : tokens de design · socle mouvement réduit + runbook · typographie fluide zoom-safe · reveal au scroll sans jamais masquer le contenu · barre de progression + header adaptatif + scroll-spy (`side-projects` replié sur `projets`, aucune entrée ajoutée) — ⚠️ les cinq partagent la branche 6.1, sur décision explicite de Jeevons ; `/` reste Static+ISR, vérifié au build)
 project: jeevonsPortoflio-2024
 project_key: NOKEY
 tracking_system: file-system
@@ -109,11 +109,11 @@ development_status:
   5-20-utiliser-l-administration-au-clavier-sans-a-coups: review
   epic-5-retrospective: optional
   epic-6: in-progress
-  6-1-systematiser-l-identite-visuelle-existante: ready-for-dev
-  6-2-neutraliser-le-mouvement-d-un-seul-geste: ready-for-dev
-  6-3-rendre-les-titres-et-les-textes-agreables-a-lire: ready-for-dev
-  6-4-decouvrir-le-contenu-a-mesure-que-je-defile: ready-for-dev
-  6-5-situer-ma-progression-dans-la-page: ready-for-dev
+  6-1-systematiser-l-identite-visuelle-existante: review
+  6-2-neutraliser-le-mouvement-d-un-seul-geste: review
+  6-3-rendre-les-titres-et-les-textes-agreables-a-lire: review
+  6-4-decouvrir-le-contenu-a-mesure-que-je-defile: review
+  6-5-situer-ma-progression-dans-la-page: review
   6-6-rendre-les-elements-interactifs-vivants: ready-for-dev
   6-7-etre-accueilli-par-une-page-d-accueil-marquante: ready-for-dev
   6-8-explorer-les-cartes-de-projet: ready-for-dev

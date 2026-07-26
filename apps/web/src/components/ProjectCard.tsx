@@ -86,7 +86,7 @@ export const ProjectCard = ({
     <Card className={className} style={style}>
       <div className="lg:grid lg:grid-cols-2 lg:gap-16">
         <div className="lg:pb-16">
-          <div className="inline-flex items-baseline gap-2 font-bold uppercase tracking-widest text-sm bg-gradient-to-r from-emerald-300 to-sky-400 text-transparent bg-clip-text">
+          <div className="inline-flex items-baseline gap-2 font-bold uppercase tracking-widest text-sm text-gradient-accent">
             <span>{project.company}</span>
             <span>&bull;</span>
             <span className="text-3xs md:text-sm">{project.year}</span>
@@ -103,7 +103,9 @@ export const ProjectCard = ({
             </p>
           ) : null}
 
-          <h3 className="font-serif text-2xl mt-2 md:text-4xl md:mt-5">
+          {/* Story 6.3 (AC1) — échelle fluide 2xl→4xl. Les marges restent par
+              palier : la story ne porte que sur la typographie. */}
+          <h3 className="font-serif text-display-3 mt-2 md:mt-5">
             {project.title}
           </h3>
           <hr className="border-t-2 border-white/5 mt-4 md:mt-5" />
@@ -112,7 +114,7 @@ export const ProjectCard = ({
               correspondante ». Un résultat absent ne rend donc AUCUN élément :
               ni bloc vide, ni libellé orphelin. */}
           {project.outcome ? (
-            <p className="mt-4 md:mt-5 font-bold text-lg md:text-xl bg-gradient-to-r from-emerald-300 to-sky-400 text-transparent bg-clip-text">
+            <p className="mt-4 md:mt-5 font-bold text-lg md:text-xl text-gradient-accent">
               {project.outcome}
             </p>
           ) : null}
@@ -146,7 +148,7 @@ export const ProjectCard = ({
               target="_blank"
               rel="noopener noreferrer"
               aria-label={`Visiter le site du projet ${project.title} (nouvel onglet)`}
-              className="bg-white text-gray-950 h-12 w-full md:w-auto px-6 rounded-xl font-semibold inline-flex items-center justify-center gap-2 mt-8 hover:scale-110 transform transition duration-300 ease-in-out"
+              className="bg-white text-surface-sunken h-12 w-full md:w-auto px-6 rounded-control font-semibold inline-flex items-center justify-center gap-2 mt-8 hover:scale-110 transform transition duration-300 ease-in-out"
             >
               <span>Visiter le site</span>
               <ArrowUpRightIcon aria-hidden="true" className="size-4" />

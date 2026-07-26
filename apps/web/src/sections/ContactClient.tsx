@@ -2,6 +2,7 @@
 
 import ArrowUpRightIcon from "@/assets/icons/arrow-up-right.svg";
 import grainImage from "@/assets/images/grain.jpg";
+import { Reveal } from "@/components/Reveal";
 import type { FragmentedEmail } from "@/lib/settings";
 
 // Vue cliente (Story 4.3). Reçoit l'e-mail en FRAGMENTS et le lien LinkedIn en
@@ -18,16 +19,21 @@ export const ContactClient = ({ email, linkedinUrl }: ContactClientProps) => {
   return (
     <section className="py-16 pt-12 lg:py-24 lg:pt-20" id="contact">
       <div className="container">
-        <div className="bg-gradient-to-r from-emerald-300 to-sky-400 text-gray-900 py-8 px-10 rounded-3xl text-center md:text-left relative overflow-hidden z-0">
+        {/* Story 6.4 — la carte de contact entière se révèle d'un bloc : c'est
+            un seul message, le découper en cascade n'aurait pas de sens. */}
+        <Reveal className="bg-gradient-accent text-surface py-8 px-10 rounded-card text-center md:text-left relative overflow-hidden z-0">
+          {/* Story 6.1 — troisième et dernière copie du calque de grain,
+              désormais factorisée en `.surface-grain`. */}
           <div
-            className="absolute inset-0 opacity-5 -z-10"
+            className="surface-grain -z-10"
             style={{
               backgroundImage: `url(${grainImage.src})`,
             }}
           ></div>
           <div className="flex flex-col md:flex-row gap-8 md:gap-16 items-center">
             <div className="">
-              <h2 className="font-serif text-2xl md:text-3xl">
+              {/* Story 6.3 (AC1) — échelle fluide 2xl→3xl. */}
+              <h2 className="font-serif text-display-4">
                 À la recherche d&apos;une nouvelle aventure
               </h2>
               <p className="text-sm mt-2 md:text-base flex flex-col gap-4">
@@ -59,14 +65,14 @@ export const ContactClient = ({ email, linkedinUrl }: ContactClientProps) => {
                 onClick={() => {
                   window.location.href = `mailto:${buildMail()}`;
                 }}
-                className="text-white bg-gray-900 items-center px-6 h-12 rounded-xl gap-2 inline-flex w-max border border-gray-900 hover:scale-110 transform transition duration-300 ease-in-out"
+                className="text-white bg-surface items-center px-6 h-12 rounded-control gap-2 inline-flex w-max border border-surface hover:scale-110 transform transition duration-300 ease-in-out"
               >
                 <span className="font-semibold">Me Contacter</span>
                 <ArrowUpRightIcon aria-hidden="true" className="size-4" />
               </button>
             </div>
           </div>
-        </div>
+        </Reveal>
       </div>
     </section>
   );

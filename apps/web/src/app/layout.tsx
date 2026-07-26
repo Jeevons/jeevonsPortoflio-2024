@@ -47,7 +47,8 @@ export default function RootLayout({
         className={twMerge(
           inter.variable,
           calistoga.variable,
-          "bg-gray-900 text-white antialiased font-sans",
+          // Story 6.1 — `bg-surface` = token du fond de page (gray-900).
+          "bg-surface text-white antialiased font-sans",
         )}
       >
         {children}

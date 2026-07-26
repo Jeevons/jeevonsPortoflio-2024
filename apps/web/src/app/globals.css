@@ -9,8 +9,84 @@
     @apply px-4 py-1.5 rounded-full text-white/70 text-sm font-semibold hover:bg-white/10 hover:text-white transition duration-300;
   }
 
+  /* ------------------------------------------------------------------------
+     Story 6.3 (AC2, AC3) — ÉQUILIBRE DES LIGNES sur le site public.
+
+     Scopé sous `.site-public` (posé par `/` et `/preview`) et NON sur `body` :
+     l'admin est imbriqué sous le même layout racine, un sélecteur global aurait
+     touché ses 106 paragraphes. Le périmètre de la story est le site public.
+
+     ⚠️ `balance` et `pretty` ne sont PAS interchangeables :
+     - `balance` égalise la longueur des lignes → conçu pour les TITRES courts.
+       Les navigateurs l'ignorent au-delà de ~4-6 lignes : l'appliquer à un
+       paragraphe serait inutile et coûteux.
+     - `pretty` évite les orphelines (mot seul en dernière ligne) → conçu pour
+       le CORPS DE TEXTE.
+
+     Support : `balance` largement disponible, `pretty` plus récent (Chromium
+     117+, Safari 17.5+). La dégradation est naturelle — la propriété est
+     simplement ignorée, le texte reste parfaitement lisible. Aucun fallback JS,
+     aucune bibliothèque de balancing (AGENTS.md §9 : zéro dépendance). */
+  .site-public :is(h1, h2, h3) {
+    text-wrap: balance;
+  }
+
+  .site-public :is(p, li) {
+    text-wrap: pretty;
+  }
+
+  /* Story 6.1 — `emerald-300/5` remplacé par le token d'accent. Valeur rendue
+     identique : `--accent-from` EST emerald-300 (#6ee7b7). */
   .hero-ring {
-    @apply absolute inset-0 border-2 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2  rounded-full border-emerald-300/5 shadow-[0_0_80px_inset] shadow-emerald-300/5 -z-30;
+    @apply absolute inset-0 border-2 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2  rounded-full border-accent-from/5 shadow-[0_0_80px_inset] shadow-accent-from/5 -z-30;
+  }
+}
+
+/* Story 6.1 (AC1) — Utilitaires factorisés, pour supprimer les recettes
+   dupliquées à l'identique dans les composants publics. */
+@layer components {
+  /* Le dégradé d'accent EN TEXTE. Remplace 3 copies littérales de
+     `bg-gradient-to-r from-emerald-300 to-sky-400 bg-clip-text text-transparent`
+     (SectionHeader, ProjectCard ×2).
+     La story 6.5 réutilisera `--accent-from`/`--accent-to` pour la barre de
+     progression : d'où le passage par les tokens plutôt qu'un simple @apply. */
+  /* ⚠️ Le dégradé est écrit en CSS EXPLICITE, et non via
+     `@apply bg-gradient-to-r from-… to-…`. Raison vérifiée sur le bundle
+     compilé : dans `@layer components`, cet `@apply` perdait la déclaration
+     `background-image` (seuls `background-clip`/`color` survivaient), ce qui
+     rendait le texte transparent SANS dégradé derrière — donc invisible.
+     Le `linear-gradient` direct est à la fois correct et plus lisible. */
+  .text-gradient-accent {
+    background-image: linear-gradient(
+      to right,
+      hsl(var(--accent-from)),
+      hsl(var(--accent-to))
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Le dégradé d'accent EN FOND. Remplace 5 copies littérales
+     (Tape, ContactClient, AboutClient ×3). */
+  .bg-gradient-accent {
+    background-image: linear-gradient(
+      to right,
+      hsl(var(--accent-from)),
+      hsl(var(--accent-to))
+    );
+  }
+
+  /* Le grain : même recette dans Card, Hero et ContactClient (calque en
+     position absolue à 5 % d'opacité).
+     ⚠️ L'IMAGE reste passée en `style` inline par les composants : son URL
+     contient un hash de build généré par l'import Next (`grainImage.src`), donc
+     inconnu d'une feuille de style statique. Seuls le positionnement et
+     l'opacité sont factorisés ici — le `z-index`, qui diffère selon la surface
+     (-z-10 pour Card/Contact, -z-30 pour Hero), reste à la charge de l'appelant. */
+  .surface-grain {
+    @apply absolute inset-0;
+    opacity: var(--grain-opacity);
   }
 }
 
@@ -24,9 +100,12 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Story 6.1 — raccordé aux tokens. Les valeurs rendues sont IDENTIQUES à
+   celles d'origine (`hsl(313 56% 39%)`, `hsla(156 72% 67% / .264)`, `#111827`
+   = gray-900 = `--surface`, `#6ee7b7` = emerald-300 = `--accent-from`). */
 ::selection {
-  background-color: hsl(313, 56%, 39%);
-  color: hsla(0, 0%, 100%, 0.918);
+  background-color: hsl(var(--selection));
+  color: hsl(var(--selection-foreground) / 0.918);
 }
 
 ::-webkit-scrollbar {
@@ -35,8 +114,8 @@ html {
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: hsla(156, 72%, 67%, 0.264);
-  border: 0.32rem solid #111827;
+  background-color: hsl(var(--accent-from) / 0.264);
+  border: 0.32rem solid hsl(var(--surface));
   border-radius: 100vw;
   cursor: pointer;
 }
@@ -47,11 +126,43 @@ html {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: #6ee7b7;
+  background-color: hsl(var(--accent-from));
 }
 
 :root {
   --text-3xs: 0.675rem;
+
+  /* ------------------------------------------------------------------------
+     Story 6.3 (AC1) — ÉCHELLE TYPOGRAPHIQUE FLUIDE des titres.
+
+     Remplace les paliers (`text-3xl md:text-5xl lg:text-6xl`) par une
+     interpolation continue. Chaque échelle conserve EXACTEMENT ses bornes
+     actuelles : l'identité visuelle ne bouge pas, seule la progression entre
+     les deux devient continue.
+
+     🛑 POURQUOI `Xrem + Yvw` ET JAMAIS `Yvw` SEUL :
+     un `clamp(1.875rem, 5vw, 3.75rem)` fige le texte au zoom navigateur — les
+     `vw` ne réagissent pas au zoom de texte, donc la taille reste bloquée sur
+     sa valeur médiane. C'est un échec WCAG 1.4.4 (Resize Text), et l'a11y est
+     non négociable (AGENTS.md §6). La part en `rem` est ce qui garantit que le
+     zoom continue d'agir : elle est NON NULLE dans les quatre échelles.
+
+     Interpolation calée sur les breakpoints DU PROJET (`tailwind.config.ts` :
+     sm 375px, md 768px, lg 1200px) : minimum atteint à 375px, maximum à
+     1200px — et non aux 1536px par défaut de Tailwind.
+
+     ⚠️ Ces tokens portent des noms NOUVEAUX (`--text-display-*`). Aucune taille
+     Tailwind existante n'est redéfinie : `text-3xl` reste `text-3xl`, ce dont
+     dépend l'admin (`components/admin/stat-card.tsx`). */
+
+  /* Hero h1 — 3xl (1.875rem) → 6xl (3.75rem) */
+  --text-display-1: clamp(1.875rem, 1.0227rem + 3.6364vw, 3.75rem);
+  /* SectionHeader h2 — 3xl (1.875rem) → 5xl (3rem) */
+  --text-display-2: clamp(1.875rem, 1.3636rem + 2.1818vw, 3rem);
+  /* ProjectCard h3 — 2xl (1.5rem) → 4xl (2.25rem) */
+  --text-display-3: clamp(1.5rem, 1.1591rem + 1.4545vw, 2.25rem);
+  /* Contact h2 — 2xl (1.5rem) → 3xl (1.875rem) */
+  --text-display-4: clamp(1.5rem, 1.3295rem + 0.7273vw, 1.875rem);
 }
 
 .text-3xs {
@@ -98,6 +209,51 @@ html {
   --ring: 156 72% 67%;
 
   --radius: 0.5rem;
+
+  /* ------------------------------------------------------------------------
+     Story 6.1 — Tokens du SITE PUBLIC, ajoutés au MÊME `:root` (un seul socle).
+
+     ⚠️ POURQUOI DE NOUVEAUX TOKENS DE SURFACE plutôt que réutiliser
+     `--background`/`--card` : ils ne valent PAS les couleurs du site public,
+     contrairement à ce qu'affirme le commentaire de la story 5.7 ci-dessus.
+     Vérifié par conversion :
+       --background  217 33% 11%  = #131a25   ·  gray-900 = #111827
+       --card        217 33% 14%  = #18212f   ·  gray-800 = #1f2937
+     L'arrondi de 5.7 a dérivé en teinte ET en saturation. Faire pointer le
+     site public sur ces tokens changerait donc le fond — ce que l'AC2 interdit
+     (« rendu strictement identique »). Et corriger leur valeur repeindrait
+     tout l'admin (5.7-5.20) qui les consomme.
+     → On AJOUTE, on ne modifie pas. C'est la consigne du périmètre de la story.
+
+     `--primary` (156 72% 67%), lui, EST exactement emerald-300 (#6ee7b7) : il
+     est donc réutilisé tel quel comme départ du dégradé d'accent.
+
+     Format HSL sans `hsl()` : contrat shadcn, cf. bloc ci-dessus. */
+
+  /* Surfaces du site public — valeurs exactes des couleurs Tailwind d'origine */
+  --surface: 220.9 39.3% 11%; /* gray-900 #111827 — fond de page, boutons sombres */
+  --surface-raised: 215 27.9% 16.9%; /* gray-800 #1f2937 — fond des cartes */
+  --surface-sunken: 224 71.4% 4.1%; /* gray-950 #030712 — badge du hero, texte sur clair */
+
+  /* Dégradé d'accent — la signature visuelle du site.
+     `--accent-from` réutilise volontairement la MÊME valeur que `--primary`
+     (emerald-300) ; `--accent-to` est sky-400, absent des tokens shadcn. */
+  --accent-from: 156 72% 67%; /* emerald-300 #6ee7b7 */
+  --accent-to: 198.4 93.2% 59.6%; /* sky-400   #38bdf8 */
+
+  /* Sélection de texte (valeurs d'origine des lignes 27-30, inchangées) */
+  --selection: 313 56% 39%;
+  --selection-foreground: 0 0% 100%;
+
+  /* Rayons du site public. Distincts de `--radius` (0.5rem), qui reste le
+     rayon de l'admin shadcn et n'est pas touché. */
+  --radius-card: 1.5rem; /* rounded-3xl — cartes */
+  --radius-control: 0.75rem; /* rounded-xl  — boutons et CTA */
+  --radius-badge: 0.5rem; /* rounded-lg  — badge « disponible » */
+
+  /* Opacité du grain, partagée par les 3 surfaces qui l'appliquent
+     (Card, Hero, ContactClient) — cf. `.surface-grain` plus bas. */
+  --grain-opacity: 0.05;
 }
 
 /* Respect du réglage système « réduire les animations » (UX-DR20, règle D11).
@@ -113,6 +269,16 @@ html {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+
+    /* Story 6.2 — Les DÉLAIS sont neutralisés eux aussi.
+       Sans cela, une animation raccourcie à 0.01ms mais précédée d'un
+       `animation-delay: 400ms` (ou d'un `delay-*` Tailwind) laisse l'élément
+       dans son ÉTAT INITIAL pendant toute l'attente — donc invisible s'il part
+       d'une opacité nulle. C'est précisément ce qu'interdit l'AC2. Le reveal au
+       scroll de la story 6.4 utilisera des délais en cascade : le trou est
+       comblé ici, avant qu'il ne soit exploitable. */
+    animation-delay: 0ms !important;
+    transition-delay: 0ms !important;
   }
 
   html {
