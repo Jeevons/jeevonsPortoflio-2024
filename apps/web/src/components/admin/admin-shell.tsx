@@ -16,8 +16,14 @@ import { AdminNav } from "@/components/admin/admin-nav";
 
 type AdminShellProps = {
   children: React.ReactNode;
-  /** E-mail du compte connecté, affiché en pied de barre latérale. */
-  email: string;
+  /**
+   * E-mail du compte connecté, affiché en pied de barre latérale.
+   * Optionnel : les `loading.tsx` (story 5.20) réutilisent cette coquille pour
+   * que la silhouette de chargement occupe exactement la même mise en page
+   * que le contenu final (AC3), sans relire la session (un `loading.tsx` doit
+   * rester synchrone).
+   */
+  email?: string;
 };
 
 export function AdminShell({ children, email }: AdminShellProps) {

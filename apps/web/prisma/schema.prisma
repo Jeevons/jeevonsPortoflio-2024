@@ -113,6 +113,30 @@ model User {
   totpLastCounter Int?
   recoveryCodes   Json?
   createdAt       DateTime  @default(now())
+  auditLogs       AuditLog[]
+}
+
+// Story 5.19 — Journal des mutations admin (PLAN §2.1). Champs EXACTS du plan :
+// `userId` (relation `User`, requis — chaque mutation journalisée est
+// attribuable, AGENTS.md §6), `action`/`entity`/`entityId` (identification
+// lisible de CE qui a changé), `diff` (résumé lisible, JAMAIS un blob complet
+// ni un secret — voir `lib/admin/audit.ts`, seul point d'écriture).
+//
+// ⚠️ Append-only : aucune Server Action ne modifie ni ne supprime une entrée
+// (intégrité de la preuve, piège n°6). `entityId`/`diff` sont optionnels pour
+// couvrir un futur cas sans entité ciblée ; toutes les entrées actuelles les
+// renseignent.
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action    String
+  entity    String
+  entityId  String?
+  diff      Json?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
 }
 
 model Highlight {
@@ -236,4 +260,28 @@ model SiteSetting {
   key       String   @id
   value     Json
   updatedAt DateTime @updatedAt
+}
+
+// Story 5.18 — Messages reçus via le formulaire de contact public (Epic 6, pas
+// encore construit ici). Champs EXACTS du PLAN §2.1 : `ip` est l'« adresse
+// d'origine » requise par l'AC1, volontairement optionnelle (une insertion
+// directe — seed/SQL, seul moyen de vérifier cette story avant Epic 6 — n'a pas
+// toujours d'IP réelle à fournir). Aucune relation : ce modèle n'a pas besoin
+// de connaître l'utilisateur admin qui le lit.
+//
+// ⚠️ Données personnelles de tiers (AGENTS.md §6) : jamais lu par une fonction
+// mise en cache/exposée au public, contrairement à Project/TimelineEntry/etc.
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  body      String   @db.Text
+  ip        String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // Tri anti-chronologique de la boîte de réception (AC2) — index sur la
+  // colonne triée, pratique constante du reste du schéma (`Project`,
+  // `TimelineEntry`).
+  @@index([createdAt])
 }

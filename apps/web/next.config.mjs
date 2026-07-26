@@ -4,10 +4,34 @@
 // migrer le SVG vers Turbopack est un chantier hors périmètre (story 3.3).
 const nextConfig = {
   output: "standalone",
+  // Story 5.17 — `pdf-to-img` (vignette du CV, piège n°1) est importé
+  // DYNAMIQUEMENT dans `lib/media/pdf.ts`, à dessein (dépendance lourde
+  // chargée seulement à l'upload). Le traçage de fichiers du standalone ne
+  // suit pas les `import()` dynamiques : sans cette inclusion explicite, le
+  // paquet (et sa dépendance `pdfjs-dist`) serait absent du conteneur de
+  // production, exactement le même piège que `sharp` (5.12) mais côté
+  // traçage plutôt que côté libvips.
+  //
+  // `@napi-rs/canvas` est une DÉPENDANCE OPTIONNELLE de `pdfjs-dist` (moteur
+  // de rendu réel de la page PDF côté Node — `pdf-to-img` n'est donc pas
+  // "100% JS" comme supposé initialement, piège n°1 revu). Le binaire natif
+  // varie par plateforme (`@napi-rs/canvas-linux-x64-musl` sous Alpine/musl,
+  // `-darwin-arm64` en local) : `bun install` ne résout QUE le binaire de la
+  // plateforme courante, donc chaque environnement (local, image Docker)
+  // obtient le sien — mais il faut aussi le tracer explicitement, sinon le
+  // build standalone ne l'embarque pas (même piège que pdf-to-img lui-même).
+  outputFileTracingIncludes: {
+    "/api/admin/cv": [
+      "./node_modules/pdf-to-img/**",
+      "./node_modules/pdfjs-dist/**",
+      "./node_modules/@napi-rs/canvas/**",
+      "./node_modules/@napi-rs/canvas-*/**",
+    ],
+  },
   webpack(config) {
     // Grab the existing rule that handles SVG imports
     const fileLoaderRule = config.module.rules.find((rule) =>
-      rule.test?.test?.(".svg")
+      rule.test?.test?.(".svg"),
     );
 
     config.module.rules.push(
@@ -39,7 +63,7 @@ const nextConfig = {
             },
           },
         },
-      }
+      },
     );
 
     // Modify the file loader rule to ignore *.svg, since we have it handled now.

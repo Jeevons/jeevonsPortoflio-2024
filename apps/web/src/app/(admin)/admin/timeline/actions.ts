@@ -3,6 +3,7 @@
 import { revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { buildDiff, resolveAuditUserId, writeAudit } from "@/lib/admin/audit";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import { prisma } from "@/lib/db";
 import { requireAdmin, UnauthorizedError } from "@/lib/require-admin";
@@ -114,11 +115,13 @@ const STALE_AVATAR_ERROR =
 async function guardAndValidate(
   formData: FormData,
 ): Promise<
-  | { ok: true; data: TimelineEntryInput }
+  | { ok: true; data: TimelineEntryInput; email: string | null | undefined }
   | { ok: false; state: TimelineFormState }
 > {
+  let email: string | null | undefined;
   try {
-    await requireAdmin();
+    const session = await requireAdmin();
+    email = session.user?.email;
   } catch (error) {
     if (error instanceof UnauthorizedError) {
       return {
@@ -154,7 +157,7 @@ async function guardAndValidate(
     };
   }
 
-  return { ok: true, data: parsed.data };
+  return { ok: true, data: parsed.data, email };
 }
 
 /**
@@ -186,6 +189,17 @@ export async function createTimelineEntryAction(
       select: { id: true },
     });
     createdId = created.id;
+
+    const userId = await resolveAuditUserId(guard.email);
+    if (userId) {
+      await writeAudit({
+        userId,
+        action: "CREATE",
+        entity: "TimelineEntry",
+        entityId: createdId,
+        diff: buildDiff("TimelineEntry", undefined, guard.data),
+      });
+    }
   } catch (error) {
     if (isSlugConflict(error)) {
       return {
@@ -240,11 +254,36 @@ export async function updateTimelineEntryAction(
   }
 
   try {
+    const before = await prisma.timelineEntry.findUnique({
+      where: { id },
+      select: {
+        slug: true,
+        title: true,
+        place: true,
+        body: true,
+        avatarId: true,
+        startYear: true,
+        endYear: true,
+        published: true,
+      },
+    });
+
     await prisma.timelineEntry.update({
       where: { id },
       data: guard.data,
       select: { id: true },
     });
+
+    const userId = await resolveAuditUserId(guard.email);
+    if (userId) {
+      await writeAudit({
+        userId,
+        action: "UPDATE",
+        entity: "TimelineEntry",
+        entityId: id,
+        diff: buildDiff("TimelineEntry", before ?? undefined, guard.data),
+      });
+    }
   } catch (error) {
     if (isSlugConflict(error)) {
       return {
@@ -309,8 +348,10 @@ export async function deleteTimelineEntryAction(
   _prevState: DeleteTimelineEntryState,
   formData: FormData,
 ): Promise<DeleteTimelineEntryState> {
+  let email: string | null | undefined;
   try {
-    await requireAdmin();
+    const session = await requireAdmin();
+    email = session.user?.email;
   } catch (error) {
     if (error instanceof UnauthorizedError) {
       return { status: "error", message: SESSION_EXPIRED };
@@ -329,6 +370,16 @@ export async function deleteTimelineEntryAction(
 
   try {
     await prisma.timelineEntry.delete({ where: { id }, select: { id: true } });
+
+    const userId = await resolveAuditUserId(email);
+    if (userId) {
+      await writeAudit({
+        userId,
+        action: "DELETE",
+        entity: "TimelineEntry",
+        entityId: id,
+      });
+    }
   } catch (error) {
     // P2025 : l'enregistrement n'existe pas (déjà supprimé dans un autre
     // onglet). Ce n'est pas une panne — on le dit sans alarmer.

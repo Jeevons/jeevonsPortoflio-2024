@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   FolderKanban,
   GaugeCircle,
+  History,
   Image as ImageIcon,
   Layers,
   Mail,
@@ -49,7 +50,8 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/admin/stacks", label: "Technologies", icon: Layers, ready: true },
   // Story 5.13 — bibliothèque d'images livrée : l'entrée devient un vrai lien.
   { href: "/admin/media", label: "Médias", icon: ImageIcon, ready: true },
-  { href: "/admin/messages", label: "Messages", icon: Mail, ready: false },
+  // Story 5.18 — boîte de réception livrée.
+  { href: "/admin/messages", label: "Messages", icon: Mail, ready: true },
   // Story 5.16 — écran d'édition des textes du site livré.
   { href: "/admin/settings", label: "Réglages", icon: Settings, ready: true },
   {
@@ -58,6 +60,8 @@ const NAV_ITEMS: NavItem[] = [
     icon: ShieldCheck,
     ready: true,
   },
+  // Story 5.19 — journal des mutations livré.
+  { href: "/admin/audit", label: "Journal", icon: History, ready: true },
 ];
 
 export function AdminNav() {

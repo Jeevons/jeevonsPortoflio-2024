@@ -4,6 +4,7 @@ import { revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 
 import type { Prisma } from "@/generated/prisma/client";
+import { resolveAuditUserId, writeAudit } from "@/lib/admin/audit";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import { prisma } from "@/lib/db";
 import { requireAdmin, UnauthorizedError } from "@/lib/require-admin";
@@ -59,8 +60,10 @@ export async function saveSettingsAction(
   _prevState: SettingsFormState,
   formData: FormData,
 ): Promise<SettingsFormState> {
+  let email: string | null | undefined;
   try {
-    await requireAdmin();
+    const session = await requireAdmin();
+    email = session.user?.email;
   } catch (error) {
     if (error instanceof UnauthorizedError) {
       return { status: "error", message: SESSION_EXPIRED, fieldErrors: {} };
@@ -130,6 +133,19 @@ export async function saveSettingsAction(
         }),
       ),
     );
+
+    // Story 5.19 — UNE entrée résume les 9 clés (piège n°2 : `SiteSetting` n'a
+    // que `key` dans l'allow-list, jamais les valeurs textuelles) : la liste
+    // des clés touchées suffit à savoir CE QUI a changé, sans exposer le texte.
+    const userId = await resolveAuditUserId(email);
+    if (userId) {
+      await writeAudit({
+        userId,
+        action: "UPDATE",
+        entity: "SiteSetting",
+        diff: { keys: entries.map((entry) => entry.key) },
+      });
+    }
   } catch (error) {
     const raw = error instanceof Error ? error.message : String(error);
     console.error(

@@ -17,6 +17,7 @@ import {
   getProjectCounts,
   getRecentMessages,
   getTrafficSummary,
+  getUnreadMessageCount,
 } from "@/lib/admin/dashboard";
 import { getRecoveryCodesStatus } from "@/lib/auth/recovery-codes";
 import { cn } from "@/lib/utils";
@@ -47,12 +48,14 @@ export default async function AdminDashboardPage() {
 
   // Lectures indépendantes lancées EN PARALLÈLE : sérialisées, elles
   // additionneraient inutilement leurs latences.
-  const [counts, messages, traffic, recoveryCodes] = await Promise.all([
-    getProjectCounts(),
-    getRecentMessages(),
-    getTrafficSummary(),
-    getRecoveryCodesStatus(email),
-  ]);
+  const [counts, messages, unreadCount, traffic, recoveryCodes] =
+    await Promise.all([
+      getProjectCounts(),
+      getRecentMessages(),
+      getUnreadMessageCount(),
+      getTrafficSummary(),
+      getRecoveryCodesStatus(email),
+    ]);
 
   // AC3 — Portfolio NEUF : aucun projet du tout (ni publié, ni brouillon), et la
   // base répond bien. `counts.available` est décisif : pendant une panne, les
@@ -178,7 +181,7 @@ export default async function AdminDashboardPage() {
             Activité
           </h2>
           <div className="grid gap-4 lg:grid-cols-2">
-            <RecentMessagesCard messages={messages} />
+            <RecentMessagesCard messages={messages} unreadCount={unreadCount} />
             <TrafficCard traffic={traffic} />
           </div>
         </section>

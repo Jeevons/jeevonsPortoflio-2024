@@ -3,6 +3,7 @@
 import { revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { buildDiff, resolveAuditUserId, writeAudit } from "@/lib/admin/audit";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import { prisma } from "@/lib/db";
 import { requireAdmin, UnauthorizedError } from "@/lib/require-admin";
@@ -141,10 +142,13 @@ const STALE_COVER_ERROR =
 async function guardAndValidate(
   formData: FormData,
 ): Promise<
-  { ok: true; data: ProjectInput } | { ok: false; state: ProjectFormState }
+  | { ok: true; data: ProjectInput; email: string | null | undefined }
+  | { ok: false; state: ProjectFormState }
 > {
+  let email: string | null | undefined;
   try {
-    await requireAdmin();
+    const session = await requireAdmin();
+    email = session.user?.email;
   } catch (error) {
     if (error instanceof UnauthorizedError) {
       return {
@@ -178,7 +182,7 @@ async function guardAndValidate(
     };
   }
 
-  return { ok: true, data: parsed.data };
+  return { ok: true, data: parsed.data, email };
 }
 
 /**
@@ -227,6 +231,17 @@ export async function createProjectAction(
       select: { id: true },
     });
     createdId = created.id;
+
+    const userId = await resolveAuditUserId(guard.email);
+    if (userId) {
+      await writeAudit({
+        userId,
+        action: "CREATE",
+        entity: "Project",
+        entityId: createdId,
+        diff: buildDiff("Project", undefined, scalars),
+      });
+    }
   } catch (error) {
     if (isSlugConflict(error)) {
       return {
@@ -290,6 +305,23 @@ export async function updateProjectAction(
     // plusieurs écritures. Sans transaction, un échec en cours de route
     // laisserait le projet à moitié modifié : des points forts supprimés mais
     // pas recréés, donc une perte de données silencieuse.
+    const before = await prisma.project.findUnique({
+      where: { id },
+      select: {
+        slug: true,
+        title: true,
+        company: true,
+        category: true,
+        description: true,
+        period: true,
+        outcome: true,
+        published: true,
+        link: true,
+        repoUrl: true,
+        coverId: true,
+      },
+    });
+
     await prisma.$transaction(async (tx) => {
       // AC1 — RÉCONCILIATION des points forts par identifiant (piège n°2).
       //
@@ -352,6 +384,17 @@ export async function updateProjectAction(
         select: { id: true },
       });
     });
+
+    const userId = await resolveAuditUserId(guard.email);
+    if (userId) {
+      await writeAudit({
+        userId,
+        action: "UPDATE",
+        entity: "Project",
+        entityId: id,
+        diff: buildDiff("Project", before ?? undefined, scalars),
+      });
+    }
   } catch (error) {
     if (isSlugConflict(error)) {
       return {
@@ -418,8 +461,10 @@ export async function deleteProjectAction(
   _prevState: DeleteProjectState,
   formData: FormData,
 ): Promise<DeleteProjectState> {
+  let email: string | null | undefined;
   try {
-    await requireAdmin();
+    const session = await requireAdmin();
+    email = session.user?.email;
   } catch (error) {
     if (error instanceof UnauthorizedError) {
       return { status: "error", message: SESSION_EXPIRED };
@@ -438,6 +483,16 @@ export async function deleteProjectAction(
 
   try {
     await prisma.project.delete({ where: { id }, select: { id: true } });
+
+    const userId = await resolveAuditUserId(email);
+    if (userId) {
+      await writeAudit({
+        userId,
+        action: "DELETE",
+        entity: "Project",
+        entityId: id,
+      });
+    }
   } catch (error) {
     // P2025 : l'enregistrement n'existe pas (déjà supprimé dans un autre
     // onglet). Ce n'est pas une panne — on le dit sans alarmer.

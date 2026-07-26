@@ -1,5 +1,6 @@
 import { revalidateTag } from "next/cache";
 
+import { resolveAuditUserId, writeAudit } from "@/lib/admin/audit";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import { mediaUrl, replaceMedia } from "@/lib/media";
 import { MAX_UPLOAD_BYTES, TOO_LARGE_MESSAGE } from "@/lib/media/process";
@@ -49,6 +50,17 @@ export async function POST(
 
   if (!result.ok) {
     return Response.json({ error: result.message }, { status: 415 });
+  }
+
+  const userId = await resolveAuditUserId(guard.user?.email);
+  if (userId) {
+    await writeAudit({
+      userId,
+      action: "UPDATE",
+      entity: "Media",
+      entityId: id,
+      diff: { path: { after: result.media.path } },
+    });
   }
 
   // ⚠️ ICI l'invalidation est INDISPENSABLE, contrairement au téléversement :

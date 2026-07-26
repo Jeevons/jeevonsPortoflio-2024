@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import {
   Card,
   CardContent,
@@ -9,13 +11,11 @@ import type { RecentMessage } from "@/lib/admin/dashboard";
 
 // Story 5.7 (AC1) — Carte « cinq derniers messages ».
 //
-// ⚠️ Aujourd'hui TOUJOURS en état vide : le modèle `ContactMessage` est la story
-// 5.18 (piège n°2 — ne pas le créer ici). L'AC dit « s'il en existe » : l'état
-// vide est conforme.
-//
-// La carte est écrite pour se remplir SANS RÉÉCRITURE quand 5.18 arrivera : elle
-// consomme déjà `RecentMessage[]` et sait rendre la liste. Seul le corps de
-// `getRecentMessages()` changera.
+// Story 5.18 (piège n°6) — `ContactMessage` existe désormais : la carte affiche
+// aussi le compte RÉEL de messages non lus, avec un lien vers la boîte de
+// réception complète (`/admin/messages`). `unreadCount === null` = lecture
+// échouée (même discipline que `ProjectCounts.available`) : on tait le compte
+// plutôt que d'afficher un 0 trompeur.
 
 const dateFormatter = new Intl.DateTimeFormat("fr-FR", {
   day: "2-digit",
@@ -26,16 +26,31 @@ const dateFormatter = new Intl.DateTimeFormat("fr-FR", {
 
 type RecentMessagesCardProps = {
   messages: RecentMessage[];
+  /** `null` = lecture échouée (base injoignable), pas « aucun non lu ». */
+  unreadCount: number | null;
 };
 
-export function RecentMessagesCard({ messages }: RecentMessagesCardProps) {
+export function RecentMessagesCard({
+  messages,
+  unreadCount,
+}: RecentMessagesCardProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Derniers messages</CardTitle>
-        <CardDescription>
-          Les cinq messages les plus récents reçus via le formulaire de contact.
-        </CardDescription>
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <CardTitle className="text-base">Derniers messages</CardTitle>
+            <CardDescription>
+              Les cinq messages les plus récents reçus via le formulaire de
+              contact.
+            </CardDescription>
+          </div>
+          {unreadCount !== null && unreadCount > 0 ? (
+            <span className="inline-flex shrink-0 items-center rounded-full bg-primary/15 px-2 py-0.5 text-xs font-medium text-foreground">
+              {unreadCount} non lu{unreadCount > 1 ? "s" : ""}
+            </span>
+          ) : null}
+        </div>
       </CardHeader>
       <CardContent>
         {messages.length === 0 ? (
@@ -72,6 +87,12 @@ export function RecentMessagesCard({ messages }: RecentMessagesCardProps) {
             ))}
           </ul>
         )}
+        <Link
+          href="/admin/messages"
+          className="mt-4 inline-block text-sm underline-offset-4 hover:underline"
+        >
+          Voir tous les messages
+        </Link>
       </CardContent>
     </Card>
   );

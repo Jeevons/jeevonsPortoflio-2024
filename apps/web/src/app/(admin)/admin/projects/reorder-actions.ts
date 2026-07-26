@@ -3,6 +3,7 @@
 import { revalidateTag } from "next/cache";
 import { z } from "zod";
 
+import { resolveAuditUserId, writeAudit } from "@/lib/admin/audit";
 import { CACHE_TAGS } from "@/lib/cache-tags";
 import { prisma } from "@/lib/db";
 import { ProjectCategory } from "@/generated/prisma/enums";
@@ -74,7 +75,7 @@ export async function reorderProjectsAction(input: {
   try {
     // Une Server Action est un endpoint POST à part entière : le guard de
     // layout ne la protège pas.
-    await requireAdmin();
+    const session = await requireAdmin();
 
     const parsed = reorderSchema.safeParse(input);
     if (!parsed.success) {
@@ -122,6 +123,19 @@ export async function reorderProjectsAction(input: {
     // Sans cette invalidation, le nouvel ordre n'apparaîtrait sur le site public
     // qu'au bout d'une heure de cache (AC3).
     revalidateTag(CACHE_TAGS.projects, { expire: 0 });
+
+    // Story 5.19 — pas d'`entityId` unique (l'opération touche N lignes) : un
+    // diff résumé (catégorie + effectif) suffit à comprendre CE qui a changé,
+    // sans un doublon de la liste complète des identifiants.
+    const userId = await resolveAuditUserId(session.user?.email);
+    if (userId) {
+      await writeAudit({
+        userId,
+        action: "UPDATE",
+        entity: "Project",
+        diff: { reordered: { category, count: orderedIds.length } },
+      });
+    }
 
     return { status: "success" };
   } catch (error) {
