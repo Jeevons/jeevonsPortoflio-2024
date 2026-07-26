@@ -28,6 +28,24 @@ const nextConfig = {
       "./node_modules/@napi-rs/canvas-*/**",
     ],
   },
+  // 🛑 CORRECTIF story 5.17 — SANS CECI, TOUT TÉLÉVERSEMENT DE CV ÉCHOUE EN 500.
+  //
+  // `outputFileTracingIncludes` ci-dessus règle la PRÉSENCE des fichiers dans
+  // l'image standalone ; il ne dit rien de la façon dont ils sont CHARGÉS. Sans
+  // `serverExternalPackages`, webpack tente de bundler `pdfjs-dist` — un ESM qui
+  // manipule ses propres exports et charge un binaire natif (`@napi-rs/canvas`).
+  // La transpilation casse alors l'objet module, et l'`await import("pdf-to-img")`
+  // de `lib/media/pdf.ts:79` lève :
+  //     TypeError: Object.defineProperty called on non-object
+  //
+  // ⚠️ Le bug est resté INVISIBLE jusqu'ici parce qu'aucun CV n'avait jamais été
+  // téléversé (la clé `cv.current` n'existait pas en base) : le chemin de code
+  // n'était donc jamais emprunté. Découvert en validant l'AC2 de la story 6.11.
+  //
+  // ⚠️ Ces trois paquets sont EXCLUSIVEMENT serveur (route `/api/admin/cv`) et
+  // ne doivent jamais rejoindre un bundle : les déclarer externes les laisse
+  // chargés par le `require`/`import` natif de Node, tel que le paquet l'attend.
+  serverExternalPackages: ["pdf-to-img", "pdfjs-dist", "@napi-rs/canvas"],
   webpack(config) {
     // Grab the existing rule that handles SVG imports
     const fileLoaderRule = config.module.rules.find((rule) =>
