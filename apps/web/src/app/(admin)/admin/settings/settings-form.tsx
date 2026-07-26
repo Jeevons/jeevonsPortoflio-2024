@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import {
   settingsSchema,
   type SettingsFormValues,
+  type SettingsInput,
 } from "@/lib/schemas/settings";
 import { cn } from "@/lib/utils";
 
@@ -50,7 +51,13 @@ export function SettingsForm({ values }: SettingsFormProps) {
     register,
     formState: { errors },
     trigger,
-  } = useForm<SettingsFormValues>({
+    // ⚠️ TROIS paramètres de type, depuis la story 6.7. `settingsSchema`
+    // TRANSFORME désormais (les rôles se saisissent en texte, se stockent en
+    // tableau) : la forme des CHAMPS (`SettingsFormValues` = `z.input`) et celle
+    // que produit le résolveur (`SettingsInput` = `z.infer`) ont divergé. Sans
+    // le troisième paramètre, `zodResolver` et `useForm` se retrouvent avec deux
+    // types incompatibles sur `heroRoles`.
+  } = useForm<SettingsFormValues, unknown, SettingsInput>({
     resolver: zodResolver(settingsSchema),
     // `onBlur` : on ne harcèle pas pendant la frappe, mais un lien mal formé est
     // signalé avant d'atteindre le bouton d'envoi.
@@ -101,7 +108,7 @@ export function SettingsForm({ values }: SettingsFormProps) {
       <Section
         id="hero"
         title="Accroche"
-        description="Le grand texte d'ouverture de votre page d'accueil, et le badge de disponibilité qui l'accompagne."
+        description="Le grand texte d'ouverture de votre page d'accueil, le badge de disponibilité qui l'accompagne, et les rôles qui défilent en dessous."
       >
         <Field
           label="Titre"
@@ -149,6 +156,27 @@ export function SettingsForm({ values }: SettingsFormProps) {
             aria-describedby="heroStatusBadge-hint"
             aria-invalid={errorFor("heroStatusBadge") ? true : undefined}
             {...register("heroStatusBadge")}
+          />
+        </Field>
+
+        {/* Story 6.7 — Les intitulés qui défilent sous le badge, en effet de
+            frappe. ⚠️ UNE LIGNE = UN RÔLE, et non des valeurs séparées par des
+            virgules : un intitulé peut lui-même en contenir. L'indice le dit
+            explicitement, sinon la règle n'existerait que dans le schéma. */}
+        <Field
+          label="Rôles"
+          name="heroRoles"
+          required
+          error={errorFor("heroRoles")}
+          hint="Un rôle par ligne. Ils défilent l'un après l'autre sous le badge de statut."
+        >
+          <textarea
+            id="heroRoles"
+            rows={4}
+            className={fieldClass("heroRoles")}
+            aria-describedby="heroRoles-hint"
+            aria-invalid={errorFor("heroRoles") ? true : undefined}
+            {...register("heroRoles")}
           />
         </Field>
       </Section>

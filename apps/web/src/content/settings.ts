@@ -26,6 +26,14 @@ export const settingsContent: ContentSetting[] = [
     key: "hero.statusBadge",
     value: "En recherche d'une alternance pour 2026-2027",
   },
+  // Story 6.7 — Rôles défilants du hero. SEULE clé dont la valeur est un
+  // TABLEAU de chaînes : `SiteSetting.value` est un `Json`, on s'en sert donc
+  // tel quel plutôt que d'encoder une liste dans une chaîne à séparateur, qui
+  // rendrait toute virgule d'un intitulé ambiguë.
+  {
+    key: "hero.roles",
+    value: ["Développeur Full-Stack", "UI Engineer", "Créatif"],
+  },
   { key: "social.twitter", value: "https://x.com/Jeevons__" },
   {
     key: "social.instagram",

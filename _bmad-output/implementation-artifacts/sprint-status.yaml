@@ -41,7 +41,7 @@
 # - Retrospective appends its action items to action_items; sprint-status surfaces open ones
 
 generated: 2026-07-21
-last_updated: 2026-07-26 (Story 6.6 → review : boutons magnétiques ~8 px + curseur personnalisé desktop, tous deux absents sous mouvement réduit et sur tactile ; lint/tsc/build verts, `/` reste Static+ISR. ⚠️ VÉRIFICATIONS MANUELLES DES 5 AC NON EXÉCUTÉES — pas de navigateur headless avant l'Epic 7, elles restent à la charge de Jeevons (test décisif : cliquer un lien avec le curseur custom actif). Story 6.7 → in-progress. ⚠️ Les stories 6.6 à 6.10 partagent la branche 6.6, un commit par story, sur décision explicite de Jeevons. Précédemment : stories 6.1 à 6.5 → review — tokens de design · socle mouvement réduit + runbook · typographie fluide zoom-safe · reveal au scroll sans jamais masquer le contenu · barre de progression + header adaptatif + scroll-spy (`side-projects` replié sur `projets`, aucune entrée ajoutée) ; ces cinq-là partagent la branche 6.1 ; `/` reste Static+ISR, vérifié au build)
+last_updated: 2026-07-26 (Story 6.7 → review : parallaxe des orbites au pointeur (conteneurs ENVELOPPANTS, `HeroOrbit` non touché, `pointer-events-none` conservé) + rôle défilant en effet de frappe (annonce a11y statique en `sr-only`, cale anti-CLS) ; `Hero.tsx` reste Server Component `async`. 🛑 ÉCART AU PÉRIMÈTRE ASSUMÉ, décidé par Jeevons : les rôles sont une CLÉ ADMINISTRABLE (`hero.roles`) alors que la story classait cette option hors périmètre — aucune migration Prisma nécessaire pour autant (`SiteSetting.value` est un `Json` à clé libre), mais un écran admin est touché. lint 0 erreur / tsc 0 / build OK, `/` reste Static+ISR 1h. ⚠️ VÉRIFICATIONS MANUELLES NON EXÉCUTÉES : LCP/CLS non mesurés (d'où `priority` NON ajouté à l'avatar, faute d'avoir pu confirmer qu'il est l'élément LCP), CTA cliquables sous parallaxe, immobilité visuelle des orbites en mouvement réduit, aller-retour du champ « Rôles » en admin. Précédemment : Story 6.6 → review : boutons magnétiques ~8 px + curseur personnalisé desktop, tous deux absents sous mouvement réduit et sur tactile ; lint/tsc/build verts, `/` reste Static+ISR. ⚠️ VÉRIFICATIONS MANUELLES DES 5 AC NON EXÉCUTÉES — pas de navigateur headless avant l'Epic 7, elles restent à la charge de Jeevons (test décisif : cliquer un lien avec le curseur custom actif). ⚠️ Les stories 6.6 à 6.10 partagent la branche 6.6, un commit par story, sur décision explicite de Jeevons. Précédemment : stories 6.1 à 6.5 → review — tokens de design · socle mouvement réduit + runbook · typographie fluide zoom-safe · reveal au scroll sans jamais masquer le contenu · barre de progression + header adaptatif + scroll-spy (`side-projects` replié sur `projets`, aucune entrée ajoutée) ; ces cinq-là partagent la branche 6.1 ; `/` reste Static+ISR, vérifié au build)
 project: jeevonsPortoflio-2024
 project_key: NOKEY
 tracking_system: file-system
@@ -115,7 +115,7 @@ development_status:
   6-4-decouvrir-le-contenu-a-mesure-que-je-defile: review
   6-5-situer-ma-progression-dans-la-page: review
   6-6-rendre-les-elements-interactifs-vivants: review
-  6-7-etre-accueilli-par-une-page-d-accueil-marquante: in-progress
+  6-7-etre-accueilli-par-une-page-d-accueil-marquante: review
   6-8-explorer-les-cartes-de-projet: ready-for-dev
   6-9-suivre-le-parcours-de-jeevons: ready-for-dev
   6-10-consulter-un-projet-en-detail: ready-for-dev
