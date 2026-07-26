@@ -28,6 +28,8 @@ export const SelfProjectsSection = async ({
     : await getPublishedProjects("PERSONAL");
 
   const projects: Project[] = dbProjects.map((project) => ({
+    // Story 6.10 — slug transmis pour le lien vers la fiche (cf. Projects.tsx).
+    slug: project.slug,
     company: project.company,
     year: project.period,
     title: project.title,

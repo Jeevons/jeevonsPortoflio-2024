@@ -49,6 +49,119 @@ export type PublishedProject = Awaited<
 >[number];
 
 // ---------------------------------------------------------------------------
+// Story 6.10 — LECTURE D'UN PROJET PUBLIÉ PAR SON SLUG (AC1, AC3).
+// ---------------------------------------------------------------------------
+
+/**
+ * Un projet publié, désigné par son `slug`.
+ *
+ * 🛑 `published: true` EST DANS LA REQUÊTE, jamais un filtre appliqué en JS
+ * après coup. C'est l'invariant d'AC3 : un brouillon ne doit pas seulement être
+ * masqué à l'affichage, il ne doit **jamais sortir de la base** sur ce chemin.
+ * Un filtre post-requête laisserait le contenu non publié transiter par le
+ * cache partagé de `unstable_cache` — donc servable à n'importe qui.
+ *
+ * ⚠️ `stacks` est inclus ici alors que la lecture par catégorie ne le fait pas :
+ * les technologies sont l'un des contenus attendus par AC1 (« le contexte, le
+ * rôle tenu et les technologies employées »), et la carte, elle, n'en a pas
+ * besoin. On ne les ajoute donc PAS à la lecture de liste, qui les paierait sur
+ * chaque projet de la page d'accueil sans les afficher.
+ */
+function queryPublishedProjectBySlug(slug: string) {
+  return prisma.project.findFirst({
+    where: { slug, published: true },
+    include: {
+      highlights: { orderBy: { sortOrder: "asc" } },
+      cover: true,
+      stacks: { orderBy: { name: "asc" } },
+    },
+  });
+}
+
+const cachedPublishedProjectBySlug = unstable_cache(
+  queryPublishedProjectBySlug,
+  ["published-project-by-slug"],
+  { tags: [CACHE_TAGS.projects], revalidate: REVALIDATE_SECONDS },
+);
+
+/**
+ * Repli statique d'un projet, par slug.
+ *
+ * ⚠️ Le repli de la story 4.5 est indexé PAR CATÉGORIE (`fallbackProjects`) :
+ * il n'existe aucune entrée par slug. On parcourt donc les deux catégories.
+ *
+ * ✅ SÛR POUR AC3, et c'est vérifié : `fallbackProjects` force `published: true`
+ * sur chaque entrée (`content/fallbacks.ts`), et le contenu statique de
+ * `content/projects.ts` ne contient que d'anciens projets publiés. Base
+ * injoignable, ce chemin ne peut donc pas servir de brouillon.
+ * 🛑 SI DES ENTRÉES SONT AJOUTÉES AU REPLI, MAINTENIR CET INVARIANT.
+ *
+ * ⚠️ Le repli ne porte NI `stacks` (relation, absente du contenu statique) NI
+ * `cover` (ligne `Media`, en base par construction). La page doit donc traiter
+ * ces deux blocs comme absents — ce qu'AC2 impose déjà pour tout champ vide.
+ */
+function fallbackProjectBySlug(slug: string): PublishedProjectDetail | null {
+  const match = [
+    ...fallbackProjects("FLAGSHIP"),
+    ...fallbackProjects("PERSONAL"),
+  ].find((project) => project.slug === slug);
+
+  return match ? { ...match, stacks: [] } : null;
+}
+
+/**
+ * Lecture résiliente (story 4.5) d'un projet publié par slug.
+ *
+ * Renvoie `null` quand le slug est inconnu OU que le projet est un brouillon :
+ * l'appelant en fait un `notFound()`. 🛑 Un brouillon doit produire un VRAI 404
+ * (AC3), pas une page vide en 200 — c'est une règle de sécurité, pas
+ * d'affichage.
+ */
+export async function getPublishedProjectBySlug(slug: string) {
+  return readWithFallback(
+    CACHE_TAGS.projects,
+    () => cachedPublishedProjectBySlug(slug),
+    () => fallbackProjectBySlug(slug),
+  );
+}
+
+export type PublishedProjectDetail = NonNullable<
+  Awaited<ReturnType<typeof queryPublishedProjectBySlug>>
+>;
+
+/**
+ * Les slugs publiés, pour `generateStaticParams` (pré-rendu) et le sitemap.
+ *
+ * ⚠️ Même contrat de cache et de repli que les lectures ci-dessus : le sitemap
+ * ne doit PAS faire d'appel Prisma nu, qui contournerait à la fois le cache 4.4
+ * et la résilience 4.5.
+ */
+function queryPublishedProjectSlugs() {
+  return prisma.project.findMany({
+    where: { published: true },
+    select: { slug: true, updatedAt: true },
+    orderBy: { sortOrder: "asc" },
+  });
+}
+
+const cachedPublishedProjectSlugs = unstable_cache(
+  queryPublishedProjectSlugs,
+  ["published-project-slugs"],
+  { tags: [CACHE_TAGS.projects], revalidate: REVALIDATE_SECONDS },
+);
+
+export async function getPublishedProjectSlugs() {
+  return readWithFallback(
+    CACHE_TAGS.projects,
+    () => cachedPublishedProjectSlugs(),
+    () =>
+      [...fallbackProjects("FLAGSHIP"), ...fallbackProjects("PERSONAL")].map(
+        (project) => ({ slug: project.slug, updatedAt: project.updatedAt }),
+      ),
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Story 5.15 — TECHNOLOGIES affichées publiquement (AC3).
 // ---------------------------------------------------------------------------
 

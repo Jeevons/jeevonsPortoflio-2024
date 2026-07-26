@@ -21,6 +21,12 @@ import { z } from "zod";
 //       social.twitter · social.instagram · social.linkedin · social.github
 //       contact.linkedin
 //   • 1 clé STRUCTURÉE : contact.email = { user: string[], host: string[] }
+//   • 1 clé LISTE (story 6.7) : hero.roles = string[]
+//
+// ⚠️ Depuis 6.7, ce schéma TRANSFORME (`rolesSchema`) : `z.input` (ce que pilote
+// le formulaire) et `z.infer` (ce qu'écrit la Server Action) ne sont donc plus
+// identiques. Les deux types exportés en bas de fichier ne sont pas redondants —
+// confondre l'un avec l'autre casserait le pré-remplissage OU l'écriture.
 //
 // ⚠️ Le texte de la story supposait des objets composés (`hero = {title,
 // subtitle}`). C'est FAUX : les clés sont PLATES et pointées. Vérifié dans
@@ -32,6 +38,8 @@ import { z } from "zod";
 const TITLE_MAX = 200;
 const SUBTITLE_MAX = 1000;
 const BADGE_MAX = 120;
+const ROLE_MAX = 60;
+const ROLES_MAX = 6;
 const URL_MAX = 500;
 const EMAIL_MAX = 254; // RFC 5321 : longueur maximale d'une adresse.
 
@@ -77,6 +85,50 @@ function textSchema(label: string, max: number) {
     .trim()
     .min(1, `${label} est obligatoire.`)
     .max(max, `${label} ne peut dépasser ${max} caractères.`);
+}
+
+/**
+ * Les rôles défilants du hero (story 6.7, clé `hero.roles`).
+ *
+ * 🛑 SEUL CHAMP DE CET ÉCRAN DONT LA VALEUR STOCKÉE N'EST PAS UNE CHAÎNE. Le
+ * public (`readStringArray`, `lib/settings.ts`) attend un TABLEAU de chaînes :
+ * écrire ici la chaîne brute du textarea ferait retomber le hero sur ses rôles
+ * par défaut, en silence — exactement le piège n°1 documenté en tête de fichier.
+ * D'où le `.transform()` : le schéma est le seul endroit où la saisie devient la
+ * forme stockée, et il l'est pour le client comme pour la Server Action.
+ *
+ * ⚠️ UNE LIGNE = UN RÔLE, et surtout PAS des valeurs séparées par des virgules :
+ * un intitulé peut légitimement en contenir (« Développeur, côté serveur »), ce
+ * qui rendrait tout séparateur en ligne ambigu.
+ *
+ * Les lignes vides sont écartées plutôt que refusées : une ligne blanche laissée
+ * en fin de saisie est une scorie de frappe, pas une erreur à signaler.
+ */
+export const rolesSchema = z
+  .string()
+  .transform((value) =>
+    value
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0),
+  )
+  .pipe(
+    z
+      .array(
+        z
+          .string()
+          .max(
+            ROLE_MAX,
+            `Chaque rôle ne peut dépasser ${ROLE_MAX} caractères.`,
+          ),
+      )
+      .min(1, "Indiquez au moins un rôle.")
+      .max(ROLES_MAX, `Vous ne pouvez pas dépasser ${ROLES_MAX} rôles.`),
+  );
+
+/** Traduit les rôles stockés vers la saisie « une ligne par rôle ». */
+export function rolesToText(roles: readonly string[]): string {
+  return roles.join("\n");
 }
 
 /**
@@ -161,6 +213,7 @@ export const settingsSchema = z.object({
   heroTitle: textSchema("Le titre de l'accroche", TITLE_MAX),
   heroSubtitle: textSchema("Le sous-titre de l'accroche", SUBTITLE_MAX),
   heroStatusBadge: textSchema("Le badge de statut", BADGE_MAX),
+  heroRoles: rolesSchema,
   socialTwitter: linkSchema("Le lien X (Twitter)"),
   socialInstagram: linkSchema("Le lien Instagram"),
   socialLinkedin: linkSchema("Le lien LinkedIn (pied de page)"),
@@ -192,6 +245,10 @@ export function settingsFormDataToInput(formData: FormData): unknown {
     heroTitle: text("heroTitle"),
     heroSubtitle: text("heroSubtitle"),
     heroStatusBadge: text("heroStatusBadge"),
+    // La chaîne brute du textarea : c'est `rolesSchema` qui la découpe en
+    // tableau, pas cette fonction (qui ne fait que changer de forme, jamais de
+    // type).
+    heroRoles: text("heroRoles"),
     socialTwitter: text("socialTwitter"),
     socialInstagram: text("socialInstagram"),
     socialLinkedin: text("socialLinkedin"),

@@ -22,6 +22,7 @@ export const SETTING_KEYS = {
   heroTitle: "hero.title",
   heroSubtitle: "hero.subtitle",
   heroStatusBadge: "hero.statusBadge",
+  heroRoles: "hero.roles",
   socialTwitter: "social.twitter",
   socialInstagram: "social.instagram",
   socialLinkedin: "social.linkedin",
@@ -79,6 +80,33 @@ function readString(
   return typeof value === "string" && value.length > 0 ? value : fallback;
 }
 
+/**
+ * Lecture typée d'une liste de chaînes (story 6.7, `hero.roles`).
+ *
+ * ⚠️ Même discipline défensive que `readString` : `SiteSetting.value` est un
+ * `Json` libre, donc rien ne garantit la forme côté base. Un tableau vide, ou
+ * contenant autre chose que des chaînes, retombe sur le défaut plutôt que de
+ * faire rendre `undefined` au site public. Les entrées vides sont écartées : une
+ * ligne blanche laissée dans le champ d'administration ne doit pas produire un
+ * rôle invisible dans le défilement.
+ */
+function readStringArray(
+  settings: Map<string, unknown>,
+  key: string,
+  fallback: readonly string[],
+): string[] {
+  const value = settings.get(key);
+  if (!Array.isArray(value)) {
+    return [...fallback];
+  }
+
+  const entries = value.filter(
+    (entry): entry is string => typeof entry === "string" && entry.length > 0,
+  );
+
+  return entries.length > 0 ? entries : [...fallback];
+}
+
 function readEmail(
   settings: Map<string, unknown>,
   fallback: FragmentedEmail,
@@ -94,6 +122,12 @@ export const SETTING_DEFAULTS = {
   heroSubtitle:
     "Le front-end est mon terrain de jeu, mais pour moi, c'est dans les coulisses que la vraie magie opère. Avec des bases solides en développement front, je veux explorer tout le spectre pour véritablement devenir \"tech-savvy\". Et quand je ne code pas, je m'amuse à donner vie à mes idées grâce à la suite Adobe.",
   heroStatusBadge: "En recherche d'une alternance pour 2026-2027",
+  // Story 6.7 — Intitulés du PLAN §4.2 (P2 n°6), désormais administrables.
+  heroRoles: [
+    "Développeur Full-Stack",
+    "UI Engineer",
+    "Créatif",
+  ] as readonly string[],
   socialTwitter: "https://x.com/Jeevons__",
   socialInstagram:
     "https://www.instagram.com/jeevons_/profilecard/?igsh=eGE4YnBtazhobmk0",
@@ -120,6 +154,9 @@ export const SETTING_DEFAULTS = {
     [SETTING_KEYS.heroTitle]: SETTING_DEFAULTS.heroTitle,
     [SETTING_KEYS.heroSubtitle]: SETTING_DEFAULTS.heroSubtitle,
     [SETTING_KEYS.heroStatusBadge]: SETTING_DEFAULTS.heroStatusBadge,
+    // ✅ La comparaison passe par `JSON.stringify` : le tableau des rôles est
+    // donc couvert par ce garde au même titre que les chaînes.
+    [SETTING_KEYS.heroRoles]: SETTING_DEFAULTS.heroRoles,
     [SETTING_KEYS.socialTwitter]: SETTING_DEFAULTS.socialTwitter,
     [SETTING_KEYS.socialInstagram]: SETTING_DEFAULTS.socialInstagram,
     [SETTING_KEYS.socialLinkedin]: SETTING_DEFAULTS.socialLinkedin,
@@ -140,6 +177,11 @@ export type HeroSettings = {
   title: string;
   subtitle: string;
   statusBadge: string;
+  /**
+   * Intitulés défilants du hero (story 6.7). Jamais vide : `readStringArray`
+   * retombe sur le défaut si la clé est absente ou mal formée.
+   */
+  roles: string[];
 };
 
 export async function getHeroSettings(): Promise<HeroSettings> {
@@ -159,6 +201,11 @@ export async function getHeroSettings(): Promise<HeroSettings> {
       settings,
       SETTING_KEYS.heroStatusBadge,
       SETTING_DEFAULTS.heroStatusBadge,
+    ),
+    roles: readStringArray(
+      settings,
+      SETTING_KEYS.heroRoles,
+      SETTING_DEFAULTS.heroRoles,
     ),
   };
 }

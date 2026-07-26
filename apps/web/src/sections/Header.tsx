@@ -3,6 +3,7 @@
 import { ScrollProgress } from "@/components/ScrollProgress";
 import { useActiveSection } from "@/lib/use-active-section";
 import { useMotionValueEvent, useScroll } from "motion/react";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { twMerge } from "tailwind-merge";
 
@@ -35,10 +36,28 @@ const NAV_ITEMS = [
 /** Défilement (en px) au-delà duquel la nav passe en état compact (AC2). */
 const COMPACT_THRESHOLD = 80;
 
+/**
+ * Les pages qui PORTENT les sections ancrées.
+ *
+ * 🛑 Ailleurs, un `href="#projects"` ne désigne RIEN : le navigateur ne trouve
+ * pas la cible et le clic reste sans effet — c'est exactement ce qui se
+ * produisait sur `/projects/[slug]` depuis la story 6.10, qui a introduit la
+ * première page publique n'étant pas la page d'accueil. La nav doit alors
+ * pointer vers `/#ancre`, ce qui ramène à l'accueil PUIS défile.
+ */
+const ANCHORED_PAGES = ["/", "/preview"];
+
 export const Header = () => {
   const activeNavId = useActiveSection();
   const [isCompact, setIsCompact] = useState(false);
   const { scrollY } = useScroll();
+
+  // ⚠️ `usePathname` plutôt qu'une prop à passer depuis chaque page : les trois
+  // appelants (`/`, `/preview`, `/projects/[slug]`) n'ont pas à se souvenir de
+  // la renseigner, et toute route publique future est couverte d'office. Le
+  // composant est déjà client (voir l'en-tête), le hook ne coûte donc rien.
+  const pathname = usePathname();
+  const isOnAnchoredPage = ANCHORED_PAGES.includes(pathname);
 
   // ⚠️ `useMotionValueEvent` et non un listener `scroll` maison : `motion`
   // s'abonne à sa propre valeur de défilement, déjà mutualisée, au lieu
@@ -93,7 +112,9 @@ export const Header = () => {
             return (
               <a
                 key={item.id}
-                href={item.href}
+                // Hors d'une page ancrée, le fragment est PRÉFIXÉ par `/` :
+                // sans cela le clic ne fait rien (voir `ANCHORED_PAGES`).
+                href={isOnAnchoredPage ? item.href : `/${item.href}`}
                 // AC4 — signal SÉMANTIQUE, pour qui la couleur n'existe pas.
                 // `aria-current="location"` est la valeur prévue pour « l'endroit
                 // courant dans un ensemble », ce qu'est exactement une section.

@@ -1,4 +1,5 @@
-import { ProjectCard, type ProjectCardData } from "@/components/ProjectCard";
+import { type ProjectCardData } from "@/components/ProjectCard";
+import { ProjectCardInteractive } from "@/components/ProjectCardInteractive";
 import { Reveal } from "@/components/Reveal";
 import { SectionHeader } from "@/components/SectionHeader";
 
@@ -71,10 +72,28 @@ export const ProjectList = ({
                liste ci-dessus : la section se révèle à l'entrée, sans qu'aucune
                carte ne soit touchée. La cascade, elle, reste portée par les
                listes qui n'ont pas cette contrainte (hobbies, toolbox). */
-            <ProjectCard
+            /* Story 6.8 — L'INCLINAISON S'APPLIQUE AU NŒUD `sticky` LUI-MÊME.
+
+               🛑 `sticky` reste EXACTEMENT là où il était : dans la classe
+               passée à la carte. `ProjectCardInteractive` n'ajoute AUCUN nœud
+               enveloppant — il transmet ses `transform` à cette même racine.
+               C'est la seule structure qui préserve à la fois l'empilement
+               (un `transform` sur un ANCÊTRE le casserait) et la mise en garde
+               (b) de la story 6.4 rappelée ci-dessus (un niveau d'empilement
+               supplémentaire changerait l'ordre de superposition).
+
+               ⚠️ L'aperçu admin (`project-preview.tsx`) importe `ProjectCard`
+               NU, sans cette enveloppe : il reste donc sans tilt ni halo. */
+            /* Story 6.10 (AC6) — LE LIEN VERS LA FICHE EST ACTIVÉ ICI, ET
+               SEULEMENT ICI. `project-preview.tsx` (aperçu admin) importe
+               `ProjectCard` nu, sans cette prop : son aperçu ne pointe donc
+               jamais vers `/projects/[slug]`, qui renverrait un 404 sur un
+               projet encore en brouillon. */
+            <ProjectCardInteractive
               key={project.title}
               project={project}
-              className="px-8 pt-8 pb-0  md:pt-12 m:px-10 lg:pt-16 lg:px-20 sticky"
+              detailLink
+              className="project-card-highlight px-8 pt-8 pb-0  md:pt-12 m:px-10 lg:pt-16 lg:px-20 sticky"
               // Décalage croissant : les cartes s'empilent en défilant.
               style={{
                 top: `calc(64px + ${projectIndex * 40}px)`,

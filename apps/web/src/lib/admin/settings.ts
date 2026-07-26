@@ -3,7 +3,8 @@ import "server-only";
 import { prisma } from "@/lib/db";
 import {
   fromFragmentedEmail,
-  type SettingsInput,
+  rolesToText,
+  type SettingsFormValues,
 } from "@/lib/schemas/settings";
 import { SETTING_DEFAULTS, SETTING_KEYS } from "@/lib/settings";
 
@@ -20,9 +21,17 @@ import { SETTING_DEFAULTS, SETTING_KEYS } from "@/lib/settings";
 // lit : les redéclarer ici créerait deux sources de vérité, et la première
 // divergence casserait le rendu public en silence.
 
-/** Résultat de la lecture. `available: false` = base injoignable, PAS « vide ». */
+/**
+ * Résultat de la lecture. `available: false` = base injoignable, PAS « vide ».
+ *
+ * ⚠️ `SettingsFormValues` (= `z.input`) et NON `SettingsInput` (= `z.infer`).
+ * Depuis la story 6.7, le schéma TRANSFORME : les rôles se saisissent en texte
+ * (« une ligne = un rôle ») et se stockent en tableau. Ce qui alimente le
+ * formulaire est donc la forme d'ENTRÉE — la forme de sortie n'apparaît qu'à
+ * l'écriture, côté Server Action.
+ */
 export type AdminSettings =
-  { available: true; values: SettingsInput } | { available: false };
+  { available: true; values: SettingsFormValues } | { available: false };
 
 /** Lit une chaîne, en retombant sur le défaut si la clé est absente/invalide. */
 function readString(
@@ -34,8 +43,24 @@ function readString(
   return typeof value === "string" && value.length > 0 ? value : fallback;
 }
 
+/** Lit une liste de chaînes, mêmes règles de repli que le public (story 6.7). */
+function readStringArray(
+  rows: Map<string, unknown>,
+  key: string,
+  fallback: readonly string[],
+): string[] {
+  const value = rows.get(key);
+  if (!Array.isArray(value)) {
+    return [...fallback];
+  }
+  const entries = value.filter(
+    (entry): entry is string => typeof entry === "string" && entry.length > 0,
+  );
+  return entries.length > 0 ? entries : [...fallback];
+}
+
 /**
- * Charge les 9 clés éditables (AC1).
+ * Charge les 10 clés éditables (AC1).
  *
  * ⚠️ Une clé ABSENTE n'est pas une erreur : le formulaire affiche alors le
  * DÉFAUT (`SETTING_DEFAULTS`), exactement ce que le public affiche déjà dans ce
@@ -77,6 +102,17 @@ export async function getAdminSettings(): Promise<AdminSettings> {
           byKey,
           SETTING_KEYS.heroStatusBadge,
           SETTING_DEFAULTS.heroStatusBadge,
+        ),
+        // Story 6.7 — La forme stockée (tableau) redevient la forme saisie
+        // (une ligne par rôle). Même repli défensif que côté public : un `Json`
+        // mal formé affiche les défauts plutôt qu'un champ vide, sans quoi
+        // enregistrer écraserait les rôles par une saisie blanche.
+        heroRoles: rolesToText(
+          readStringArray(
+            byKey,
+            SETTING_KEYS.heroRoles,
+            SETTING_DEFAULTS.heroRoles,
+          ),
         ),
         socialTwitter: readString(
           byKey,

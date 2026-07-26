@@ -4,7 +4,7 @@ baseline_commit: c408eae7818fb33ef915a70085775688fbf80640
 
 # Story 6.10: Consulter un projet en détail
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -155,26 +155,27 @@ Vérifié dans `prisma/schema.prisma`, **aucune migration n'est nécessaire** :
 
 ## Tasks / Subtasks
 
-- [ ] **Tâche 0 — Prérequis & décisions** (AC: 1, 4, 5, 6)
-  - [ ] 6.1 et 6.2 `done`. 🛑 **Décider et documenter** : le « rôle » → `description` (❌ pas de nouveau champ) · portée du `not-found.tsx` (racine recommandée) · image de partage par projet ou héritée · technique de transition (transition d'entrée sobre recommandée, sans toucher `next.config.mjs`).
-- [ ] **Tâche 1 — Lecture par slug** (AC: 1, 3 ; piège n°1)
-  - [ ] `getPublishedProjectBySlug(slug)` dans `lib/projects.ts` : `published: true` **dans la requête**, `include` `highlights`/`cover`/`stacks`, `unstable_cache` tag `projects` avec le slug **dans la clé**, `readWithFallback`. ⚠️ Vérifier que le repli statique **ne contient aucun brouillon**.
-- [ ] **Tâche 2 — Route `/projects/[slug]`** (AC: 1, 2, 3 ; pièges n°2, n°6)
-  - [ ] `page.tsx` avec **`params` asynchrone** (Next 16), `export const revalidate = 3600` (littéral), `generateStaticParams()` sur les slugs publiés. `notFound()` si `null`. **Chaque champ optionnel : section absente, jamais vide.** `repoUrl` en `target="_blank" rel="noopener noreferrer"` + `aria-label`. Images selon le pattern `ProjectCard` (`<img>` + `width`/`height` + `blurDataUrl`).
-- [ ] **Tâche 3 — Page « non trouvée »** (AC: 4 ; piège n°3)
-  - [ ] `not-found.tsx` (portée décidée en tâche 0), identité tokenisée (6.1), **lien de retour vers `/`** focusable, `<h1>`, contrastes AA. ⚠️ Vérifier l'effet sur `/admin` et `/login` si placé à la racine.
-- [ ] **Tâche 4 — Métadonnées & sitemap** (AC: 5 ; piège n°4)
-  - [ ] `generateMetadata` par projet (title/description/openGraph/twitter), **tolérante au `null`**, `metadataBase` du layout réutilisé.
-  - [ ] `sitemap.ts` passé en **`async`**, une entrée par projet **publié**, via la lecture cachée (❌ pas de Prisma nu), **dégradation propre** si la base est injoignable. ⚠️ **Mettre à jour le commentaire** devenu faux.
-- [ ] **Tâche 5 — Lien depuis la carte + transition** (AC: 6 ; piège n°5)
-  - [ ] Lien carte → fiche **sans imbriquer de lien** (le bouton « Visiter le site » existe déjà). 🛑 Lien **optionnel par prop**, activé par `ProjectList` seulement — **pas dans l'aperçu admin**.
-  - [ ] Transition fluide ; sous reduced-motion **navigation immédiate** (vérifier à l'œil, y compris sur `::view-transition-*` si cette voie est retenue).
-- [ ] **Tâche 6 — Vérification locale** (AC: 1-6 ; piège n°8)
-  - [ ] Les 6 AC un par un, dont **code HTTP 404 réel** pour brouillon et slug inconnu, projet **le plus dépouillé**, `/sitemap.xml` **sans brouillon**, clavier sur la page 404, reduced-motion.
-- [ ] **Tâche 7 — Definition of Done** (AGENTS.md §8)
-  - [ ] `bun run lint` 0 / `bunx tsc --noEmit` 0 / `bun run build` OK (**`/` toujours `○ (Static)`**, noter le marqueur de `/projects/[slug]`).
-  - [ ] `git diff DEV` : nouvelle route + `lib/projects.ts` + `sitemap.ts` + `not-found.tsx` (+ lien optionnel sur la carte). ❌ **Aucune migration**, aucun écran admin, `robots.ts` intact, **aucune dépendance**.
-  - [ ] `File List` + `Completion Notes` + `Change Log` · `sprint-status.yaml`.
+- [x] **Tâche 0 — Prérequis & décisions** (AC: 1, 4, 5, 6)
+  - [x] 6.1 et 6.2 `done`. 🛑 **Décidé et documenté** : le « rôle » → `description` (❌ aucun nouveau champ) · `not-found.tsx` **racine** + une frontière dédiée au segment projet · image de partage **héritée** de la racine · transition **d'entrée sobre** (`ProjectDetailReveal`), `next.config.mjs` **non touché**.
+- [x] **Tâche 1 — Lecture par slug** (AC: 1, 3 ; piège n°1)
+  - [x] `getPublishedProjectBySlug(slug)` dans `lib/projects.ts` : `published: true` **dans la requête**, `include` `highlights`/`cover`/`stacks`, `unstable_cache` tag `projects` avec le slug **dans la clé**, `readWithFallback`. ✅ Repli statique vérifié : `content/fallbacks.ts` force `published: true`, aucun brouillon servable.
+- [x] **Tâche 2 — Route `/projects/[slug]`** (AC: 1, 2, 3 ; pièges n°2, n°6)
+  - [x] `page.tsx` avec **`params` asynchrone**, `export const revalidate = 3600` (littéral), `generateStaticParams()` sur les slugs publiés (tolérant à une base absente). `notFound()` si `null`. Chaque champ optionnel masqué, **plus un bloc filet** quand tous sont vides. `link`/`repoUrl` en `target="_blank" rel="noopener noreferrer"` + `aria-label`. Images au pattern `ProjectCard`.
+- [x] **Tâche 3 — Page « non trouvée »** (AC: 4 ; piège n°3)
+  - [x] `app/not-found.tsx` racine (sans `Header`/`Footer` : elle couvre aussi `/admin` et `/login`) + `app/projects/[slug]/not-found.tsx` au message dédié. `<h1>`, lien de retour focusable, tokens 6.1. ✅ `/admin` renvoie toujours 307 : le garde d'authentification n'est pas perturbé. ⚠️ Limite Next 16 documentée ci-dessous.
+- [x] **Tâche 4 — Métadonnées & sitemap** (AC: 5 ; piège n°4)
+  - [x] `generateMetadata` par projet, **tolérante au `null`**, `metadataBase` du layout réutilisé, description repliée sur un texte construit quand le champ est vide.
+  - [x] `sitemap.ts` passé en **`async`**, une entrée par projet publié via la lecture cachée, `try/catch` → entrée racine seule si la base tombe. Commentaire « page unique » corrigé.
+- [x] **Tâche 5 — Lien depuis la carte + transition** (AC: 6 ; piège n°5)
+  - [x] Lien **distinct** « Voir le projet » — ❌ ni imbrication, ni pseudo-élément couvrant (conflit avec le liseré `after:` de `Card`). Prop `detailLink` **opt-in**, posée par `ProjectList` seulement ; l'aperçu admin importe `ProjectCard` nu.
+  - [x] `ProjectDetailReveal` : fondu + 16 px, **court-circuité** sous mouvement réduit (retour direct des enfants, aucun `motion.div`).
+- [x] **Tâche 6 — Vérification locale** (AC: 1-6 ; piège n°8)
+  - [x] Sondes automatisées : `/` 200 · `/projects/quantum` 200 (`<h1>` **rendu côté serveur**, vérifié dans le HTML) · `/projects/nimportequoi` **404** · `/sitemap.xml` 200 avec la racine + exactement les 6 projets publiés, aucun brouillon · `/admin` 307.
+  - [ ] ⚠️ **Restent à la charge de Jeevons** (voir Completion Notes) : AC3 sur un vrai brouillon, AC6 à l'œil + reduced-motion, clavier sur la 404, non-régression de l'aperçu admin.
+- [x] **Tâche 7 — Definition of Done** (AGENTS.md §8)
+  - [x] `bun run lint` **0** / `bunx tsc --noEmit` **0** / `bun run build` OK — **`/` toujours `○ (Static)` `1h`**, `/projects/[slug]` en **`●` (SSG)** avec 6 slugs pré-rendus.
+  - [x] ❌ Aucune migration, aucun écran admin, `robots.ts` intact, `next.config.mjs` intact, **aucune dépendance**.
+  - [x] `File List` + `Completion Notes` + `Change Log` · `sprint-status.yaml`.
 
 ## Dev Notes
 
@@ -222,8 +223,56 @@ Vérification **manuelle** des 6 AC, avec trois tests décisifs : le **code HTTP
 
 ### Agent Model Used
 
+claude-opus-5
+
 ### Completion Notes
+
+**Décisions prises (tâche 0).**
+
+- **« Le rôle tenu » → `description`.** Aucun champ ne le portait. Sur consigne explicite de Jeevons (« le plus robuste et simple pour moi après »), c'est le champ `description` (`@db.Text`, déjà administrable depuis 5.9) qui le couvre, sous le titre **« Contexte et rôle »**. ❌ Aucune colonne ajoutée, aucune migration, aucun second champ à remplir en administration.
+- **Image de partage héritée** de `app/opengraph-image.tsx` : AC5 demande que la page « porte son image », pas qu'elle en ait une propre. Une image par projet coûterait un rendu Satori par slug à chaque build, sans gain mesurable.
+- **Transition AC6 sans `next.config.mjs`.** `ViewTransition` exige `experimental.viewTransition`, donc une modification d'un fichier qui porte `@svgr/webpack` (3.3) et `outputFileTracingIncludes` (5.17). Le risque était sans commune mesure avec l'enjeu : `ProjectDetailReveal` fait un fondu + 16 px à l'entrée, et **court-circuite entièrement** sous mouvement réduit (les enfants sont rendus nus, sans `motion.div` — AC6 dit « immédiate », pas « plus rapide »).
+
+**État réel de la base — AC2 est le cas nominal, pas un cas limite.** Interrogation directe : les **6 projets publiés ont `description`, `outcome` et `repoUrl` tous à `null`**, et **aucun brouillon n'existe**. La page se réduirait donc aujourd'hui à un titre isolé sur fond vide — exactement ce qu'AC2 interdit. D'où un **bloc filet**, rendu uniquement quand *tous* les champs optionnels sont vides : « La fiche détaillée de ce projet est en cours de rédaction. » ⚠️ Ces pages ne prendront leur sens qu'une fois les `description` renseignées depuis l'administration.
+
+**🛑 LIMITE CONNUE — AC4 n'est que partiellement tenu, et il faut le savoir.**
+
+`notFound()` depuis `/projects/[slug]` renvoie bien un **code HTTP 404** et un `noindex`, mais Next 16.2.11 remplace tout le document par son enveloppe `<html id="__next_error__">` : **le corps HTML servi est vide**, le contenu de la page 404 ne vit que dans la charge utile RSC et n'apparaît qu'à l'hydratation. Concrètement : avec JavaScript (tous les visiteurs réels), la page 404 soignée s'affiche normalement ; **sans JavaScript, elle est nue**.
+
+Trois pistes ont été mesurées et **écartées, chiffres à l'appui** :
+1. frontière `not-found.tsx` déclarée dans le segment — Next l'utilise bien (son texte propre apparaît dans la charge RSC), mais le corps reste vide ;
+2. markup dupliqué dans le segment au lieu d'un ré-export — aucun effet ;
+3. `generateStaticParams` renvoyant `[]`, route non pré-rendue — **aucun effet non plus**, ce qui **disqualifie le pré-rendu comme cause** : le comportement tient à `notFound()` sur une route à paramètre dynamique.
+
+La seule voie de contournement restante serait d'élargir `src/proxy.ts` (aujourd'hui strictement limité à `/admin`) au site public pour y servir un document 404 — **toucher un fichier critique pour l'authentification pour un gain cosmétique sans JS**. Écarté. ⚠️ À rouvrir si Next corrige le comportement, ou si le rendu sans JS devient une exigence. Les fiches projets **valides**, elles, sont bien rendues côté serveur (`<h1>` présent dans le HTML de `/projects/quantum` — vérifié).
+
+**Sondes automatisées (serveur de production local).** `/` 200 · `/projects/quantum` 200 avec `<h1>` dans le HTML · `/projects/gallerie` 200 · `/projects/nimportequoi` **404** · `/sitemap.xml` 200, entrée racine + **exactement les 6 projets publiés** · `/admin` **307** (le `not-found.tsx` racine ne perturbe pas le garde d'authentification). Build : **`/` `○ (Static)` `1h`** (garde-fou tenu), **`/projects/[slug]` `●` (SSG)**, 6 slugs pré-rendus.
+
+**⚠️ Vérifications manuelles restant à la charge de Jeevons.**
+- **AC3 — le test décisif, aujourd'hui impossible** : aucun brouillon n'existe en base. Dépublier un projet en administration, puis ouvrir son adresse en navigation privée → **404 réel** (onglet Réseau), pas une page vide en 200.
+- **AC6** : transition à l'œil depuis une carte, puis **reduced-motion activé** → navigation immédiate, sans aucune transition.
+- **AC4** : lien de retour de la page 404 atteignable et visible **au clavier**.
+- **Non-régression** : aperçu `/admin/projects/[id]` intact — la carte n'y porte **pas** le lien « Voir le projet ».
 
 ### File List
 
+**Créés**
+- `apps/web/src/app/projects/[slug]/page.tsx` — la fiche (AC1, AC2, AC3, AC5, AC6)
+- `apps/web/src/app/projects/[slug]/not-found.tsx` — frontière dédiée au segment projet (AC4)
+- `apps/web/src/app/not-found.tsx` — page « non trouvée » racine (AC4)
+- `apps/web/src/components/ProjectDetailReveal.tsx` — transition d'entrée (AC6)
+
+**Modifiés**
+- `apps/web/src/lib/projects.ts` — `getPublishedProjectBySlug`, `getPublishedProjectSlugs`, type `PublishedProjectDetail` (contrat 4.4/4.5)
+- `apps/web/src/app/sitemap.ts` — `async`, une entrée par projet publié, dégradation propre (AC5)
+- `apps/web/src/components/ProjectCard.tsx` — `slug` dans la donnée + prop `detailLink` (lien distinct)
+- `apps/web/src/components/ProjectCardInteractive.tsx` — `detailLink` transmis dans **les deux** chemins de rendu
+- `apps/web/src/components/ProjectList.tsx` — active `detailLink` (jamais l'aperçu admin)
+- `apps/web/src/sections/Projects.tsx` — projette `slug`
+- `apps/web/src/sections/SelfProject.tsx` — projette `slug`
+
 ### Change Log
+
+| Date | Version | Description |
+|---|---|---|
+| 2026-07-26 | 1.0 | Story 6.10 implémentée : route `/projects/[slug]` (SSG + ISR 1 h), lecture par slug au contrat 4.4/4.5, métadonnées par projet, sitemap étendu, pages « non trouvée » racine et de segment, lien opt-in depuis la carte, transition d'entrée neutralisée sous mouvement réduit. Aucune migration, aucune dépendance. ⚠️ AC4 partiel : corps 404 vide sans JavaScript (limite Next 16 documentée). |

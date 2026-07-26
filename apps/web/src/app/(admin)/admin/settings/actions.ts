@@ -96,8 +96,9 @@ export async function saveSettingsAction(
   const values = parsed.data;
 
   // ⚠️ PIÈGE n°1 — FORME JSON. Chaque entrée réécrit EXACTEMENT la forme que le
-  // public lit (`lib/settings.ts`, story 4.3) : huit chaînes nues, et l'e-mail
-  // seul sous forme fragmentée `{ user, host }`. Écrire un objet là où le public
+  // public lit (`lib/settings.ts`, story 4.3) : huit chaînes nues, le TABLEAU de
+  // rôles de la story 6.7, et l'e-mail seul sous forme fragmentée
+  // `{ user, host }`. Écrire un objet là où le public
   // attend une chaîne ne lèverait AUCUNE erreur — `readString` retomberait
   // simplement sur le défaut, et le texte saisi disparaîtrait sans un mot.
   // `InputJsonValue` est le type que Prisma attend pour une colonne `Json` :
@@ -107,6 +108,11 @@ export async function saveSettingsAction(
     { key: SETTING_KEYS.heroTitle, value: values.heroTitle },
     { key: SETTING_KEYS.heroSubtitle, value: values.heroSubtitle },
     { key: SETTING_KEYS.heroStatusBadge, value: values.heroStatusBadge },
+    // Story 6.7 — SEULE valeur non scalaire hors e-mail : un TABLEAU de chaînes,
+    // exactement ce que `readStringArray` attend côté public. Le découpage
+    // « une ligne = un rôle » a déjà eu lieu dans `rolesSchema` : `values` porte
+    // ici la forme stockée, pas la saisie.
+    { key: SETTING_KEYS.heroRoles, value: values.heroRoles },
     { key: SETTING_KEYS.socialTwitter, value: values.socialTwitter },
     { key: SETTING_KEYS.socialInstagram, value: values.socialInstagram },
     { key: SETTING_KEYS.socialLinkedin, value: values.socialLinkedin },
@@ -119,7 +125,7 @@ export async function saveSettingsAction(
   ];
 
   try {
-    // ⚠️ TRANSACTION, ici justifiée (contrairement à 5.15) : ce sont NEUF
+    // ⚠️ TRANSACTION, ici justifiée (contrairement à 5.15) : ce sont DIX
     // écritures distinctes. Sans elle, une panne au milieu laisserait le site
     // avec une accroche à jour et des liens périmés — un état incohérent que
     // Jeevons ne pourrait pas diagnostiquer depuis l'écran.

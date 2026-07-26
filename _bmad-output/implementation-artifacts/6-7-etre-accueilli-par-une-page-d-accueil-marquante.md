@@ -1,10 +1,10 @@
 ---
-baseline_commit: c408eae7818fb33ef915a70085775688fbf80640
+baseline_commit: 6e8666a
 ---
 
 # Story 6.7: Être accueilli par une page d'accueil marquante
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -112,24 +112,24 @@ AC4 s'appuie sur le **socle de neutralisation** de 6.2. Les couleurs d'accent (`
 
 ## Tasks / Subtasks
 
-- [ ] **Tâche 0 — Prérequis & décision sur la source des rôles** (AC: 2 ; pièges n°1, n°2)
-  - [ ] 6.1 et 6.2 `done`. 🛑 **Décider et documenter** : liste en dur (recommandé) vs clé de réglage. Vérifier ce que valent `title`/`subtitle` en base et **ne rien écraser** sans le dire.
-- [ ] **Tâche 1 — Extraction client sans casser le Server Component** (AC: 1, 2 ; piège n°1)
-  - [ ] `Hero.tsx` **reste serveur `async`** avec `getHeroSettings()`. Créer le(s) enfant(s) `"use client"` alimentés **en props**, sur le modèle `Testimonials`/`TestimonialsClient`.
-- [ ] **Tâche 2 — Parallaxe des orbites** (AC: 1, 4 ; pièges n°5, n°6)
-  - [ ] `useMotionValue`/`useSpring` de `motion` sur un **conteneur enveloppant** (jamais sur les `transform` de `HeroOrbit`). Amplitude subtile, différenciée. `pointer-events-none` conservé. Listener borné au hero et nettoyé.
-- [ ] **Tâche 3 — Rôle défilant + effet de frappe** (AC: 2, 3, 4 ; pièges n°2, n°3, n°4, n°6)
-  - [ ] Texte animé `aria-hidden="true"` + rôle lisible **une seule fois** en `sr-only`. `<h1>` jamais vide. **Place réservée** (largeur/hauteur stables, texte centré) contre le CLS. `if (shouldReduceMotion) return;` **avant** de démarrer le minuteur ; nettoyage au démontage.
-- [ ] **Tâche 4 — Performance** (AC: 3 ; piège n°4)
-  - [ ] Mesurer LCP/CLS. Identifier l'élément LCP réel ; `priority` sur l'avatar **si** c'est lui. Profiler avec CPU ralenti ; réduire la portée du parallaxe si le taux d'images chute.
-- [ ] **Tâche 5 — Mouvement réduit** (AC: 4 ; piège n°6)
-  - [ ] Vérifier **à l'œil** que les orbites `animate-spin` sont bien immobiles. Parallaxe et frappe coupés **en JavaScript**, pas seulement en CSS. Réactivité au changement de réglage.
-- [ ] **Tâche 6 — Vérification locale** (AC: 1-4 ; piège n°8)
-  - [ ] Les 4 AC un par un, inspection DOM de l'annonce a11y, Lighthouse (LCP/CLS), reduced-motion, clavier.
-- [ ] **Tâche 7 — Definition of Done** (AGENTS.md §8)
-  - [ ] `bun run lint` 0 / `bunx tsc --noEmit` 0 / `bun run build` OK (**marqueur `○ (Static)` de `/`**). Vérification visuelle **avec et sans** reduced-motion.
-  - [ ] `git diff DEV` : hero uniquement. ❌ Aucune migration Prisma, aucun écran admin, **aucune dépendance**.
-  - [ ] `File List` + `Completion Notes` + `Change Log` · `sprint-status.yaml`.
+- [x] **Tâche 0 — Prérequis & décision sur la source des rôles** (AC: 2 ; pièges n°1, n°2)
+  - [x] 6.1 et 6.2 `done`. 🛑 **Décidé par Jeevons : clé administrable en base** (`hero.roles`), contre la recommandation « liste en dur » — **écart au périmètre assumé et documenté** (voir Completion Notes). Vérifié : ni `title` ni `subtitle` n'est un intitulé de rôle, **rien de saisi n'est écrasé**.
+- [x] **Tâche 1 — Extraction client sans casser le Server Component** (AC: 1, 2 ; piège n°1)
+  - [x] `Hero.tsx` **reste serveur `async`** avec `getHeroSettings()`. Deux enfants `"use client"` (`HeroRoles`, `HeroParallax`) alimentés **en props**. `/` toujours `○ (Static)`, `revalidate 1h` — vérifié au build.
+- [x] **Tâche 2 — Parallaxe des orbites** (AC: 1, 4 ; pièges n°5, n°6)
+  - [x] `useMotionValue`/`useSpring` sur un **conteneur enveloppant**. `HeroOrbit` **non modifié**. Amplitude différenciée (anneaux `depth 0.4`, orbites `depth 1`). `pointer-events-none` conservé. Listener sur la `<section>` du hero, nettoyé au démontage.
+- [x] **Tâche 3 — Rôle défilant + effet de frappe** (AC: 2, 3, 4 ; pièges n°2, n°3, n°4, n°6)
+  - [x] Texte animé `aria-hidden="true"` + rôles en `sr-only` **statique** (aucun `aria-live`, donc aucune inondation). `<h1>` inchangé. **Cale `invisible`** au rôle le plus long contre le CLS. `if (shouldReduceMotion) return;` **avant** tout minuteur ; `clearTimeout` à chaque nettoyage.
+- [ ] **Tâche 4 — Performance** (AC: 3 ; piège n°4) — ⚠️ **NON EXÉCUTÉE**
+  - [ ] Mesure LCP/CLS **non faite** : aucun outil de mesure dans le dépôt (Lighthouse est manuel, Playwright arrive en Epic 7). `priority` **volontairement pas ajouté** sur l'avatar, faute d'avoir pu confirmer qu'il est bien l'élément LCP. À faire par Jeevons.
+- [ ] **Tâche 5 — Mouvement réduit** (AC: 4 ; piège n°6) — ⚠️ **contrôle visuel à faire**
+  - [x] Coupure **en JavaScript** vérifiée dans le code : `HeroRoles` sort avant de programmer un minuteur, `HeroParallax` ne pose aucun listener et ne rend aucun `transform`.
+  - [ ] Contrôle **à l'œil** de l'immobilité des orbites et bascule à chaud du réglage : à faire par Jeevons.
+- [ ] **Tâche 6 — Vérification locale** (AC: 1-4 ; piège n°8) — ⚠️ **NON EXÉCUTÉE** (manuelle)
+- [x] **Tâche 7 — Definition of Done** (AGENTS.md §8)
+  - [x] `bun run lint` **0 erreur** (1 warning **préexistant**, `TestimonialsClient.tsx:79`, hors périmètre → story 6.9) / `bunx tsc --noEmit` **0** / `bun run build` **OK**, `/` en **`○ (Static)`, Revalidate `1h`**.
+  - [x] ❌ Aucune migration Prisma (`SiteSetting` = `key`/`value Json`, clé libre). ❌ **Aucune dépendance**. ⚠️ **Un écran admin touché** — conséquence directe et assumée de la décision de la tâche 0.
+  - [x] `File List` + `Completion Notes` + `Change Log` · `sprint-status.yaml`.
 
 ## Dev Notes
 
@@ -170,8 +170,47 @@ Vérification **manuelle** des 4 AC : parallaxe à la souris (CTA toujours cliqu
 
 ### Agent Model Used
 
+claude-opus-5 (Claude Code)
+
 ### Completion Notes
+
+**🛑 Écart au périmètre, décidé par Jeevons et assumé.** La story classait explicitement « migration Prisma ou nouvelle clé de réglage » en **hors périmètre**, et recommandait une liste en dur. Interrogé, Jeevons a choisi la **clé administrable en base**. L'écart est donc volontaire, et son coût réel s'est révélé plus faible que ce que la story supposait : `SiteSetting` est un magasin `key String @id, value Json` à clé **libre**, donc **aucune migration Prisma n'a été nécessaire** — seul l'ajout d'une clé et de son champ d'administration. Le « hors périmètre » qui reste tenu : aucune migration, aucune dépendance.
+
+**Rien de ce que Jeevons a saisi n'a été écrasé.** Vérifié avant d'écrire : `hero.title` est une accroche longue et `hero.subtitle` un paragraphe de présentation — ni l'un ni l'autre n'est un intitulé de poste. Le bloc de rôles est donc **purement additif**, inséré entre le badge de statut et le `<h1>` (placement choisi par Jeevons).
+
+**Les deux échecs d'AC que le code évite explicitement.** (1) *Inondation des lecteurs d'écran (AC2)* : le texte animé est `aria-hidden`, et les rôles sont exposés **une seule fois** dans un nœud `sr-only` **statique** — pas d'`aria-live`, donc rien à inonder. (2) *Saut de mise en page (AC3)* : le rôle le plus long est rendu en `invisible` sous le texte animé, ce qui fige largeur et hauteur dès le premier rendu ; le texte animé est superposé en `absolute` et ne pousse donc jamais rien.
+
+**AC4 est coupé en JavaScript, pas en CSS.** La règle globale de la story 6.2 neutralise animations et transitions CSS, mais **n'atteint ni un `setTimeout` ni un listener** : sous mouvement réduit, `HeroRoles` sort **avant** de programmer le moindre minuteur (le premier rôle s'affiche entier et définitif) et `HeroParallax` ne pose aucun listener et ne rend aucun `transform`. `useReducedMotion` étant réactif, une bascule à chaud du réglage arrête bien l'effet.
+
+**Le parallaxe enveloppe, il ne modifie rien.** `HeroOrbit` compose déjà **trois `transform` imbriqués** ; y écrire un décalage écraserait ses rotations. Le décalage vit donc sur des conteneurs **parents**, et `HeroOrbit` est **inchangé**. Le `pointer-events-none` du conteneur d'orbites est **conservé** : les orbites couvrent les CTA, les laisser capter le pointeur les rendrait incliquables. Deux amplitudes (anneaux `0.4`, orbites `1`) — c'est l'écart entre les deux, et non le déplacement lui-même, qui se lit comme de la profondeur ; d'où une amplitude volontairement faible (AC1 : « sans donner le tournis »).
+
+**Divergence de types introduite, à connaître.** `settingsSchema` **transforme** désormais (les rôles se saisissent « une ligne = un rôle », se stockent en `string[]`) : `z.input` et `z.infer` ne coïncident plus. Conséquences traitées : `AdminSettings.values` passe à `SettingsFormValues`, et `useForm` prend son **troisième** paramètre de type. Le séparateur est le **retour à la ligne** et non la virgule, qu'un intitulé peut légitimement contenir.
+
+**⚠️ Vérifications manuelles NON exécutées, dues par Jeevons** (aucun outil de mesure ni navigateur sans interface dans le dépôt) :
+- **AC3 — LCP/CLS non mesurés.** `priority` n'a **délibérément pas** été ajouté à l'avatar : la story le conditionne à « **si** c'est lui l'élément LCP », ce que je n'ai pas pu confirmer. L'ajouter à l'aveugle sur un élément non-LCP dégraderait le chargement au lieu de l'améliorer.
+- **AC1 — CTA toujours cliquables** avec le parallaxe actif.
+- **AC4 — contrôle visuel** de l'immobilité des orbites sous mouvement réduit.
+- Le **champ « Rôles »** de `/admin/settings` : enregistrer, puis vérifier que l'accueil affiche bien les nouveaux intitulés.
 
 ### File List
 
+**Créés**
+- `apps/web/src/components/HeroRoles.tsx` — rôle défilant en effet de frappe (AC2, AC3, AC4)
+- `apps/web/src/components/HeroParallax.tsx` — conteneur de parallaxe au pointeur (AC1, AC4)
+
+**Modifiés**
+- `apps/web/src/sections/Hero.tsx` — reste Server Component `async` ; enveloppe les deux calques de décor, insère `HeroRoles` entre le badge et le `<h1>`
+- `apps/web/src/content/settings.ts` — clé de repli `hero.roles`
+- `apps/web/src/lib/settings.ts` — `SETTING_KEYS.heroRoles`, `readStringArray()`, défaut, garde de cohérence, `HeroSettings.roles`
+- `apps/web/src/lib/schemas/settings.ts` — `rolesSchema` (transformation texte → tableau), `rolesToText()`, champ `heroRoles`
+- `apps/web/src/lib/admin/settings.ts` — lecture admin des rôles, `values` typé `SettingsFormValues`
+- `apps/web/src/app/(admin)/admin/settings/settings-form.tsx` — champ « Rôles » (une ligne par rôle)
+- `apps/web/src/app/(admin)/admin/settings/actions.ts` — écriture de `hero.roles`
+
+**Non modifié, volontairement** : `apps/web/src/components/HeroOrbit.tsx` (voir Completion Notes).
+
 ### Change Log
+
+| Date | Version | Description |
+| --- | --- | --- |
+| 2026-07-26 | 0.1 | Parallaxe des orbites au pointeur, rôle défilant en effet de frappe, rôles rendus administrables (`hero.roles`). Status → `review`. Vérifications manuelles AC1/AC3/AC4 restant dues. |
