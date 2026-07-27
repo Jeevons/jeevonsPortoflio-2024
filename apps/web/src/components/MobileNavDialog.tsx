@@ -87,9 +87,17 @@ export const MobileNavDialog = ({
         "backdrop:bg-black/80 backdrop:backdrop-blur-sm",
       )}
     >
-      {/* Le panneau. `mt-3` l'aligne sur la position du header fermé, pour que
-          l'ouverture se lise comme un dépliage et non comme une apparition. */}
-      <div className="mx-3 mt-3 rounded-card border border-white/15 bg-surface-raised/95 p-2 shadow-2xl shadow-black/60 backdrop-blur-xl">
+      {/* Le panneau. `mt-3` l'aligne sur la position du header fermé et
+          `ml-auto` le CALE À DROITE, sous le bouton qui l'ouvre (aligné à droite
+          lui aussi, demande de Jeevons) : l'ouverture se lit comme un dépliage
+          depuis ce bouton, et non comme une apparition sans origine.
+          ⚠️ `w-[min(16rem,calc(100vw-1.5rem))]` et non `max-w-xs` : une largeur
+          MAXIMALE seule laisserait le panneau se rétracter à la longueur du plus
+          long libellé, donnant une carte étroite et irrégulière. On fixe donc
+          une largeur, bornée par la fenêtre — les `1.5rem` retranchés sont les
+          marges `mr-3` et son pendant à gauche, sans quoi le panneau déborderait
+          sur les écrans les plus étroits. */}
+      <div className="ml-auto mr-3 mt-3 w-[min(16rem,calc(100vw-1.5rem))] rounded-card border border-white/15 bg-surface-raised/95 p-2 shadow-2xl shadow-black/60 backdrop-blur-xl">
         <nav aria-label="Navigation principale">
           <ul className="flex flex-col gap-1">
             {items.map((item) => {

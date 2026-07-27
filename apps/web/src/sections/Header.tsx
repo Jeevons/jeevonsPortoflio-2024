@@ -155,10 +155,19 @@ export const Header = () => {
 
             ⚠️ `aria-expanded` est ce qui rend l'état AUDIBLE : sans lui, un
             lecteur d'écran annonce « Menu, bouton » sans jamais dire si le
-            panneau est ouvert ou fermé. `aria-controls` le relie au panneau. */}
+            panneau est ouvert ou fermé. `aria-controls` le relie au panneau.
+
+            ⚠️ `ml-auto mr-4` — ALIGNÉ À DROITE (demande de Jeevons), là où le
+            pouce l'atteint sans traverser l'écran. Le `<header>` reste
+            `justify-center` pour la pilule : la marge automatique ne joue que
+            lorsque le bouton est le SEUL enfant présent dans le flex, ce qui est
+            exactement le cas sous 500 px puisque la pilule y est en
+            `display:none` et sort donc du flux. ❌ Ne pas passer le `<header>`
+            en `justify-between` pour obtenir le même effet : au-delà de 500 px
+            la pilule cesserait d'être centrée. */}
         <button
           type="button"
-          className="nav:hidden inline-flex size-11 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white backdrop-blur transition-colors duration-200 hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+          className="nav:hidden ml-auto mr-4 inline-flex size-11 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white backdrop-blur transition-colors duration-200 hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
           aria-expanded={isMobileNavOpen}
           aria-controls={mobileNavId}
           aria-label="Ouvrir le menu de navigation"
