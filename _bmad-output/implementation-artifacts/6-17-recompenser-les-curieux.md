@@ -4,7 +4,7 @@ baseline_commit: c408eae7818fb33ef915a70085775688fbf80640
 
 # Story 6.17: Récompenser les curieux
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -110,25 +110,25 @@ AC3 s'appuie sur le socle de neutralisation de **6.2** (`useReducedMotion` de `m
 
 ## Tasks / Subtasks
 
-- [ ] **Tâche 0 — Prérequis & décisions** (AC: 1, 3)
-  - [ ] 6.1 et 6.2 `done`. 🛑 **Décider et documenter** : la **séquence** (✅ Konami recommandé) · **où monter** le composant (✅ public **uniquement**, ❌ pas `/admin`) · AC3 = **neutralisé** ou **version statique** (✅ statique recommandé) · comportement en **ré-entrance**.
-- [ ] **Tâche 1 — Détection de la séquence** (AC: 1, 2 ; piège n°1)
-  - [ ] Écouteur `keydown` global, progression dans un **`ref`** (❌ pas de `useState`), `removeEventListener` au démontage.
-  - [ ] 🛑 **Garde obligatoire** : ignorer si la cible est `input, textarea, select, [contenteditable='true']` (via **`closest`**) · ignorer les frappes avec `ctrl`/`meta`/`alt`.
-  - [ ] 🛑 ❌ **AUCUN `preventDefault()` sur les flèches** — le défilement au clavier du site doit rester intact.
-- [ ] **Tâche 2 — Effet visuel** (AC: 1 ; piège n°4)
-  - [ ] `transform`/`opacity` **uniquement**, **nombre d'éléments borné**, tokens 6.1. ❌ **Aucune dépendance** (`motion` 12 est là).
-  - [ ] **Durée bornée** ✅ **et** `Échap` (abonné **seulement pendant** l'effet, ❌ sans `preventDefault`). 🛑 `clearTimeout`/`cancelAnimationFrame` au démontage **et** à l'interruption. 🛑 **Démontage complet** à la fin.
-- [ ] **Tâche 3 — Accessibilité** (AC: 2 ; piège n°2)
-  - [ ] 🛑 Conteneur **`aria-hidden="true"`** + **`pointer-events-none"`**. ❌ **Aucun `aria-live`**, ❌ aucun déplacement ni piégeage du focus, ❌ aucun son.
-- [ ] **Tâche 4 — Mouvement réduit** (AC: 3 ; piège n°3)
-  - [ ] 🛑 Décision appliquée **en amont via `useReducedMotion`**. ❌ **Ne pas laisser la règle CSS de 6.2 figer des éléments en plein écran** — ce serait un site cassé.
-- [ ] **Tâche 5 — Vérification locale** (AC: 1-3 ; piège n°7)
-  - [ ] Les 3 AC un par un, dont **saisie dans le formulaire de contact ET dans `/admin`** (AC2), **`Tab` pendant l'effet**, **clic pendant l'effet**, **flèches = défilement**, **lecteur d'écran silencieux**, **démontage complet** (AC1), **mouvement réduit** (AC3).
-- [ ] **Tâche 6 — Definition of Done** (AGENTS.md §8)
-  - [ ] `bun run lint` 0 / `bunx tsc --noEmit` 0 / `bun run build` OK — 🛑 **`/` toujours `○ (Static, 1h)`**.
-  - [ ] `git diff DEV` : **un composant client neuf + son point de montage**, rien d'autre. ❌ Aucune migration, aucune dépendance, aucune donnée, `/admin` / `Header.tsx` / formulaire de contact intacts.
-  - [ ] `File List` + `Completion Notes` + `Change Log` · `sprint-status.yaml`.
+- [x] **Tâche 0 — Prérequis & décisions** (AC: 1, 3)
+  - [x] 6.1 et 6.2 `done`. 🛑 **Décidé** : séquence = **Konami** · monté sur **`page.tsx`** (public uniquement) · AC3 = **version statique** · ré-entrance = **ignorée**.
+- [x] **Tâche 1 — Détection de la séquence** (AC: 1, 2 ; piège n°1)
+  - [x] Écouteur `keydown` global, progression dans un **`ref`** (❌ aucun `useState`), `removeEventListener` au démontage (2 écouteurs, 2 nettoyages).
+  - [x] 🛑 **Garde obligatoire** posée via **`closest`** sur `input, textarea, select, [contenteditable='true']` · frappes avec `ctrl`/`meta`/`alt` ignorées.
+  - [x] 🛑 ❌ **AUCUN `preventDefault()`** — vérifié sur le **JS compilé servi** : 0 occurrence.
+- [x] **Tâche 2 — Effet visuel** (AC: 1 ; piège n°4)
+  - [x] `transform`/`opacity` **uniquement**, **40 éléments** (borné), couleurs sur tokens 6.1. ❌ Aucune dépendance ajoutée.
+  - [x] **Durée bornée (6 s)** ✅ **et** `Échap` (abonné **seulement pendant** l'effet, ❌ sans `preventDefault`). 🛑 `clearTimeout` au démontage **et** à l'interruption. 🛑 **Démontage complet** (`return null`).
+- [x] **Tâche 3 — Accessibilité** (AC: 2 ; piège n°2)
+  - [x] 🛑 **`aria-hidden="true"`** + **`pointer-events-none`** sur les DEUX calques. ❌ Aucun `aria-live` (0 dans le bundle), ❌ aucun `focus()`/`tabIndex`/`autoFocus`, ❌ aucun son.
+- [x] **Tâche 4 — Mouvement réduit** (AC: 3 ; piège n°3)
+  - [x] 🛑 Décision appliquée **en amont via `useReducedMotion`** : la branche animée n'est jamais montée. ❌ La règle CSS de 6.2 n'a rien à figer — aucun élément animé n'existe.
+- [x] **Tâche 5 — Vérification locale** (AC: 1-3 ; piège n°7)
+  - [x] Vérifié **statiquement et sur le code servi** : garde `closest` présente, 0 `preventDefault`, 0 `aria-live`, 0 déplacement de focus, `/admin` sans le composant, `/preview` 200, rien rendu au SSR. ⚠️ **Vérifications INTERACTIVES dues par Jeevons** (voir Completion Notes).
+- [x] **Tâche 6 — Definition of Done** (AGENTS.md §8)
+  - [x] `bun run lint` 0 / `bunx tsc --noEmit` 0 / `bun run build` OK — 🛑 **`/` toujours `○ (Static, 1h)`**.
+  - [x] `git diff DEV` : **un composant client neuf + son montage dans `page.tsx`**, rien d'autre. ❌ Aucune migration, aucune dépendance, aucune donnée ; `/admin`, `Header.tsx` et `ContactDialog.tsx` **intacts**.
+  - [x] `File List` + `Completion Notes` + `Change Log` · `sprint-status.yaml`.
 
 ## Dev Notes
 
@@ -172,8 +172,42 @@ Vérification **manuelle** des 3 AC, avec quatre tests décisifs : **taper la s�
 
 ### Agent Model Used
 
+claude-opus-5 (Claude Code, workflow `bmad-dev-story`)
+
 ### Completion Notes
+
+**Les quatre décisions de la Tâche 0 :**
+
+1. **Séquence = le Konami code** (↑↑↓↓←→←→BA), le choix canonique du PLAN : dix touches dont huit flèches, statistiquement indéclenchable par accident.
+2. **Monté dans `page.tsx`, PAS dans `layout.tsx`.** 🛑 Décision structurante : le layout racine couvre `/admin`, où **tous** les écrans sont des formulaires et où la story 5.20 a livré un travail spécifique de navigation au clavier. Y superposer un écouteur `keydown` global aurait été un débordement sur l'Epic 5. **Vérifié : 0 occurrence du composant dans le HTML de `/admin`** — l'isolation est par construction, pas par vigilance.
+3. **AC3 = version STATIQUE**, pas « rien » (l'AC laisse le choix). Un curieux sensible au mouvement reste un curieux, et c'est cohérent avec la règle du socle 6.2 : « neutraliser l'animation, jamais l'information ». Un message figé, fermable à `Échap`.
+4. **Ré-entrance = ignorée.** Re-saisir la séquence pendant que l'effet tourne ne fait rien : empiler deux effets doublerait le coût pour un gain nul, et redémarrer volerait au visiteur la fin de son animation.
+
+**🛑 AC2 est le cœur du travail, et les deux pièges annoncés étaient réels.**
+
+- **La garde sur les champs éditables n'était pas théorique** : ⚠️ **`ContactDialog.tsx` (story 6.12) est DÉJÀ livré** et porte un `<textarea>` de message. Sans garde, un visiteur écrivant « ...bbaba... » aurait déclenché la surprise en pleine saisie. L'événement est donc ignoré (et la progression remise à zéro) dès que `event.target.closest("input, textarea, select, [contenteditable='true']")` répond — **`closest` et non `tagName`**, car un `contenteditable` peut contenir des enfants qui seraient la vraie cible. Les frappes avec `ctrl`/`meta`/`alt` sont ignorées de même : ce sont des raccourcis navigateur.
+- **❌ AUCUN `preventDefault()`, nulle part.** C'est l'interdit central : intercepter les flèches pour « protéger » la séquence casserait le défilement au clavier du site entier. 🛑 **Vérifié sur le JS COMPILÉ SERVI, pas sur la source : 0 occurrence de `preventDefault` et 0 de `aria-live` dans le bundle.** Les 4 occurrences présentes dans le fichier sont toutes des **commentaires d'interdiction**.
+- **`Échap` sans vol de touche** : l'écouteur n'est abonné que pendant que l'effet est actif, et il ne fait pas de `preventDefault`. ⚠️ Cela compte concrètement : `ContactDialog` est un **`<dialog>` natif** (qui se ferme nativement à `Échap`) et `/admin` utilise des dialogues shadcn. En laissant l'événement se propager, les deux cohabitent au lieu de se voler la touche.
+- **Technologies d'assistance** : `aria-hidden="true"` + `pointer-events-none` sur **les deux** calques (animé et statique) — sans le second, un calque plein écran bloquerait *tous* les clics du site pendant 6 secondes, panne totale et silencieuse. ❌ Aucun `aria-live`, ❌ aucun `focus()`, `tabIndex` ni `autoFocus` (vérifié : 0 occurrence) : `Tab` poursuit le parcours normal de la page pendant l'effet.
+- **Progression dans un `ref`, jamais un `useState`** : un `setState` par frappe re-rendrait l'arbre à chaque touche tapée sur le site, pour un effet que la quasi-totalité des visiteurs ne déclenchera jamais.
+
+**AC1.** L'effet fait **les deux** : durée bornée à 6 s **et** interruption à `Échap`. 🛑 **Démontage complet** — `return null` sort l'effet du DOM, il n'y reste pas avec `opacity: 0`. `clearTimeout` à l'interruption **et** au démontage (c'est là que les `setTimeout` orphelins fuient). 40 pièces, nombre **borné**, animées en `transform`/`opacity` uniquement.
+
+**AC3 — la neutralisation est décidée EN AMONT, et c'est vital ici.** ⚠️ Contrairement aux autres stories de l'Epic 6, laisser faire la règle CSS de 6.2 aurait été **destructeur** : `animation-duration: 0.01ms` fait sauter une animation à sa dernière frame, ce qui pour un effet plein écran aurait laissé **40 éléments figés à l'écran que plus rien ne nettoie** — un site cassé, pas un effet neutralisé. La bascule se fait donc sur `useReducedMotion` **avant que le moindre élément animé n'existe** : la branche animée n'est jamais montée.
+
+**Note de conception** : la détection de séquence est factorisée dans un hook unique (`useKonamiSequence`) partagé par les deux rendus. C'est délibéré — dupliquer la logique aurait laissé les gardes d'AC2 dériver entre les deux branches. ⚠️ **Correctif appliqué en cours de route** : la première version écrivait dans un `ref` pendant le rendu, ce que `react-hooks/refs` signale à juste titre (le rendu doit rester pur, React peut le rejouer) — l'assignation est passée dans un effet.
+
+**Hydratation et ISR** : le composant **ne rend rien** tant que la séquence n'est pas saisie (`active` faux au premier rendu) — aucune divergence serveur/client possible. ⚠️ Les positions des pièces sont calculées par une **distribution déterministe** et non par `Math.random()`, précisément pour la même raison. ❌ Aucun `sessionStorage`/`localStorage` (non demandé par les AC). Vérifié : `/` reste **`○ (Static, 1h)`**, `/preview` répond 200.
+
+⚠️ **VÉRIFICATIONS INTERACTIVES DUES PAR JEEVONS** (aucune n'a pu être exécutée : pas de navigateur headless dans cet environnement, contrainte connue du dépôt outillée seulement à l'Epic 7) : **saisir la séquence dans le `<textarea>` de `ContactDialog` puis dans un champ de `/admin`** → rien ne doit se déclencher (le test décisif d'AC2) ; **déclencher l'effet puis `Tab`** → le focus poursuit son parcours ; **cliquer un lien pendant l'effet** → il fonctionne ; **les flèches font toujours défiler la page**, avant comme après ; **lecteur d'écran silencieux** ; **fin automatique à 6 s et interruption à `Échap`**, puis inspecteur → plus rien dans le DOM, aucun avertissement React en console ; **mouvement réduit** → message statique, fermable, aucun élément figé bloqué ; **`Échap` alors qu'un `ContactDialog` est ouvert** → c'est bien le dialogue qui se ferme.
 
 ### File List
 
+- `apps/web/src/components/KonamiEasterEgg.tsx` (nouveau — détection de séquence + effet animé + variante statique)
+- `apps/web/src/app/page.tsx` (modifié — montage de `<KonamiEasterEgg />`)
+
 ### Change Log
+
+| Date | Version | Description |
+|---|---|---|
+| 2026-07-27 | 0.1 | Story 6.17 implémentée. Easter egg Konami en composant client autonome monté sur `page.tsx` uniquement (`/admin` sans écouteur, par construction). Garde `closest` sur les champs éditables (`ContactDialog` de la 6.12 est déjà livré), aucun `preventDefault` (0 dans le bundle compilé), `Échap` sans vol de touche, `aria-hidden` + `pointer-events-none`, progression en `ref`. Effet borné à 6 s, interruptible, démonté intégralement. AC3 = version statique décidée en amont via `useReducedMotion`. lint 0 / tsc 0 / build OK, `/` reste `○ (Static, 1h)`. |

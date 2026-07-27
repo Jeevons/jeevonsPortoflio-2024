@@ -1,5 +1,6 @@
 import { AuroraBackground } from "@/components/AuroraBackground";
 import { CustomCursor } from "@/components/CustomCursor";
+import { KonamiEasterEgg } from "@/components/KonamiEasterEgg";
 import { AboutSection } from "@/sections/About";
 import { ContactSection } from "@/sections/Contact";
 import { Footer } from "@/sections/Footer";
@@ -51,6 +52,16 @@ export default function Home() {
           ⚠️ Composant SERVEUR, 100 % CSS : aucun JavaScript ajouté au bundle,
           et `/` reste `○ (Static, 1h)`. */}
       <AuroraBackground />
+      {/* Story 6.17 (AC2) — Easter egg (Konami), monté ICI et NON dans
+          `layout.tsx`. 🛑 Décision structurante : le layout racine couvre
+          `/admin`, où TOUS les écrans sont des formulaires et où la story 5.20 a
+          livré un travail spécifique de navigation au clavier. Y superposer un
+          écouteur `keydown` global serait un débordement sur l'Epic 5. Monté à
+          la page, `/admin` n'a AUCUN écouteur ajouté — par construction, sans
+          vérification à faire.
+          ⚠️ Le composant ne rend RIEN tant que la séquence n'est pas saisie :
+          aucune divergence d'hydratation, et `/` reste `○ (Static, 1h)`. */}
+      <KonamiEasterEgg />
       <Header />
       <HeroSection />
       <ProjectsSection />
