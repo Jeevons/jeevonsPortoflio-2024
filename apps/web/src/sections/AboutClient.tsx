@@ -81,19 +81,47 @@ export const AboutClient = ({
             description="Ce que j'aime faire, et ce qui me motive."
           />
         </Reveal>
-        <div className="mt-20 flex flex-col gap-8">
-          {/* Story 6.4 (AC1, piège n°5) — CASCADE SUR LES DEUX RANGÉES, pas sur
-              chaque carte.
+        {/* Story 6.15 (AC1) — UNE SEULE GRILLE MODULAIRE.
 
-              ⚠️ Les `Card` portent des `md:col-span-*` : les envelopper
-              individuellement appliquerait le span au wrapper et non à la
-              carte, ce qui casserait la grille. On révèle donc les rangées,
-              décalées l'une par rapport à l'autre (`index`). */}
-          <Reveal
-            index={0}
-            className="grid grid-cols-1 gap-8 md:grid-cols-5 lg:grid-cols-3"
-          >
-            <Card className="h-[380px] md:col-span-2 lg:col-span-1">
+            🛑 Auparavant : DEUX `div` de grille indépendants, et quatre cartes
+            TOUTES figées à `h-[380px]`. Deux rangées séparées ne sont pas une
+            grille — les blocs ne peuvent pas se répartir librement — et une
+            hauteur uniforme est l'inverse d'« une taille adaptée au contenu ».
+
+            🛑 LA TENSION AC1 / AC2, ET SA RÉSOLUTION. « Taille adaptée au
+            contenu » pousse à retirer les hauteurs fixes ; or l'aire de jeu des
+            centres d'intérêt a BESOIN d'une hauteur, sans quoi `dragConstraints`
+            s'effondre à 0 pixel et les vignettes deviennent indéplaçables — en
+            silence, sans la moindre erreur. La résolution retenue :
+
+              • hobbies  → hauteur EXPLICITE conservée. Sa taille adaptée EST une
+                           hauteur : c'est une aire de jeu, pas du texte.
+              • memoji   → hauteur explicite aussi : son contenu est une image de
+                           fond, qui n'a pas de hauteur intrinsèque à suivre.
+              • CV       → hauteur LIBRE, dictée par la vignette (ou par l'état
+                           neutre « CV bientôt disponible. », bien plus court).
+              • toolbox  → hauteur LIBRE, dictée par ses deux bandes.
+
+            `items-start` est indispensable : sans lui, `align-items: stretch`
+            réétirerait les cartes libres à la hauteur de leur rangée, ce qui
+            rétablirait exactement l'uniformité qu'AC1 corrige.
+
+            ⚠️ AC3 — la grille s'effondre en `grid-cols-1` sur petit écran, et
+            l'ordre du DOM est l'ordre de lecture : ❌ aucun `order`, ❌ aucun
+            `hidden`, ❌ aucune troncature. */}
+        <div className="mt-20 grid grid-cols-1 items-start gap-8 md:grid-cols-5 lg:grid-cols-3">
+          {/* Story 6.4 (AC1) — CASCADE PAR CARTE, désormais possible.
+
+              ⚠️ Le commentaire précédent notait, à raison, qu'envelopper une
+              carte appliquerait le `col-span` au wrapper et non à la carte. La
+              grille étant maintenant unique, la correction est de déplacer les
+              spans SUR les `Reveal` : le wrapper EST l'élément de grille, et la
+              carte porte sa propre hauteur (explicite ou libre). On gagne une
+              cascade carte par carte au lieu de deux rangées en bloc. */}
+          {/* CARTE CV — hauteur LIBRE. ❌ Pas de `h-*` : elle se règle sur la
+              vignette, et se réduit franchement dans l'état neutre. */}
+          <Reveal index={0} className="md:col-span-2 lg:col-span-1">
+            <Card className="pb-6">
               <CardHeader
                 title="CV"
                 description="Découvrez mon parcours, mes compétences et mes expériences."
@@ -133,7 +161,17 @@ export const AboutClient = ({
                 </p>
               )}
             </Card>
-            <Card className="h-[380px] md:col-span-3 lg:col-span-2">
+          </Reveal>
+
+          {/* CARTE TOOLBOX — hauteur LIBRE, réglée par ses deux bandes.
+
+              ⚠️ La toolbox est CONSERVÉE : décision Jeevons prise en 6.13, où la
+              nouvelle section « Stack & outils » a été ajoutée SANS la
+              remplacer. Elle est décorative (deux bandes défilantes de logos) là
+              où l'autre est informative (domaine + niveau) — pas de doublon.
+              ❌ Hors périmètre de cette story de toute façon. */}
+          <Reveal index={1} className="md:col-span-3 lg:col-span-2">
+            <Card className="pb-6">
               <CardHeader
                 title="Mon pack d'explorateur"
                 description="Découvrez les technologies et outils qui m'accompagnent dans mes aventures, pour créer et innover dans cet univers digital."
@@ -151,11 +189,24 @@ export const AboutClient = ({
               />
             </Card>
           </Reveal>
-          <Reveal
-            index={1}
-            className="grid grid-cols-1 md:grid-cols-5 gap-8 lg:grid-cols-3"
-          >
-            <Card className="h-[380px] p-0 flex flex-col md:col-span-3 lg:col-span-2">
+          {/* CARTE CENTRES D'INTÉRÊT — 🛑 HAUTEUR EXPLICITE, DÉLIBÉRÉMENT.
+
+              🛑 NE PAS RETIRER `h-[380px]` AU NOM D'AC1. C'est le piège central
+              de la story, et son échec est SILENCIEUX. Sans hauteur sur la
+              carte, `flex-1` n'a plus rien à remplir : le conteneur de
+              contrainte s'effondre à 0 pixel, `dragConstraints` référence une
+              aire vide, et les vignettes — positionnées en `absolute` à des
+              pourcentages — deviennent indéplaçables ou invisibles. Aucune
+              erreur, aucun avertissement.
+
+              ✅ C'est cohérent avec AC1, pas une exception : la « taille adaptée
+              au contenu » d'une AIRE DE JEU est précisément une hauteur. Elle
+              n'a pas de contenu qui coule.
+
+              🛑 `relative`, `flex-1` et le `ref` restent EXACTEMENT où ils sont
+              (piège n°1 : les déplacer fausse les contraintes). */}
+          <Reveal index={2} className="md:col-span-3 lg:col-span-2">
+            <Card className="flex h-[380px] flex-col p-0">
               <CardHeader
                 title="Quand je ne code pas"
                 description="Toujours entrain d'explorer ! Que ce soit à travers le design,
@@ -183,7 +234,17 @@ export const AboutClient = ({
                 ))}
               </div>
             </Card>
-            <Card className="h-[380px] p-0 relative md:col-span-2 lg:col-span-1">
+          </Reveal>
+
+          {/* CARTE / MEMOJI — hauteur explicite elle aussi.
+
+              ⚠️ Son contenu est une IMAGE DE FOND en `object-cover` : elle n'a
+              pas de hauteur intrinsèque à suivre, c'est le cadre qui la
+              découpe. Sans hauteur, la carte se réduirait à la hauteur du
+              memoji. Une valeur plus basse que les hobbies : rien n'oblige les
+              deux blocs à s'aligner, c'est précisément ce qu'AC1 demande. */}
+          <Reveal index={3} className="md:col-span-2 lg:col-span-1">
+            <Card className="relative h-[320px] p-0">
               <Image
                 src={mapImage}
                 alt="Map"
