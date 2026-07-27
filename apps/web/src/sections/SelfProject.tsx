@@ -3,74 +3,56 @@ import insureLandingPage from "@/assets/images/insureLanding-page.webp";
 import sleepingAppMockup from "@/assets/images/sleepingApp-mockup.webp";
 import sunnysideAgency from "@/assets/images/sunnyside-landingPage.webp";
 import { ProjectList, type Project } from "@/components/ProjectList";
+import { toCardCover } from "@/lib/media";
+import { getProjectsForPreview, getPublishedProjects } from "@/lib/projects";
+import type { StaticImageData } from "next/image";
 
-const portfolioProjects: Project[] = [
-  {
-    company: "Insure",
-    year: "Octobre - 2024",
-    title: "Landing page.",
-    results: [
-      { title: "Html, CSs et Javascript" },
-      {
-        title: "Masterisé le responsive",
-      },
-      { title: "Notions d'ergonomie & d'accessibilité" },
-    ],
-    link: "https://insure-landing-page-jeevons.vercel.app/",
-    image: insureLandingPage,
-  },
-  {
-    company: "Sunnyside",
-    year: "Août - 2024",
-    title: "Landing Page.",
-    results: [
-      { title: "Html, Css, Javascript" },
-      {
-        title: "Masterisé le responsive",
-      },
-      { title: "Entraînement sur des dispositions d'interface plus complexes" },
-    ],
-    link: "https://jeevons-sunnyside.vercel.app/index.html",
-    image: sunnysideAgency,
-  },
-  {
-    company: "SleepingTime",
-    year: "Janvier - 2024",
-    title: "Calculateur de temps de sommeil",
-    results: [
-      { title: "Html, Css, Javascript" },
-      {
-        title: "Mes débuts avec javascript",
-      },
-      { title: "Script basique, responsive, manipulation du DOM" },
-    ],
-    link: "https://sleeping-calculator.vercel.app/",
-    image: sleepingAppMockup,
-  },
-  {
-    company: "Gallerie",
-    year: "Novembre - 2023",
-    title: "Une simple gallerie d'images pour m'entrainer avec Grid.",
-    results: [
-      { title: "Html, Css, Javascript" },
-      {
-        title: "Display grid, flexbox, responsive design",
-      },
-      { title: "Composants réutilisable" },
-    ],
-    link: "https://img-galery-psi.vercel.app/",
-    image: gallery,
-  },
-];
+// Jointure locale slug → image, repli hérité de 4.1 : cf. Projects.tsx.
+const projectImagesBySlug: Record<string, StaticImageData> = {
+  insure: insureLandingPage,
+  sunnyside: sunnysideAgency,
+  "sleeping-time": sleepingAppMockup,
+  gallerie: gallery,
+};
 
-export const SelfProjectsSection = () => {
+// Story 5.11 — cf. `Projects.tsx` : `preview` est décidé par la page, jamais
+// par la section elle-même.
+type SelfProjectsSectionProps = { preview?: boolean };
+
+// Server Component async : lit la base (AC3).
+export const SelfProjectsSection = async ({
+  preview = false,
+}: SelfProjectsSectionProps) => {
+  const dbProjects = preview
+    ? await getProjectsForPreview("PERSONAL")
+    : await getPublishedProjects("PERSONAL");
+
+  const projects: Project[] = dbProjects.map((project) => ({
+    // Story 6.10 — slug transmis pour le lien vers la fiche (cf. Projects.tsx).
+    slug: project.slug,
+    company: project.company,
+    year: project.period,
+    title: project.title,
+    results: project.highlights.map((highlight) => ({
+      title: highlight.label,
+    })),
+    link: project.link ?? "",
+    image: projectImagesBySlug[project.slug],
+    // Story 5.12 (AC5) — couverture téléversée, prioritaire (cf. Projects.tsx).
+    cover: toCardCover(project.cover),
+    // Story 5.9 (AC4) : vide → la carte masque la section correspondante.
+    outcome: project.outcome,
+    // Story 5.11 (AC2) — repère « brouillon » en aperçu (cf. Projects.tsx).
+    draft: preview && !project.published,
+  }));
+
   return (
     <ProjectList
       id="side-projects"
       eyebrow="eat() explore() sleep() repeat()"
       title="Mes petites réalisations personnelles"
       description="Quoi de mieux pour apprendre que d'expérimenter soi-même ?"
-      projects={portfolioProjects}
+      projects={projects}
     />
   );
 };

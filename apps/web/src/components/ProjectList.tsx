@@ -1,20 +1,16 @@
-import ArrowUpRightIcon from "@/assets/icons/arrow-up-right.svg";
-import CheckCircleIcon from "@/assets/icons/check-circle.svg";
-import { Card } from "@/components/Card";
+import { type ProjectCardData } from "@/components/ProjectCard";
+import { ProjectCardInteractive } from "@/components/ProjectCardInteractive";
+import { Reveal } from "@/components/Reveal";
 import { SectionHeader } from "@/components/SectionHeader";
-import Image, { type StaticImageData } from "next/image";
 
 // Contrat de donnée d'un projet, partagé par les deux sections.
 // Sert de contrat stable pour l'Epic 4 (branchement DB) : le composant ne
 // connaît que cette forme, pas la façon dont les projets ont été obtenus (AC3).
-export type Project = {
-  company: string;
-  year: string;
-  title: string;
-  results: { title: string }[];
-  link: string;
-  image: StaticImageData;
-};
+//
+// Story 5.9 : la forme est désormais définie par `ProjectCard`, seul rendu de la
+// carte. Le ré-export préserve les imports existants (`Projects.tsx`,
+// `SelfProject.tsx`) — aucun appelant n'a eu à changer.
+export type Project = ProjectCardData;
 
 type ProjectListProps = {
   id: string; // "projects" | "side-projects" — ancres posées en Epic 1 (AC2)
@@ -26,7 +22,12 @@ type ProjectListProps = {
 
 // Composant de présentation unique consommé par ProjectsSection et
 // SelfProjectsSection. Aucune donnée ni image importée ici : tout arrive en
-// props (AC3). Rendu strictement identique à l'existant (AC2).
+// props (AC3).
+//
+// Story 5.9 : le rendu d'UNE carte a migré dans `ProjectCard`, pour que
+// l'aperçu de l'éditeur admin affiche exactement la même carte que le visiteur
+// (AC3 de 5.9). Cette liste ne garde que ce qui lui est propre : l'entête de
+// section et l'empilement `sticky`.
 export const ProjectList = ({
   id,
   eyebrow,
@@ -37,69 +38,69 @@ export const ProjectList = ({
   return (
     <section className="pb-16 lg:py-24" id={id}>
       <div className="container">
-        <SectionHeader
-          eyebrow={eyebrow}
-          title={title}
-          description={description}
-        />
+        {/* Story 6.4 — l'entête se révèle normalement : elle n'est pas
+            `sticky`, le déplacement vertical y est sans risque. */}
+        <Reveal>
+          <SectionHeader
+            eyebrow={eyebrow}
+            title={title}
+            description={description}
+          />
+        </Reveal>
 
-        <div className="mt-10 md:mt-20 flex flex-col  gap-20">
+        {/* 🛑 `fadeOnly` OBLIGATOIRE ICI : ce conteneur est l'ANCÊTRE des cartes
+            `sticky`. Un `transform`, même `translateY(0)`, ferait de lui leur
+            containing block et casserait l'empilement (piège n°2). Le fondu
+            seul n'introduit aucun `transform` — vérifié à la sonde SSR. */}
+        <Reveal fadeOnly className="mt-10 md:mt-20 flex flex-col  gap-20">
           {projects.map((project, projectIndex) => (
-            <Card
+            /* Story 6.4 (piège n°2) — LES CARTES NE SONT PAS ENVELOPPÉES, et
+               c'est le choix prudent assumé.
+
+               L'empilement `sticky` est la signature visuelle de la section.
+               Deux façons de le casser, toutes deux écartées ici :
+               (a) un wrapper animé rend le `sticky` enfant d'un élément porteur
+                   de `transform`, ce qui change son containing block ;
+               (b) même en déplaçant `sticky` sur le wrapper, on insère un
+                   niveau d'empilement supplémentaire entre le conteneur et le
+                   `relative z-0` de `Card` — l'ordre de superposition des
+                   cartes qui se chevauchent peut alors changer.
+
+               La story prévoit explicitement ce repli : « si conflit : révéler
+               le CONTENEUR DE SECTION plutôt que chaque carte ». C'est ce que
+               fait la `Reveal` posée sur l'entête et sur le conteneur de la
+               liste ci-dessus : la section se révèle à l'entrée, sans qu'aucune
+               carte ne soit touchée. La cascade, elle, reste portée par les
+               listes qui n'ont pas cette contrainte (hobbies, toolbox). */
+            /* Story 6.8 — L'INCLINAISON S'APPLIQUE AU NŒUD `sticky` LUI-MÊME.
+
+               🛑 `sticky` reste EXACTEMENT là où il était : dans la classe
+               passée à la carte. `ProjectCardInteractive` n'ajoute AUCUN nœud
+               enveloppant — il transmet ses `transform` à cette même racine.
+               C'est la seule structure qui préserve à la fois l'empilement
+               (un `transform` sur un ANCÊTRE le casserait) et la mise en garde
+               (b) de la story 6.4 rappelée ci-dessus (un niveau d'empilement
+               supplémentaire changerait l'ordre de superposition).
+
+               ⚠️ L'aperçu admin (`project-preview.tsx`) importe `ProjectCard`
+               NU, sans cette enveloppe : il reste donc sans tilt ni halo. */
+            /* Story 6.10 (AC6) — LE LIEN VERS LA FICHE EST ACTIVÉ ICI, ET
+               SEULEMENT ICI. `project-preview.tsx` (aperçu admin) importe
+               `ProjectCard` nu, sans cette prop : son aperçu ne pointe donc
+               jamais vers `/projects/[slug]`, qui renverrait un 404 sur un
+               projet encore en brouillon. */
+            <ProjectCardInteractive
               key={project.title}
-              className="px-8 pt-8 pb-0  md:pt-12 m:px-10 lg:pt-16 lg:px-20 sticky"
+              project={project}
+              detailLink
+              className="project-card-highlight px-8 pt-8 pb-0  md:pt-12 m:px-10 lg:pt-16 lg:px-20 sticky"
+              // Décalage croissant : les cartes s'empilent en défilant.
               style={{
                 top: `calc(64px + ${projectIndex * 40}px)`,
               }}
-            >
-              <div className="lg:grid lg:grid-cols-2 lg:gap-16">
-                <div className="lg:pb-16">
-                  <div className="inline-flex items-baseline gap-2 font-bold uppercase tracking-widest text-sm bg-gradient-to-r from-emerald-300 to-sky-400 text-transparent bg-clip-text">
-                    <span>{project.company}</span>
-                    <span>&bull;</span>
-                    <span className="text-3xs md:text-sm">{project.year}</span>
-                  </div>
-
-                  <h3 className="font-serif text-2xl mt-2 md:text-4xl md:mt-5">
-                    {project.title}
-                  </h3>
-                  <hr className="border-t-2 border-white/5 mt-4 md:mt-5" />
-                  <ul className="flex flex-col gap-4 mt-4 md:mt-5">
-                    {project.results.map((result, resultIndex) => (
-                      <li
-                        key={resultIndex} // Ajout de la clé ici
-                        className="flex gap-2 text-sm md:text-base text-white/50"
-                      >
-                        <CheckCircleIcon
-                          aria-hidden="true"
-                          className="size-5 md:size-6"
-                        />
-                        <span>{result.title}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <a
-                    href={project.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={`Visiter le site du projet ${project.title} (nouvel onglet)`}
-                    className="bg-white text-gray-950 h-12 w-full md:w-auto px-6 rounded-xl font-semibold inline-flex items-center justify-center gap-2 mt-8 hover:scale-110 transform transition duration-300 ease-in-out"
-                  >
-                    <span>Visiter le site</span>
-                    <ArrowUpRightIcon aria-hidden="true" className="size-4" />
-                  </a>
-                </div>
-                <div className="relative">
-                  <Image
-                    className="mt-8 -mb-4 md:mb-0 lg:mt-0 lg:absolute lg:h-full lg:w-auto lg:max-w-[450px]"
-                    src={project.image}
-                    alt={`Capture d'écran du projet ${project.title}`}
-                  />
-                </div>
-              </div>
-            </Card>
+            />
           ))}
-        </div>
+        </Reveal>
       </div>
     </section>
   );

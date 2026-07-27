@@ -6,7 +6,17 @@ import eslintConfigPrettier from "eslint-config-prettier";
 /** @type {import('eslint').Linter.Config[]} */
 const config = [
   {
-    ignores: [".next/**", "node_modules/**"],
+    // src/generated/** : client Prisma généré (gitignoré, non maintenu à la main).
+    // prisma/seed.mjs : bundle du seed transpilé par build:seed (généré, gitignoré).
+    // scripts/admin-reset-2fa.mjs : bundle du script de secours 2FA transpilé par
+    // build:reset-2fa (généré, gitignoré — story 5.6).
+    ignores: [
+      ".next/**",
+      "node_modules/**",
+      "src/generated/**",
+      "prisma/seed.mjs",
+      "scripts/admin-reset-2fa.mjs",
+    ],
   },
   ...nextCoreWebVitals,
   // En DERNIER : désactive les règles de style d'ESLint que Prettier gère,

@@ -1,0 +1,299 @@
+// Schéma Prisma — Story 4.1 (pivot Epic 4).
+// Périmètre STRICT : uniquement Project / Highlight / Stack + enums.
+// TimelineEntry/Hobby → 4.2 · SiteSetting → 4.3 · Media/User/… → Epic 5.
+// Ne PAS déclarer de relation vers Media (inexistant) : cover/coverId
+// seront ajoutés par migration en Epic 5 (décision Jeevons, story 4.1).
+
+generator client {
+  provider = "prisma-client"
+  // Prisma 7 : le générateur "prisma-client" (ESM) exige un output explicite.
+  // Généré hors de src/ pour ne pas polluer le code applicatif, et gitignoré.
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  // Prisma 7 : l'URL de connexion ne vit plus ici. Elle est fournie à Migrate
+  // via prisma.config.ts (datasource.url) et au runtime via un driver adapter
+  // passé au constructeur PrismaClient (voir src/lib/db.ts).
+  provider = "postgresql"
+}
+
+// Story 5.1 — Rôle du compte admin. Volontairement mono-valeur (surface
+// d'attaque minimale : un seul compte seedé, zéro inscription). D'autres rôles
+// pourront s'ajouter par migration additive si le besoin apparaît.
+enum Role {
+  ADMIN
+}
+
+enum ProjectCategory {
+  FLAGSHIP
+  PERSONAL
+  LAB
+}
+
+enum SkillLevel {
+  LEARNING
+  COMFORTABLE
+  STRONG
+}
+
+model Project {
+  id          String          @id @default(cuid())
+  slug        String          @unique
+  category    ProjectCategory
+  company     String
+  title       String
+  description String?         @db.Text
+  period      String // ex. "Janvier - 2024"
+  // Story 5.9 (AC4) — Résultat chiffré du projet, ex. « +38 % de conversion ».
+  // OPTIONNEL par nature : tous les projets n'ont pas de métrique à afficher.
+  // Vide → la section correspondante est simplement masquée côté public, jamais
+  // rendue en bloc vide (décision Jeevons : migration additive assumée).
+  outcome     String?
+  sortOrder   Int             @default(0)
+  published   Boolean         @default(false)
+  link        String?
+  repoUrl     String?
+  // Story 5.12 — Image de couverture. Réservée en 4.1 (« cover/coverId ajoutés
+  // en Epic 5 avec Media »), livrée ici par migration ADDITIVE.
+  //
+  // ⚠️ `onDelete: SetNull` et NON `Cascade` : supprimer une image ne doit
+  // JAMAIS supprimer les projets qui l'utilisent. En pratique la story 5.13
+  // interdit de supprimer un média encore référencé (garde applicative) ; ce
+  // `SetNull` est la ceinture de sécurité au niveau de la base si une
+  // suppression passait malgré tout — le projet perd son illustration, pas son
+  // existence.
+  coverId     String?
+  cover       Media?          @relation(fields: [coverId], references: [id], onDelete: SetNull)
+  highlights  Highlight[]
+  stacks      Stack[]         @relation("ProjectStacks")
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([category, sortOrder])
+}
+
+// Story 5.1 — Compte administrateur du back-office. UNIQUE et seedé (aucune
+// inscription : PLAN §3.1, REGISTRATION_OPEN=false). `passwordHash` = argon2id,
+// jamais réversible ni stocké en clair (AC1).
+//
+// Story 5.3 — Champs 2FA (TOTP obligatoire, PLAN §9.1) ajoutés par migration
+// additive. Tous NULLABLE : le compte seedé démarre sans second facteur
+// (totpEnabledAt = null → enrôlement forcé au 1er login, AC1).
+//  - totpSecret    : secret base32 CHIFFRÉ au repos (AES-256-GCM, clé dérivée
+//                    d'AUTH_SECRET — AC5). Persisté dès la génération ; sa seule
+//                    présence n'active PAS la 2FA (anti-lock-out, AC4).
+//  - totpEnabledAt : null = 2FA pas encore confirmée. Posé UNIQUEMENT après un
+//                    premier code TOTP valide (AC4). Sert de point de décision
+//                    au guard de redirection forcée (AC2).
+//  - recoveryCodes : champ créé ici, REMPLI depuis la story 5.4.
+//
+// Story 5.4 — `recoveryCodes` contient un tableau `[{ hash, usedAt }]` de 8
+// entrées (voir src/lib/auth/recovery-codes.ts, SOURCE UNIQUE de sa lecture et
+// de son écriture) :
+//  - hash   : code de secours haché ARGON2ID — jamais lisible en base (AC2) ;
+//  - usedAt : null tant que le code est disponible, horodatage ISO une fois
+//             consommé. Les codes utilisés sont CONSERVÉS (usage unique
+//             définitif + décompte des restants, AC3).
+// Aucune migration : le champ Json? existant accueille cette forme telle quelle.
+// Story 5.5 — `totpLastCounter` : dernier pas RFC 6238 (time step) consommé par
+// un code TOTP validé. ANTI-REJEU (AC4) : à la vérification suivante, otplib
+// refuse tout code dont le pas est ≤ à cette valeur — un code déjà utilisé est
+// donc mort, même encore dans sa fenêtre de validité, et le rejeu reste bloqué
+// d'une session à l'autre comme après un redémarrage du conteneur (ce qu'un
+// compteur en mémoire n'aurait pas garanti). Nullable : aucun code consommé
+// avant la première connexion en deux temps.
+model User {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  passwordHash    String
+  role            Role      @default(ADMIN)
+  totpSecret      String?
+  totpEnabledAt   DateTime?
+  totpLastCounter Int?
+  recoveryCodes   Json?
+  createdAt       DateTime  @default(now())
+  auditLogs       AuditLog[]
+}
+
+// Story 5.19 — Journal des mutations admin (PLAN §2.1). Champs EXACTS du plan :
+// `userId` (relation `User`, requis — chaque mutation journalisée est
+// attribuable, AGENTS.md §6), `action`/`entity`/`entityId` (identification
+// lisible de CE qui a changé), `diff` (résumé lisible, JAMAIS un blob complet
+// ni un secret — voir `lib/admin/audit.ts`, seul point d'écriture).
+//
+// ⚠️ Append-only : aucune Server Action ne modifie ni ne supprime une entrée
+// (intégrité de la preuve, piège n°6). `entityId`/`diff` sont optionnels pour
+// couvrir un futur cas sans entité ciblée ; toutes les entrées actuelles les
+// renseignent.
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action    String
+  entity    String
+  entityId  String?
+  diff      Json?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model Highlight {
+  id        String  @id @default(cuid())
+  label     String
+  sortOrder Int     @default(0)
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+// Story 6.13 — `domain` : le regroupement par domaine de la section publique
+// « Stack & outils » (AC1, « telles que saisies en administration »).
+//
+// ⚠️ NULLABLE PAR CONSTRUCTION, et c'est délibéré (migration additive, motif de
+// `TimelineEntry.avatarId` en 5.14) : les technologies déjà en base n'en ont pas
+// et ne doivent SURTOUT PAS disparaître du site. Elles atterrissent dans un
+// groupe de repli lisible côté lecture (`groupStacksByDomain`).
+//
+// ⚠️ Texte libre volontairement, pas un enum : les domaines d'un portfolio
+// évoluent (« Back-end », « Outils », « Design »…) et chaque ajout imposerait
+// sinon une migration. Le regroupement se fait donc sur la chaîne saisie.
+model Stack {
+  id       String      @id @default(cuid())
+  name     String      @unique
+  iconKey  String?
+  level    SkillLevel?
+  domain   String?
+  projects Project[]   @relation("ProjectStacks")
+}
+
+// Story 5.12 — Fichier image téléversé depuis l'administration (PLAN §2.1).
+//
+// ⚠️ Le FICHIER lui-même ne vit PAS en base : il est écrit sur le volume
+// persistant `portfolio_uploads` monté sur `/app/uploads` (AC1, « hors de
+// l'image du conteneur »). Cette table n'en porte que les MÉTADONNÉES.
+//
+//  - path        : chemin RELATIF au volume (ex. `2026/07/abc123.webp`), jamais
+//                  un chemin absolu machine — sinon la base deviendrait
+//                  dépendante de l'arborescence d'un hôte donné et casserait au
+//                  moindre changement de montage. `@unique` : deux
+//                  enregistrements ne peuvent pas revendiquer le même fichier,
+//                  sans quoi supprimer l'un effacerait le fichier de l'autre.
+//  - width/height: dimensions RÉELLES de l'image produite (AC2). Servent les
+//                  attributs `width`/`height` de `next/image` : sans elles, le
+//                  navigateur ne peut pas réserver la place et la page saute au
+//                  chargement (CLS).
+//  - blurDataUrl : miniature floutée en data-URI, placeholder pendant le
+//                  chargement (AC2, « éviter que la page ne saute »). Stockée
+//                  en base et non recalculée : elle est minuscule (quelques
+//                  centaines d'octets) et la recalculer à chaque rendu
+//                  imposerait de relire le fichier.
+//  - alt         : texte alternatif (AC3). NULLABLE à dessein — l'AC demande de
+//                  SIGNALER l'absence comme un défaut d'accessibilité, pas de
+//                  la rendre impossible. Un champ obligatoire pousserait à
+//                  saisir n'importe quoi pour passer, ce qui est pire pour
+//                  l'accessibilité qu'un manque explicitement signalé.
+model Media {
+  id          String    @id @default(cuid())
+  path        String    @unique
+  width       Int
+  height      Int
+  blurDataUrl String    @db.Text
+  alt         String?
+  createdAt   DateTime  @default(now())
+  // Story 5.13 : c'est cette relation inverse qui permet de DÉTECTER les usages
+  // avant une suppression (garde d'intégrité).
+  projects    Project[]
+  // Story 5.14 : second usage possible d'un média — l'illustration d'une entrée
+  // de parcours. Comme `projects`, cette relation inverse est ce qui permet à la
+  // garde de 5.13 de refuser la suppression d'une image encore utilisée.
+  timeline    TimelineEntry[]
+}
+
+// Story 4.2 — Parcours (rendu par Testimonials.tsx, id="parcours").
+model TimelineEntry {
+  id        String  @id @default(cuid())
+  slug      String  @unique // clé naturelle : idempotence du seed + jointure avatar
+  title     String
+  place     String
+  body      String  @db.Text
+  // Story 5.14 — ILLUSTRATION de l'entrée. `avatarId` existait depuis 4.2 comme
+  // un `String?` NU : le modèle `Media` n'existait pas encore, et l'avatar était
+  // un import statique joint par `slug` dans le conteneur (décision 4.2).
+  //
+  // `Media` existant depuis 5.12, la colonne est PROMUE en vraie relation par
+  // migration additive (décision Jeevons, story 5.14). Aucune donnée n'est
+  // perdue : `avatarId` valait `null` partout (le seed ne le renseigne pas).
+  //
+  // ⚠️ `onDelete: SetNull` et NON `Cascade`, exactement comme `Project.coverId`
+  // (5.12) : supprimer une image ne doit JAMAIS supprimer les entrées de
+  // parcours qui l'utilisent. La garde applicative de 5.13
+  // (`findMediaUsages`) interdit déjà de supprimer un média référencé ; ce
+  // `SetNull` est la ceinture de sécurité au niveau de la base — l'entrée perd
+  // son illustration, pas son existence.
+  avatarId  String?
+  avatar    Media?  @relation(fields: [avatarId], references: [id], onDelete: SetNull)
+  startYear Int
+  // `endYear` OPTIONNEL — c'est ce qui exprime « poste toujours en cours »
+  // (5.14, AC1 : « une entrée toujours en cours peut être enregistrée sans
+  // année de fin »). Le schéma partagé impose en plus `endYear >= startYear`
+  // quand la valeur est présente.
+  endYear   Int?
+  sortOrder Int     @default(0)
+  // ⚠️ `@default(true)` HÉRITÉ de 4.2 (contrairement à `Project` = `false`) : il
+  // sert au SEED, qui crée des entrées déjà publiées. Le formulaire
+  // d'administration, lui, propose « Publiée » DÉCOCHÉE à la création (décision
+  // Jeevons, 5.14) — même geste que pour un projet, pour ne jamais publier par
+  // inadvertance (AC3). Le défaut de la colonne n'est donc jamais atteint
+  // depuis l'admin, qui envoie toujours une valeur explicite.
+  published Boolean @default(true)
+
+  @@index([published, sortOrder])
+}
+
+// Story 4.2 — Centres d'intérêt (rendus par About.tsx). Pas de `published`
+// (modèle §2.1 : les hobbies sont toujours affichés).
+model Hobby {
+  id        String @id @default(cuid())
+  slug      String @unique // clé naturelle : idempotence du seed
+  title     String
+  emoji     String
+  posLeft   String
+  posTop    String
+  sortOrder Int    @default(0)
+}
+
+// Story 4.3 — Réglages éditables du site (textes Hero, badge, liens sociaux,
+// e-mail fragmenté). `key @id` : la clé EST l'identifiant → seed idempotent
+// trivial par upsert. `value Json` : valeur structurée (string, { url },
+// { text }, ou { user, host } pour l'e-mail anti-moisson).
+// Contrat de clés consommé par /admin/settings en Epic 5.
+model SiteSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+// Story 5.18 — Messages reçus via le formulaire de contact public (Epic 6, pas
+// encore construit ici). Champs EXACTS du PLAN §2.1 : `ip` est l'« adresse
+// d'origine » requise par l'AC1, volontairement optionnelle (une insertion
+// directe — seed/SQL, seul moyen de vérifier cette story avant Epic 6 — n'a pas
+// toujours d'IP réelle à fournir). Aucune relation : ce modèle n'a pas besoin
+// de connaître l'utilisateur admin qui le lit.
+//
+// ⚠️ Données personnelles de tiers (AGENTS.md §6) : jamais lu par une fonction
+// mise en cache/exposée au public, contrairement à Project/TimelineEntry/etc.
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  body      String   @db.Text
+  ip        String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // Tri anti-chronologique de la boîte de réception (AC2) — index sur la
+  // colonne triée, pratique constante du reste du schéma (`Project`,
+  // `TimelineEntry`).
+  @@index([createdAt])
+}

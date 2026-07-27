@@ -24,13 +24,63 @@ services:
       - ./apps/web:/app
       # Volumes anonymes : préservent node_modules et .next du conteneur,
       # compilés pour Alpine/Linux, du montage de l'hôte (macOS/arm64).
+      #
+      # ⚠️ PIÈGE VÉRIFIÉ — ces volumes SURVIVENT à `up --build`. Après l'ajout
+      # d'une dépendance, l'image est bien reconstruite, mais Docker remonte
+      # par-dessus le volume existant : le conteneur voit alors un package.json
+      # qui déclare le paquet et un node_modules qui ne le contient pas
+      # (« Module not found: Can't resolve '<paquet>' »). Il faut détruire le
+      # volume anonyme :
+      #
+      #   docker compose rm -f -v web && docker compose up -d --build web
+      #
+      # 🛑 JAMAIS `docker compose down -v` pour cela : le `-v` y détruit aussi
+      # les volumes NOMMÉS, donc portfolio_db_data — la base et le compte admin.
       - /app/node_modules
       - /app/.next
+      # Story 5.12 — Images téléversées, sur un volume NOMMÉ comme en production
+      # (docker-compose.prod.yml). Monté PAR-DESSUS le bind `./apps/web:/app`,
+      # il empêche les fichiers de dev d'atterrir dans le dépôt : ils y seraient
+      # versionnés par accident, alors qu'un upload est une donnée, pas du code.
+      #
+      # ⚠️ Volume NOMMÉ et non anonyme : les images survivent ainsi à un
+      # `docker compose rm -f -v web` (la manœuvre documentée plus haut pour
+      # rafraîchir node_modules), qui détruit les volumes anonymes.
+      - portfolio_uploads_dev:/app/uploads
     depends_on:
       db:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql://portfolio:portfolio@db:5432/portfolio_dev?schema=public
+      # Credentials admin lus depuis le .env RACINE (gitignoré). Sans valeur par
+      # défaut : si le .env manque, le seed échoue explicitement (voulu).
+      #
+      # ⚠️ SOURCE UNIQUE DES SECRETS EN CONTENEUR = le `.env` RACINE.
+      # `apps/web/.env` n'est PAS lu ici : il sert au `bun run dev` lancé À LA
+      # MAIN sur l'hôte (hors Docker). Les deux fichiers coexistent donc, et
+      # c'est un piège vérifié :
+      #
+      #   AUTH_SECRET dérive (HKDF) la clé qui chiffre le secret TOTP en base
+      #   (src/lib/crypto/totp-secret.ts). Si les deux fichiers portent des
+      #   valeurs DIFFÉRENTES, un secret TOTP enrôlé via l'un est indéchiffrable
+      #   via l'autre : la connexion 2FA échoue sur
+      #   « Unsupported state or unable to authenticate data ».
+      #
+      # 🛑 Toute rotation d'AUTH_SECRET doit donc être répercutée dans LES DEUX
+      # fichiers, ET invalide les enrôlements TOTP existants (il faut re-enrôler).
+      #
+      # Ce `${VAR}` reproduit volontairement le modèle de prod
+      # (docker-compose.prod.yml) : les valeurs y sont injectées par Coolify
+      # dans l'environnement, sans aucun fichier .env sur le VPS. Pointer ce
+      # service sur `apps/web/.env` via `env_file` s'écarterait de ce modèle.
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      AUTH_SECRET: ${AUTH_SECRET}
+    # Au démarrage : migrations + seed (comme l'entrypoint de prod, story 4.6),
+    # PUIS le serveur de dev. Un seul `docker compose up` → app connectable,
+    # compte admin créé. `migrate dev` crée/applique les migrations manquantes.
+    command: sh -c "bun run db:migrate && bun run db:seed && bun run dev"
 
 volumes:
   portfolio_db_data:
+  portfolio_uploads_dev:

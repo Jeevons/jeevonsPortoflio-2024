@@ -9,8 +9,200 @@
     @apply px-4 py-1.5 rounded-full text-white/70 text-sm font-semibold hover:bg-white/10 hover:text-white transition duration-300;
   }
 
+  /* ------------------------------------------------------------------------
+     Story 6.3 (AC2, AC3) — ÉQUILIBRE DES LIGNES sur le site public.
+
+     Scopé sous `.site-public` (posé par `/` et `/preview`) et NON sur `body` :
+     l'admin est imbriqué sous le même layout racine, un sélecteur global aurait
+     touché ses 106 paragraphes. Le périmètre de la story est le site public.
+
+     ⚠️ `balance` et `pretty` ne sont PAS interchangeables :
+     - `balance` égalise la longueur des lignes → conçu pour les TITRES courts.
+       Les navigateurs l'ignorent au-delà de ~4-6 lignes : l'appliquer à un
+       paragraphe serait inutile et coûteux.
+     - `pretty` évite les orphelines (mot seul en dernière ligne) → conçu pour
+       le CORPS DE TEXTE.
+
+     Support : `balance` largement disponible, `pretty` plus récent (Chromium
+     117+, Safari 17.5+). La dégradation est naturelle — la propriété est
+     simplement ignorée, le texte reste parfaitement lisible. Aucun fallback JS,
+     aucune bibliothèque de balancing (AGENTS.md §9 : zéro dépendance). */
+  .site-public :is(h1, h2, h3) {
+    text-wrap: balance;
+  }
+
+  .site-public :is(p, li) {
+    text-wrap: pretty;
+  }
+
+  /* Story 6.1 — `emerald-300/5` remplacé par le token d'accent. Valeur rendue
+     identique : `--accent-from` EST emerald-300 (#6ee7b7). */
   .hero-ring {
-    @apply absolute inset-0 border-2 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2  rounded-full border-emerald-300/5 shadow-[0_0_80px_inset] shadow-emerald-300/5 -z-30;
+    @apply absolute inset-0 border-2 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2  rounded-full border-accent-from/5 shadow-[0_0_80px_inset] shadow-accent-from/5 -z-30;
+  }
+}
+
+/* Story 6.1 (AC1) — Utilitaires factorisés, pour supprimer les recettes
+   dupliquées à l'identique dans les composants publics. */
+@layer components {
+  /* Le dégradé d'accent EN TEXTE. Remplace 3 copies littérales de
+     `bg-gradient-to-r from-emerald-300 to-sky-400 bg-clip-text text-transparent`
+     (SectionHeader, ProjectCard ×2).
+     La story 6.5 réutilisera `--accent-from`/`--accent-to` pour la barre de
+     progression : d'où le passage par les tokens plutôt qu'un simple @apply. */
+  /* ⚠️ Le dégradé est écrit en CSS EXPLICITE, et non via
+     `@apply bg-gradient-to-r from-… to-…`. Raison vérifiée sur le bundle
+     compilé : dans `@layer components`, cet `@apply` perdait la déclaration
+     `background-image` (seuls `background-clip`/`color` survivaient), ce qui
+     rendait le texte transparent SANS dégradé derrière — donc invisible.
+     Le `linear-gradient` direct est à la fois correct et plus lisible. */
+  .text-gradient-accent {
+    background-image: linear-gradient(
+      to right,
+      hsl(var(--accent-from)),
+      hsl(var(--accent-to))
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Le dégradé d'accent EN FOND. Remplace 5 copies littérales
+     (Tape, ContactClient, AboutClient ×3). */
+  .bg-gradient-accent {
+    background-image: linear-gradient(
+      to right,
+      hsl(var(--accent-from)),
+      hsl(var(--accent-to))
+    );
+  }
+
+  /* Le grain : même recette dans Card, Hero et ContactClient (calque en
+     position absolue à 5 % d'opacité).
+     ⚠️ L'IMAGE reste passée en `style` inline par les composants : son URL
+     contient un hash de build généré par l'import Next (`grainImage.src`), donc
+     inconnu d'une feuille de style statique. Seuls le positionnement et
+     l'opacité sont factorisés ici — le `z-index`, qui diffère selon la surface
+     (-z-10 pour Card/Contact, -z-30 pour Hero), reste à la charge de l'appelant. */
+  .surface-grain {
+    @apply absolute inset-0;
+    opacity: var(--grain-opacity);
+  }
+
+  /* --------------------------------------------------------------------------
+     Story 6.16 (AC2, AC3, AC4) — AURORA : les trois blobs du fond d'ambiance.
+
+     ⚠️ LE GRAIN N'EST NI REMPLACÉ NI RETIRÉ. AC2 dit « un dégradé S'Y AJOUTE » :
+     `.surface-grain` ci-dessus et ses trois usages (Hero, ContactClient, Card)
+     sont intacts. L'aurora est une couche NOUVELLE, au fond de la page — il n'y
+     avait aucun fond décoratif global auparavant (`layout.tsx` ne pose que
+     `bg-surface`).
+
+     🛑 COULEURS VIA LES TOKENS 6.1 (`--accent-from` / `--accent-to`), jamais en
+     dur : c'est le dégradé de signature du site (PLAN §4.1). Le troisième blob
+     mélange les deux bornes pour éviter un fond bicolore trop lisible.
+
+     🛑 SEULS `transform` ET `opacity` VARIENT dans les keyframes. Le `filter:
+     blur()` est déclaré une fois, hors keyframes : il est peint au premier
+     rendu puis seulement composé. ❌ L'animer serait la propriété la plus
+     coûteuse à repeindre du CSS (AC3, piège n°4).
+
+     🛑 CHAQUE CYCLE EST FERMÉ : la frame `100%` reproduit EXACTEMENT la frame
+     `0%`. C'est ce qui rend AC4 correct — la règle `prefers-reduced-motion`
+     globale (`animation-duration: 0.01ms`, plus bas) fait sauter l'animation à
+     sa DERNIÈRE frame, qui est donc ici la position de repos. Le fond figé est
+     identique au fond au repos : présentable, jamais une position extrême ni
+     une opacité nulle. ⚠️ Aucune seconde media-query n'est ajoutée : la règle de
+     6.2 suffit et prime déjà sur les utilitaires.
+
+     ⚠️ Durées très longues (25-40 s) et désynchronisées : l'effet doit être
+     perçu comme une variation d'ambiance, pas comme un mouvement. */
+  .aurora-blob {
+    position: absolute;
+    /* Plus large que le viewport pour que les bords du dégradé radial ne soient
+       jamais visibles. Le parent porte `overflow-hidden` : aucun débordement. */
+    width: 70vmax;
+    height: 70vmax;
+    border-radius: 9999px;
+    /* Blur STATIQUE — jamais animé. */
+    filter: blur(100px);
+  }
+
+  .aurora-blob-1 {
+    top: -20vmax;
+    left: -15vmax;
+    background: radial-gradient(
+      circle,
+      hsl(var(--accent-from)) 0%,
+      transparent 70%
+    );
+    animation: aurora-drift-1 32s ease-in-out infinite;
+  }
+
+  .aurora-blob-2 {
+    top: 20vmax;
+    right: -25vmax;
+    background: radial-gradient(
+      circle,
+      hsl(var(--accent-to)) 0%,
+      transparent 70%
+    );
+    animation: aurora-drift-2 40s ease-in-out infinite;
+  }
+
+  .aurora-blob-3 {
+    bottom: -30vmax;
+    left: 20vmax;
+    background: radial-gradient(
+      circle,
+      hsl(var(--accent-from)) 0%,
+      hsl(var(--accent-to) / 0.5) 40%,
+      transparent 70%
+    );
+    animation: aurora-drift-3 25s ease-in-out infinite;
+  }
+}
+
+/* Story 6.16 — Keyframes de l'aurora. Hors `@layer` : les `@keyframes` ne sont
+   pas des règles en cascade, les placer dans une couche n'a aucun effet utile.
+
+   ⚠️ Les opacités PLAFONNENT à 0.07 : au-delà, la teinte devient une forme
+   perceptible au lieu d'une ambiance, et le risque sur le contraste cesse d'être
+   théorique. Ces valeurs ÉCLAIRCISSENT un fond gray-900 sous du texte blanc :
+   elles augmentent le contraste, elles ne le réduisent pas. */
+@keyframes aurora-drift-1 {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.07;
+  }
+  50% {
+    transform: translate3d(10vmax, 8vmax, 0) scale(1.2);
+    opacity: 0.05;
+  }
+}
+
+@keyframes aurora-drift-2 {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1.1);
+    opacity: 0.06;
+  }
+  50% {
+    transform: translate3d(-12vmax, 10vmax, 0) scale(0.9);
+    opacity: 0.04;
+  }
+}
+
+@keyframes aurora-drift-3 {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.05;
+  }
+  50% {
+    transform: translate3d(8vmax, -10vmax, 0) scale(1.15);
+    opacity: 0.07;
   }
 }
 
@@ -24,9 +216,12 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Story 6.1 — raccordé aux tokens. Les valeurs rendues sont IDENTIQUES à
+   celles d'origine (`hsl(313 56% 39%)`, `hsla(156 72% 67% / .264)`, `#111827`
+   = gray-900 = `--surface`, `#6ee7b7` = emerald-300 = `--accent-from`). */
 ::selection {
-  background-color: hsl(313, 56%, 39%);
-  color: hsla(0, 0%, 100%, 0.918);
+  background-color: hsl(var(--selection));
+  color: hsl(var(--selection-foreground) / 0.918);
 }
 
 ::-webkit-scrollbar {
@@ -35,8 +230,8 @@ html {
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: hsla(156, 72%, 67%, 0.264);
-  border: 0.32rem solid #111827;
+  background-color: hsl(var(--accent-from) / 0.264);
+  border: 0.32rem solid hsl(var(--surface));
   border-radius: 100vw;
   cursor: pointer;
 }
@@ -47,15 +242,134 @@ html {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: #6ee7b7;
+  background-color: hsl(var(--accent-from));
 }
 
 :root {
   --text-3xs: 0.675rem;
+
+  /* ------------------------------------------------------------------------
+     Story 6.3 (AC1) — ÉCHELLE TYPOGRAPHIQUE FLUIDE des titres.
+
+     Remplace les paliers (`text-3xl md:text-5xl lg:text-6xl`) par une
+     interpolation continue. Chaque échelle conserve EXACTEMENT ses bornes
+     actuelles : l'identité visuelle ne bouge pas, seule la progression entre
+     les deux devient continue.
+
+     🛑 POURQUOI `Xrem + Yvw` ET JAMAIS `Yvw` SEUL :
+     un `clamp(1.875rem, 5vw, 3.75rem)` fige le texte au zoom navigateur — les
+     `vw` ne réagissent pas au zoom de texte, donc la taille reste bloquée sur
+     sa valeur médiane. C'est un échec WCAG 1.4.4 (Resize Text), et l'a11y est
+     non négociable (AGENTS.md §6). La part en `rem` est ce qui garantit que le
+     zoom continue d'agir : elle est NON NULLE dans les quatre échelles.
+
+     Interpolation calée sur les breakpoints DU PROJET (`tailwind.config.ts` :
+     sm 375px, md 768px, lg 1200px) : minimum atteint à 375px, maximum à
+     1200px — et non aux 1536px par défaut de Tailwind.
+
+     ⚠️ Ces tokens portent des noms NOUVEAUX (`--text-display-*`). Aucune taille
+     Tailwind existante n'est redéfinie : `text-3xl` reste `text-3xl`, ce dont
+     dépend l'admin (`components/admin/stat-card.tsx`). */
+
+  /* Hero h1 — 3xl (1.875rem) → 6xl (3.75rem) */
+  --text-display-1: clamp(1.875rem, 1.0227rem + 3.6364vw, 3.75rem);
+  /* SectionHeader h2 — 3xl (1.875rem) → 5xl (3rem) */
+  --text-display-2: clamp(1.875rem, 1.3636rem + 2.1818vw, 3rem);
+  /* ProjectCard h3 — 2xl (1.5rem) → 4xl (2.25rem) */
+  --text-display-3: clamp(1.5rem, 1.1591rem + 1.4545vw, 2.25rem);
+  /* Contact h2 — 2xl (1.5rem) → 3xl (1.875rem) */
+  --text-display-4: clamp(1.5rem, 1.3295rem + 0.7273vw, 1.875rem);
 }
 
 .text-3xs {
   font-size: var(--text-3xs);
+}
+
+/* Story 5.7 — Tokens de design shadcn/ui (fondation des écrans admin 5.7-5.20).
+   Valeurs HSL sans `hsl()` : c'est le contrat shadcn, `tailwind.config.ts` les
+   enveloppe en `hsl(var(--token) / <alpha-value>)` pour que l'opacité Tailwind
+   (`bg-card/50`) reste utilisable.
+
+   ⚠️ Une SEULE palette, sombre. Le site public est en sombre permanent
+   (#111827 / emerald) : introduire un thème clair ici créerait une deuxième
+   identité visuelle non demandée. Les tokens sont donc calés sur le sombre
+   existant — `--background` reprend le gray-900 du site, `--primary` son
+   emerald-300. Aucun bloc `.dark` : pas de bascule de thème dans cette story. */
+:root {
+  --background: 217 33% 11%;
+  --foreground: 210 40% 98%;
+
+  --card: 217 33% 14%;
+  --card-foreground: 210 40% 98%;
+
+  --popover: 217 33% 14%;
+  --popover-foreground: 210 40% 98%;
+
+  --primary: 156 72% 67%;
+  --primary-foreground: 217 33% 11%;
+
+  --secondary: 217 33% 20%;
+  --secondary-foreground: 210 40% 98%;
+
+  --muted: 217 33% 20%;
+  --muted-foreground: 215 20% 65%;
+
+  --accent: 217 33% 24%;
+  --accent-foreground: 210 40% 98%;
+
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 210 40% 98%;
+
+  --border: 217 33% 24%;
+  --input: 217 33% 24%;
+  --ring: 156 72% 67%;
+
+  --radius: 0.5rem;
+
+  /* ------------------------------------------------------------------------
+     Story 6.1 — Tokens du SITE PUBLIC, ajoutés au MÊME `:root` (un seul socle).
+
+     ⚠️ POURQUOI DE NOUVEAUX TOKENS DE SURFACE plutôt que réutiliser
+     `--background`/`--card` : ils ne valent PAS les couleurs du site public,
+     contrairement à ce qu'affirme le commentaire de la story 5.7 ci-dessus.
+     Vérifié par conversion :
+       --background  217 33% 11%  = #131a25   ·  gray-900 = #111827
+       --card        217 33% 14%  = #18212f   ·  gray-800 = #1f2937
+     L'arrondi de 5.7 a dérivé en teinte ET en saturation. Faire pointer le
+     site public sur ces tokens changerait donc le fond — ce que l'AC2 interdit
+     (« rendu strictement identique »). Et corriger leur valeur repeindrait
+     tout l'admin (5.7-5.20) qui les consomme.
+     → On AJOUTE, on ne modifie pas. C'est la consigne du périmètre de la story.
+
+     `--primary` (156 72% 67%), lui, EST exactement emerald-300 (#6ee7b7) : il
+     est donc réutilisé tel quel comme départ du dégradé d'accent.
+
+     Format HSL sans `hsl()` : contrat shadcn, cf. bloc ci-dessus. */
+
+  /* Surfaces du site public — valeurs exactes des couleurs Tailwind d'origine */
+  --surface: 220.9 39.3% 11%; /* gray-900 #111827 — fond de page, boutons sombres */
+  --surface-raised: 215 27.9% 16.9%; /* gray-800 #1f2937 — fond des cartes */
+  --surface-sunken: 224 71.4% 4.1%; /* gray-950 #030712 — badge du hero, texte sur clair */
+
+  /* Dégradé d'accent — la signature visuelle du site.
+     `--accent-from` réutilise volontairement la MÊME valeur que `--primary`
+     (emerald-300) ; `--accent-to` est sky-400, absent des tokens shadcn. */
+  --accent-from: 156 72% 67%; /* emerald-300 #6ee7b7 */
+  --accent-to: 198.4 93.2% 59.6%; /* sky-400   #38bdf8 */
+
+  /* Sélection de texte (valeurs d'origine des lignes 27-30, inchangées) */
+  --selection: 313 56% 39%;
+  --selection-foreground: 0 0% 100%;
+
+  /* Rayons du site public. Distincts de `--radius` (0.5rem), qui reste le
+     rayon de l'admin shadcn et n'est pas touché. */
+  --radius-card: 1.5rem; /* rounded-3xl — cartes */
+  --radius-control: 0.75rem; /* rounded-xl  — boutons et CTA */
+  --radius-badge: 0.5rem; /* rounded-lg  — badge « disponible » */
+
+  /* Opacité du grain, partagée par les 3 surfaces qui l'appliquent
+     (Card, Hero, ContactClient) — cf. `.surface-grain` plus bas. */
+  --grain-opacity: 0.05;
 }
 
 /* Respect du réglage système « réduire les animations » (UX-DR20, règle D11).
@@ -71,9 +385,51 @@ html {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+
+    /* Story 6.2 — Les DÉLAIS sont neutralisés eux aussi.
+       Sans cela, une animation raccourcie à 0.01ms mais précédée d'un
+       `animation-delay: 400ms` (ou d'un `delay-*` Tailwind) laisse l'élément
+       dans son ÉTAT INITIAL pendant toute l'attente — donc invisible s'il part
+       d'une opacité nulle. C'est précisément ce qu'interdit l'AC2. Le reveal au
+       scroll de la story 6.4 utilisera des délais en cascade : le trou est
+       comblé ici, avant qu'il ne soit exploitable. */
+    animation-delay: 0ms !important;
+    transition-delay: 0ms !important;
   }
 
   html {
     scroll-behavior: auto !important;
+  }
+}
+
+/* Story 6.8 (AC3) — MISE EN ÉVIDENCE SANS POINTEUR.
+   ==================================================================
+   🛑 L'AC LA PLUS FACILE À MANQUER. L'inclinaison et le halo sont pilotés par
+   `pointermove` : au clavier et sur écran tactile, la carte n'aurait
+   STRICTEMENT aucun retour visuel. Cette règle est le seul mécanisme qui
+   satisfait AC3, et elle vit en CSS précisément pour ne dépendre d'aucun
+   JavaScript.
+
+   ✅ `:focus-within` — le focus vient du lien « Visiter le site » CONTENU dans
+   la carte. ❌ Surtout PAS de `tabIndex` sur la carte elle-même : ce serait
+   ajouter un arrêt de tabulation sur un élément non interactif.
+
+   🛑 LE SIGNAL N'EST PAS CHROMATIQUE. Le liseré passe de 2px à 3px et gagne en
+   opacité : l'information est portée par l'ÉPAISSEUR autant que par la teinte
+   (AGENTS.md §6, WCAG 1.4.1) — vérifiable en niveaux de gris. */
+.project-card-highlight:focus-within::after {
+  outline-width: 3px;
+  outline-color: hsl(var(--accent-from) / 0.9);
+}
+
+/* ⚠️ LE CAS QUI REND `:focus-within` INSUFFISANT À LUI SEUL : une carte dont
+   `project.link` est vide ne rend AUCUN bouton, donc ne contient aucun élément
+   focusable — `:focus-within` ne s'y déclencherait jamais. Sur les appareils
+   sans survol, la mise en évidence est donc PERMANENTE, ce qui couvre aussi
+   bien les cartes avec lien que celles sans. */
+@media (hover: none) {
+  .project-card-highlight::after {
+    outline-width: 3px;
+    outline-color: hsl(var(--accent-from) / 0.55);
   }
 }

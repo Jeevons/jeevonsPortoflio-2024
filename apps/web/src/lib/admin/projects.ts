@@ -1,0 +1,359 @@
+import "server-only";
+
+import { prisma } from "@/lib/db";
+import { ProjectCategory } from "@/generated/prisma/enums";
+
+// Story 5.8 — Lectures ADMIN des projets (AC1).
+//
+// ⚠️ PIÈGE CENTRAL (n°1) — NE PAS réutiliser `lib/projects.ts` ici.
+// La lecture publique est `unstable_cache` + `readWithFallback` + filtre
+// `published: true`. Trois raisons de ne pas la réutiliser côté admin :
+//  - CACHE : l'admin doit voir l'état RÉEL. Une liste cachée une heure
+//    n'afficherait pas le projet qui vient d'être créé ;
+//  - FILTRE : l'admin gère AUSSI ses brouillons (AC1 « tous mes projets ») ;
+//  - REPLI : le fallback statique (4.5) MENTIRAIT sur un écran de gestion — on
+//    éditerait un contenu figé sans écrire nulle part. Ici, une base injoignable
+//    doit se voir (même discipline que `lib/admin/dashboard.ts`, story 5.7).
+//
+// En revanche, les deux côtés PARTAGENT le tag `CACHE_TAGS.projects` : les
+// mutations de `actions.ts` invalident la lecture publique (AC4). C'est le seul
+// point de contact, et il est volontaire.
+
+/** Colonnes triables exposées par la liste (AC1). Liste FERMÉE : voir `parseProjectFilters`. */
+const SORTABLE = ["title", "category", "published", "updatedAt"] as const;
+export type ProjectSortKey = (typeof SORTABLE)[number];
+
+/** Statut de publication utilisé comme filtre (AC1). */
+export type ProjectStatusFilter = "all" | "published" | "draft";
+
+/** Critères de liste, déjà validés — sûrs à passer à Prisma. */
+export type ProjectFilters = {
+  /** Recherche libre sur le titre et l'entreprise. */
+  q: string;
+  category: ProjectCategory | "all";
+  status: ProjectStatusFilter;
+  sort: ProjectSortKey;
+  dir: "asc" | "desc";
+};
+
+export const DEFAULT_PROJECT_FILTERS: ProjectFilters = {
+  q: "",
+  category: "all",
+  status: "all",
+  sort: "updatedAt",
+  dir: "desc",
+};
+
+/**
+ * Valide les `searchParams` de l'URL en critères sûrs (AC1).
+ *
+ * ⚠️ Les paramètres d'URL sont une entrée UTILISATEUR arbitraire. `sort` finit
+ * dans un `orderBy` Prisma : accepter une chaîne libre exposerait un tri sur une
+ * colonne non prévue, voire une erreur 500 sur un nom inconnu. On ne fait donc
+ * PAS confiance à la valeur reçue — on la cherche dans une liste FERMÉE et on
+ * retombe silencieusement sur le défaut. Même discipline pour `category` (enum
+ * Prisma), `status` et `dir`.
+ *
+ * Un paramètre invalide ne produit ni erreur ni message : il est simplement
+ * ignoré. La liste reste utilisable, ce qui est le comportement attendu d'un
+ * filtre bookmarké devenu obsolète.
+ */
+export function parseProjectFilters(
+  searchParams: Record<string, string | string[] | undefined>,
+): ProjectFilters {
+  // Un même paramètre peut arriver en double (`?sort=a&sort=b`) : Next le donne
+  // alors en tableau. On ne garde que la première occurrence.
+  const single = (key: string): string => {
+    const value = searchParams[key];
+    if (Array.isArray(value)) return value[0] ?? "";
+    return value ?? "";
+  };
+
+  const rawCategory = single("category");
+  const category = (Object.values(ProjectCategory) as string[]).includes(
+    rawCategory,
+  )
+    ? (rawCategory as ProjectCategory)
+    : "all";
+
+  const rawStatus = single("status");
+  const status: ProjectStatusFilter =
+    rawStatus === "published" || rawStatus === "draft" ? rawStatus : "all";
+
+  const rawSort = single("sort");
+  const sort = (SORTABLE as readonly string[]).includes(rawSort)
+    ? (rawSort as ProjectSortKey)
+    : DEFAULT_PROJECT_FILTERS.sort;
+
+  const dir = single("dir") === "asc" ? "asc" : "desc";
+
+  return {
+    // `slice` : borne la longueur de la recherche, un `contains` sur une chaîne
+    // démesurée n'a aucun intérêt fonctionnel.
+    q: single("q").trim().slice(0, 200),
+    category,
+    status,
+    sort,
+    dir,
+  };
+}
+
+/** Une ligne de la liste admin — seulement ce que le tableau affiche. */
+export type AdminProjectRow = {
+  id: string;
+  slug: string;
+  title: string;
+  company: string;
+  category: ProjectCategory;
+  published: boolean;
+  updatedAt: Date;
+};
+
+/** Résultat de la liste. `available: false` = base injoignable, PAS « 0 projet ». */
+export type AdminProjectList =
+  | { available: true; rows: AdminProjectRow[]; total: number }
+  | { available: false };
+
+/**
+ * Liste les projets de l'admin : TOUS statuts, filtrés et triés (AC1).
+ *
+ * Le filtrage et le tri se font EN BASE (`where` / `orderBy`), pas en JS après
+ * coup — décision Jeevons : l'état de la liste vit dans l'URL et la page reste
+ * un Server Component.
+ *
+ * `total` compte les projets SANS filtre : il permet de distinguer « aucun
+ * projet du tout » (état d'accueil) de « aucun résultat pour ce filtre » (il
+ * faut alors proposer de réinitialiser). Les deux affichent zéro ligne mais
+ * appellent des messages différents.
+ */
+export async function listAdminProjects(
+  filters: ProjectFilters,
+): Promise<AdminProjectList> {
+  const where = {
+    ...(filters.category === "all" ? {} : { category: filters.category }),
+    ...(filters.status === "all"
+      ? {}
+      : { published: filters.status === "published" }),
+    ...(filters.q
+      ? {
+          // `mode: "insensitive"` : la recherche ne doit pas dépendre de la
+          // casse saisie. Porte sur le titre ET l'entreprise, les deux repères
+          // par lesquels Jeevons identifie un projet dans sa liste.
+          OR: [
+            { title: { contains: filters.q, mode: "insensitive" as const } },
+            { company: { contains: filters.q, mode: "insensitive" as const } },
+          ],
+        }
+      : {}),
+  };
+
+  try {
+    const [rows, total] = await Promise.all([
+      prisma.project.findMany({
+        where,
+        // Tri secondaire par `title` : sur `category` ou `published` (peu de
+        // valeurs distinctes), l'ordre interne serait sinon non déterministe
+        // d'un rendu à l'autre — la liste « sauterait » sans raison visible.
+        orderBy: [{ [filters.sort]: filters.dir }, { title: "asc" }],
+        select: {
+          id: true,
+          slug: true,
+          title: true,
+          company: true,
+          category: true,
+          published: true,
+          updatedAt: true,
+        },
+      }),
+      prisma.project.count(),
+    ]);
+
+    return { available: true, rows, total };
+  } catch (error) {
+    // Même discipline de log que `lib/admin/dashboard.ts` : cause aplatie sur
+    // une ligne, jamais de secret.
+    const raw = error instanceof Error ? error.message : String(error);
+    console.error(
+      `[admin] Liste des projets indisponible. Cause : ${raw.replace(/\s+/g, " ").trim()}`,
+    );
+    return { available: false };
+  }
+}
+
+/** Un projet complet, tel que l'éditeur le charge (5.8 + 5.9). */
+export type AdminProject = {
+  id: string;
+  slug: string;
+  title: string;
+  company: string;
+  category: ProjectCategory;
+  description: string | null;
+  period: string;
+  link: string | null;
+  repoUrl: string | null;
+  /** Story 5.9 — résultat chiffré, optionnel (AC4). */
+  outcome: string | null;
+  published: boolean;
+  /** Story 5.9 — points forts DÉJÀ ORDONNÉS par `sortOrder` (AC1). */
+  highlights: { id: string; label: string }[];
+  /** Story 5.9 — technologies associées (AC2). */
+  stacks: { id: string; name: string }[];
+  /** Story 5.12 — image de couverture, `null` si le projet n'est pas illustré. */
+  coverId: string | null;
+};
+
+/**
+ * Charge UN projet pour l'éditeur (AC4 de 5.8). `null` si l'identifiant n'existe
+ * pas — la page rend alors un 404.
+ *
+ * Story 5.9 : la sélection inclut désormais les points forts et les technologies,
+ * que l'éditeur enrichi affiche et modifie.
+ *
+ * ⚠️ `orderBy: sortOrder` sur les highlights : l'éditeur doit présenter l'ordre
+ * RÉEL, celui qu'applique déjà la lecture publique (`lib/projects.ts`). Sans ce
+ * tri, Postgres renverrait les lignes dans un ordre non garanti et l'admin
+ * verrait un ordre différent du site — l'AC1 ne serait pas vérifiable.
+ */
+export async function getAdminProject(
+  id: string,
+): Promise<AdminProject | null> {
+  return prisma.project.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      company: true,
+      category: true,
+      description: true,
+      period: true,
+      link: true,
+      repoUrl: true,
+      outcome: true,
+      published: true,
+      coverId: true,
+      highlights: {
+        orderBy: { sortOrder: "asc" },
+        select: { id: true, label: true },
+      },
+      stacks: {
+        orderBy: { name: "asc" },
+        select: { id: true, name: true },
+      },
+    },
+  });
+}
+
+/** Une technologie proposée par le sélecteur de l'éditeur (5.9, AC2). */
+export type AdminStackOption = { id: string; name: string };
+
+/**
+ * Liste TOUTES les technologies existantes, pour le sélecteur de l'éditeur (AC2).
+ *
+ * ⚠️ Périmètre : cette story ASSOCIE des technologies existantes, elle n'en crée
+ * pas — le CRUD des `Stack` est la story 5.15. Si la liste revient vide,
+ * l'éditeur invite à en créer plutôt que d'offrir un champ libre.
+ *
+ * Une base injoignable renvoie un tableau vide plutôt que de faire tomber
+ * l'éditeur entier : le reste du formulaire (champs scalaires, points forts)
+ * doit rester utilisable. La page signale déjà l'indisponibilité par ailleurs.
+ */
+export async function listStackOptions(): Promise<AdminStackOption[]> {
+  try {
+    return await prisma.stack.findMany({
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    });
+  } catch (error) {
+    const raw = error instanceof Error ? error.message : String(error);
+    console.error(
+      `[admin] Liste des technologies indisponible. Cause : ${raw.replace(/\s+/g, " ").trim()}`,
+    );
+    return [];
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Story 5.10 — Lecture dédiée à l'ÉCRAN DE RÉORDONNANCEMENT (AC1, AC3).
+// ---------------------------------------------------------------------------
+
+/** Une ligne déplaçable de l'écran de tri. Volontairement minimale. */
+export type ReorderableProject = {
+  id: string;
+  title: string;
+  company: string;
+  published: boolean;
+};
+
+/** Les projets d'une catégorie, dans leur ordre d'affichage public actuel. */
+export type ProjectCategoryGroup = {
+  category: ProjectCategory;
+  projects: ReorderableProject[];
+};
+
+/** Résultat du chargement. `available: false` = base injoignable, PAS « 0 projet ». */
+export type ProjectOrderGroups =
+  { available: true; groups: ProjectCategoryGroup[] } | { available: false };
+
+/**
+ * Charge les projets GROUPÉS PAR CATÉGORIE, dans l'ordre d'affichage public
+ * (AC1, AC3).
+ *
+ * ⚠️ Décision Jeevons : le réordonnancement se fait AU SEIN D'UNE CATÉGORIE, et
+ * non globalement. C'est ce que reflète le site public, qui rend une section par
+ * catégorie ; c'est aussi ce que suppose l'index `@@index([category, sortOrder])`.
+ * Un tri global n'aurait aucun effet observable entre deux catégories.
+ *
+ * ⚠️ Cette lecture n'est PAS filtrable et n'expose PAS de tri alternatif, à la
+ * différence de `listAdminProjects` : réordonner une liste partielle ou triée par
+ * date produirait des `sortOrder` calculés sur une séquence incomplète, donc un
+ * ordre faux pour les projets absents de l'écran. Ici, l'ordre affiché EST
+ * l'ordre persisté — c'est la condition pour que « position dans la liste =
+ * `sortOrder` » reste vrai.
+ *
+ * Les brouillons sont inclus : Jeevons place un projet avant de le publier.
+ *
+ * Tri secondaire par `title` : plusieurs projets peuvent partager le même
+ * `sortOrder` (notamment `0` par défaut, avant tout réordonnancement). Sans ce
+ * départage, Postgres renverrait ces lignes dans un ordre non garanti et la
+ * liste « sauterait » d'un rendu à l'autre.
+ */
+export async function listProjectsForReorder(): Promise<ProjectOrderGroups> {
+  try {
+    const rows = await prisma.project.findMany({
+      orderBy: [{ sortOrder: "asc" }, { title: "asc" }],
+      select: {
+        id: true,
+        title: true,
+        company: true,
+        published: true,
+        category: true,
+      },
+    });
+
+    // Groupement en JS plutôt qu'en N requêtes : le volume est celui d'un
+    // portfolio (quelques dizaines de lignes), et une seule requête garantit
+    // que toutes les catégories reflètent le MÊME instant.
+    const groups = (Object.values(ProjectCategory) as ProjectCategory[]).map(
+      (category) => ({
+        category,
+        projects: rows
+          .filter((row) => row.category === category)
+          .map(({ id, title, company, published }) => ({
+            id,
+            title,
+            company,
+            published,
+          })),
+      }),
+    );
+
+    return { available: true, groups };
+  } catch (error) {
+    const raw = error instanceof Error ? error.message : String(error);
+    console.error(
+      `[admin] Ordre des projets indisponible. Cause : ${raw.replace(/\s+/g, " ").trim()}`,
+    );
+    return { available: false };
+  }
+}

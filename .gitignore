@@ -31,6 +31,9 @@ yarn-error.log*
 .env.production
 !.env.production.example
 
+# backups locaux des settings Claude Code (artefacts horodatés, non versionnés)
+.claude/*.bak-*
+
 # vercel
 .vercel
 
