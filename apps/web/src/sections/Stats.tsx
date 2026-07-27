@@ -65,10 +65,14 @@ const buildItems = (stats: {
     items.push({
       key: "stacks",
       value: stats.stacks,
+      // ⚠️ « utilisée » ET NON « maîtrisée » (décision Jeevons, juillet 2026) :
+      // le compteur mesure ce que le portfolio RECENSE, pas un niveau revendiqué.
+      // Le niveau, lui, se lit techno par techno dans l'administration — le
+      // résumer en un mot sur un agrégat le surinterpréterait.
       label: plural(
         stats.stacks,
-        "technologie maîtrisée",
-        "technologies maîtrisées",
+        "technologie utilisée",
+        "technologies utilisées",
       ),
     });
   }
