@@ -6,7 +6,6 @@ import { Header } from "@/sections/Header";
 import { HeroSection } from "@/sections/Hero";
 import { ProjectsSection } from "@/sections/Projects";
 import { SelfProjectsSection } from "@/sections/SelfProject";
-import { StacksSection } from "@/sections/Stacks";
 import { StatsSection } from "@/sections/Stats";
 import { TapeSection } from "@/sections/Tape";
 import { TestimonialsSection } from "@/sections/Testimonials";
@@ -52,10 +51,18 @@ export default function Home() {
           vise : la section disparaît si tous ses chiffres sont vides (AC3). */}
       <StatsSection />
       <TapeSection />
-      {/* Story 6.13 — « Stack & outils », après les projets qu'elle éclaire et
-          avant les témoignages. Aucune entrée de menu ne la vise : la section
-          disparaît si aucune technologie n'est enregistrée (AC3). */}
-      <StacksSection />
+      {/* 🛑 PAS DE SECTION « Stack & outils » ICI — RETIRÉE, NE PAS RÉINTRODUIRE.
+          Décision de Jeevons du 27/07 : elle faisait doublon avec « Mon pack
+          d'explorateur » (`AboutClient`), qui montre déjà les technologies. La
+          story 6.13 l'avait pourtant justifiée comme complémentaire (niveau de
+          maîtrise + domaine, là où la toolbox est décorative) — à l'usage, le
+          recoupement l'emporte sur l'apport. `sections/Stacks.tsx` et
+          `groupStacksByDomain` sont supprimés avec elle.
+
+          ⚠️ La colonne `Stack.domain` et son `<select>` en administration
+          RESTENT (choix de Jeevons) : la donnée est conservée et éditable, prête
+          à resservir si les technologies sont un jour réaffichées autrement.
+          C'est donc un champ sans effet visible, pas un oubli. */}
       <TestimonialsSection />
       <AboutSection />
       <ContactSection />

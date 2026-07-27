@@ -7,7 +7,6 @@ import { Header } from "@/sections/Header";
 import { HeroSection } from "@/sections/Hero";
 import { ProjectsSection } from "@/sections/Projects";
 import { SelfProjectsSection } from "@/sections/SelfProject";
-import { StacksSection } from "@/sections/Stacks";
 import { StatsSection } from "@/sections/Stats";
 import { TapeSection } from "@/sections/Tape";
 import { TestimonialsSection } from "@/sections/Testimonials";
@@ -72,11 +71,10 @@ export default async function PreviewPage() {
           chiffres que ses visiteurs ne verront pas — l'inverse du but d'AC2. */}
       <StatsSection />
       <TapeSection />
-      {/* Story 6.13 — même composition que la home : l'aperçu doit rendre
-          exactement ce que verra un visiteur. `Stack` n'a pas de notion de
-          brouillon (aucune colonne `published`), donc pas de drapeau `preview`
-          à passer ici. */}
-      <StacksSection />
+      {/* 🛑 PAS DE SECTION « Stack & outils » — retirée du site le 27/07 (voir
+          `app/page.tsx` pour le motif). L'aperçu doit rendre EXACTEMENT ce que
+          verra un visiteur : la réintroduire ici seule mentirait à Jeevons sur
+          l'état de sa page. */}
       <TestimonialsSection />
       <AboutSection />
       <ContactSection />

@@ -6,12 +6,6 @@ import { fallbackProjects, fallbackStacks } from "@/content/fallbacks";
 import { CACHE_TAGS, REVALIDATE_SECONDS } from "@/lib/cache-tags";
 import { prisma } from "@/lib/db";
 import { readWithFallback } from "@/lib/read-with-fallback";
-import {
-  isKnownStackDomain,
-  STACK_DOMAIN_FALLBACK_LABEL,
-  STACK_DOMAIN_LABELS,
-  STACK_DOMAINS,
-} from "@/lib/schemas/stack";
 import type { ProjectCategory, SkillLevel } from "@/generated/prisma/enums";
 
 // Lecture serveur des projets publiés d'une catégorie (Story 4.1, AC3/AC4).
@@ -265,68 +259,17 @@ export type PublicStack = {
   iconKey: string | null;
   level: SkillLevel | null;
   /**
-   * Story 6.13 — domaine de regroupement, NULLABLE : les technologies sans
-   * domaine sont regroupées à part, jamais masquées.
+   * Domaine saisi en administration, NULLABLE.
+   *
+   * ⚠️ PLUS AUCUN RENDU PUBLIC NE LE LIT depuis le retrait de la section
+   * « Stack & outils » (27/07, doublon avec « Mon pack d'explorateur »). Il est
+   * conservé de bout en bout — colonne, schéma, formulaire admin — pour que la
+   * donnée reste éditable et prête à resservir. Ne pas le retirer de cette
+   * projection en croyant nettoyer du mort : c'est ce qui alimente le `<select>`
+   * de `/admin/stacks`.
    */
   domain: string | null;
 };
-
-// ---------------------------------------------------------------------------
-// Story 6.13 — REGROUPEMENT PAR DOMAINE (AC1).
-// ---------------------------------------------------------------------------
-
-/** Un domaine et ses technologies, prêt à rendre. Jamais vide (voir plus bas). */
-export type StackGroup = {
-  /** Clé stable pour `key` React — le libellé peut changer, pas elle. */
-  key: string;
-  label: string;
-  stacks: PublicStack[];
-};
-
-/**
- * Regroupe les technologies par domaine, dans l'ORDRE DÉTERMINISTE de
- * `STACK_DOMAINS` (AC1).
- *
- * 🛑 AUCUN GROUPE VIDE N'EST RENVOYÉ. C'est la moitié d'AC3 à l'échelle du
- * groupe : un domaine sans technologie ne doit produire ni titre ni liste — un
- * lecteur d'écran annoncerait sinon un intitulé suivi de « liste, 0 élément ».
- *
- * 🛑 LE GROUPE DE REPLI PASSE EN DERNIER, et il existe : les technologies dont
- * `domain` est `null` — ou porte une valeur retirée de `STACK_DOMAINS` — y sont
- * versées. ❌ Elles ne sont JAMAIS écartées : la colonne est nullable par
- * construction (aucune technologie existante n'avait de domaine avant 6.13), les
- * omettre viderait le site de son contenu.
- *
- * ⚠️ L'ORDRE INTERNE EST CELUI REÇU — niveau décroissant puis nom, décidé par
- * `getPublicStacks`. ❌ On ne retrie SURTOUT pas ici : ce serait annuler la
- * hiérarchie que le tri exprime.
- */
-export function groupStacksByDomain(stacks: PublicStack[]): StackGroup[] {
-  const groups: StackGroup[] = [];
-
-  for (const domain of STACK_DOMAINS) {
-    const matching = stacks.filter((stack) => stack.domain === domain);
-    if (matching.length === 0) continue;
-    groups.push({
-      key: domain,
-      label: STACK_DOMAIN_LABELS[domain],
-      stacks: matching,
-    });
-  }
-
-  const ungrouped = stacks.filter(
-    (stack) => stack.domain === null || !isKnownStackDomain(stack.domain),
-  );
-  if (ungrouped.length > 0) {
-    groups.push({
-      key: "__fallback",
-      label: STACK_DOMAIN_FALLBACK_LABEL,
-      stacks: ungrouped,
-    });
-  }
-
-  return groups;
-}
 
 // ---------------------------------------------------------------------------
 // Story 5.11 — Lecture d'APERÇU (AC2). Brouillons INCLUS, JAMAIS cachée.

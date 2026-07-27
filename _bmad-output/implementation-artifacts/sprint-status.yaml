@@ -121,7 +121,10 @@ development_status:
   6-10-consulter-un-projet-en-detail: review
   6-11-consulter-et-telecharger-le-cv: review
   6-12-prendre-contact-directement-depuis-le-site: review
-  6-13-comprendre-les-competences-de-jeevons: review
+  # Close PAR RETRAIT, pas par livraison : la section publique a été supprimée
+  # sur décision de Jeevons (doublon avec « Mon pack d'explorateur »). Le champ
+  # `domain` en admin est conservé. Détail dans le Change Log de la story.
+  6-13-comprendre-les-competences-de-jeevons: done
   6-14-saisir-l-experience-de-jeevons-en-quelques-chiffres: review
   6-15-decouvrir-la-personnalite-de-jeevons: review
   6-16-percevoir-un-site-vivant-jusque-dans-les-details: ready-for-dev

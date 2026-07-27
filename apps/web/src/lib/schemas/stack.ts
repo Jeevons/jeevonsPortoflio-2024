@@ -58,7 +58,15 @@ export const STACK_DOMAINS = [
 
 export type StackDomain = (typeof STACK_DOMAINS)[number];
 
-/** Libellés français des domaines, affichés en administration ET sur le site. */
+/**
+ * Libellés français des domaines.
+ *
+ * ⚠️ AFFICHÉS UNIQUEMENT EN ADMINISTRATION depuis le 27/07 : la section publique
+ * « Stack & outils » qui les rendait a été retirée (doublon avec « Mon pack
+ * d'explorateur »). Ils peuplent le `<select>` de `/admin/stacks`, rien d'autre.
+ * Le libellé de repli « Autres technologies » a disparu avec la section — plus
+ * rien ne regroupe, il n'y a donc plus de reste à nommer.
+ */
 export const STACK_DOMAIN_LABELS: Record<StackDomain, string> = {
   frontend: "Front-end",
   backend: "Back-end",
@@ -66,12 +74,6 @@ export const STACK_DOMAIN_LABELS: Record<StackDomain, string> = {
   tooling: "Outils & méthodes",
   design: "Design & UI",
 };
-
-/**
- * Groupe de repli des technologies SANS domaine (colonne nullable) ou portant un
- * domaine retiré de la liste. 🛑 Elles restent AFFICHÉES — jamais masquées.
- */
-export const STACK_DOMAIN_FALLBACK_LABEL = "Autres technologies";
 
 export function isKnownStackDomain(value: string): value is StackDomain {
   return (STACK_DOMAINS as readonly string[]).includes(value);

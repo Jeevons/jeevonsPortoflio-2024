@@ -267,3 +267,35 @@ La story avertissait que `AboutClient.tsx` est partagé avec 6.15. **Il n'a pas 
 | 2026-07-27 | 0.3 | `groupStacksByDomain` (ordre déterministe, aucun groupe vide, repli « Autres technologies ») et correction du commentaire devenu faux de `lib/projects.ts`. |
 | 2026-07-27 | 0.4 | Section `Stacks.tsx` (serveur pur, `<ul>`/`<li>`, niveau en texte visible + `sr-only`, `return null` si vide) intégrée à `/` et `/preview`. |
 | 2026-07-27 | 0.5 | AC1/AC2/AC3 vérifiés en conditions réelles ; `/` toujours `○ (Static, 1h)` ; base restaurée à l'identique ; statut `review`. |
+| 2026-07-27 | 1.0 | **SECTION PUBLIQUE RETIRÉE — revue de Jeevons.** Voir « Retrait de la section » ci-dessous. Statut `done` : la story est close, mais close **par retrait**, pas par livraison (`revoked` n'existe pas dans les statuts BMAD). |
+
+### Retrait de la section (27/07, revue de Jeevons)
+
+> « je ne veux pas de cette section, je la trouve redondante avec "mon pack
+> d'explorateur" »
+
+La section « Stack & outils » est **supprimée du site**. Elle avait d'abord été
+masquée par un filtre (le groupe de repli « Autres technologies » écarté du
+rendu), mais c'était un contresens : le filtre l'aurait fait **réapparaître dès
+qu'un domaine aurait été assigné** en administration, alors que la demande porte
+sur la section elle-même, pas sur son contenu.
+
+**Ce qui est supprimé :** `sections/Stacks.tsx`, son intégration dans `/` et
+`/preview`, `groupStacksByDomain` + le type `StackGroup` (`lib/projects.ts`, son
+unique appelant était la section), et `STACK_DOMAIN_FALLBACK_LABEL` (plus rien ne
+regroupe, donc plus de reste à nommer).
+
+**Ce qui est CONSERVÉ, délibérément** (choix de Jeevons) : la colonne
+`Stack.domain`, sa validation Zod, le `<select>` de `/admin/stacks`, l'entrée
+d'audit et `PublicStack.domain`. La donnée reste saisie et éditable, prête à
+resservir si les technologies sont un jour réaffichées autrement. ⚠️ C'est donc
+un champ **sans effet visible aujourd'hui** — ne pas le prendre pour du code mort
+et le nettoyer. Aucune migration : rien n'est détruit en base.
+
+⚠️ AC1/AC2/AC3 ne décrivent plus rien de rendu. Ils restent consignés tels quels
+comme trace de ce qui a été construit et pourquoi il a été retiré — ❌ ne pas les
+relire comme un contrat à honorer.
+
+Vérifié sur le HTML servi : 0 « Stack & outils », 0 « Autres technologies », 0
+`id="stack"`, « Mon pack d'explorateur » intact, `/preview` en 200, `/` toujours
+`○ (Static, 1h)`.
