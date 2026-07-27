@@ -213,7 +213,7 @@ export async function updateStackAction(
   try {
     const before = await prisma.stack.findUnique({
       where: { id },
-      select: { name: true, iconKey: true, level: true },
+      select: { name: true, iconKey: true, level: true, domain: true },
     });
 
     await prisma.stack.update({

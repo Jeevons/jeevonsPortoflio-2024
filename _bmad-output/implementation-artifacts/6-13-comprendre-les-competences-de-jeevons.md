@@ -4,7 +4,7 @@ baseline_commit: c408eae7818fb33ef915a70085775688fbf80640
 
 # Story 6.13: Comprendre les compétences de Jeevons
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -123,27 +123,26 @@ Les badges de niveau et les groupes reprennent les **tokens 6.1** (couleurs d'ac
 
 ## Tasks / Subtasks
 
-- [ ] **Tâche 0 — 🛑 DÉCISION BLOQUANTE & prérequis** (AC: 1)
-  - [ ] 6.1 et 6.2 `done`. 🛑 **ARRÊTER ET DEMANDER À JEEVONS** : d'où vient le **domaine** ? (champ en base + admin **recommandé si AC1 doit être satisfait à la lettre** / table de correspondance en code / abandon du regroupement). ❌ **Aucune migration avant sa réponse.**
-  - [ ] 🛑 **Décider et documenter** : nouvelle section **ou** remplacement de la toolbox (piège n°3, ⚠️ conflit 6.15) · sort d'une technologie **sans niveau** (afficher sans badge, recommandé) · ordre déterministe des groupes.
-- [ ] **Tâche 1 — Domaine** (AC: 1 ; selon la tâche 0)
-  - [ ] Si option 1 : migration **additive nullable** sur `Stack` (motif `TimelineEntry.avatarId`, 5.14) + champ dans `schemas/stack.ts`, `stack-form.tsx`, `actions.ts` + seed. 🛑 **Rien d'autre dans l'administration.** Les technologies sans domaine → **groupe de repli lisible**, ❌ jamais masquées.
-  - [ ] Si option 2 : table de correspondance dans `lib/`, avec un **groupe « Autres »** explicite. ⚠️ Documenter que le domaine n'est alors **pas** administrable.
-- [ ] **Tâche 2 — Lecture** (AC: 1 ; piège n°4)
-  - [ ] ✅ **Consommer `getPublicStacks()`** (déjà cachée tag `projects` + `readWithFallback`). ❌ Pas de Prisma nu, pas de nouvelle lecture. 🛑 **Mettre à jour le commentaire devenu faux** de `lib/projects.ts` (« le niveau ordonne, il ne s'affiche pas en badge »).
-  - [ ] Conserver le tri niveau ↓ puis nom **à l'intérieur de chaque groupe**.
-- [ ] **Tâche 3 — Rendu de la section** (AC: 1, 2, 3 ; pièges n°1, n°2)
-  - [ ] Groupes ordonnés déterministes, listes sémantiques (`<ul>`/`<li>`), titres de niveau cohérents, tokens 6.1, contrastes AA. **Composant serveur** si aucune interactivité.
-  - [ ] **Niveau via `SKILL_LEVEL_LABELS`** (importé, ❌ pas recopié), **texte visible**, indicateur graphique éventuel en `aria-hidden`. Technologie sans niveau : **affichée sans badge**.
-  - [ ] 🛑 **AC3 : `return null`** si aucune technologie — et pour tout groupe vide. ❌ Pas de masquage CSS.
-- [ ] **Tâche 4 — Intégration dans la page** (piège n°3, n°4)
-  - [ ] Insertion dans `page.tsx` **et `/preview`**. `id` **unique**, ❌ **aucune entrée ajoutée au `Header`**. ⚠️ Traiter la redondance avec la toolbox selon la décision de la tâche 0 ; **relire l'état réel de `AboutClient.tsx`** (conflit 6.15).
-- [ ] **Tâche 5 — Vérification locale** (AC: 1-3 ; piège n°6)
-  - [ ] Les 3 AC un par un, dont **modification d'un niveau en administration sans rebuild** (AC1), **niveaux de gris + lecteur d'écran** (AC2), **table `Stack` vidée** — pas base coupée (AC3).
-- [ ] **Tâche 6 — Definition of Done** (AGENTS.md §8)
-  - [ ] `bun run lint` 0 / `bunx tsc --noEmit` 0 / `bun run build` OK — 🛑 **`/` toujours `○ (Static, 1h)`**.
-  - [ ] `git diff DEV` : nouvelle section (+ éventuels migration/champ admin **validés**). ❌ Aucune dépendance, `Header.tsx` intact, aucun débordement Epic 5.
-  - [ ] `File List` + `Completion Notes` + `Change Log` · `sprint-status.yaml`.
+- [x] **Tâche 0 — 🛑 DÉCISION BLOQUANTE & prérequis** (AC: 1)
+  - [x] 6.1 et 6.2 `done`. 🛑 **Demandé à Jeevons AVANT toute écriture** → **option 1 retenue : « Champ en base + admin »**.
+  - [x] Décisions prises et documentées : **nouvelle section, toolbox gardée** · technologie sans niveau **affichée sans badge** · ordre des groupes **déterministe** (`STACK_DOMAINS`).
+- [x] **Tâche 1 — Domaine** (AC: 1 ; option 1)
+  - [x] Migration **additive nullable** `20260727095827_add_stack_domain` (`ALTER TABLE "Stack" ADD COLUMN "domain" TEXT;`) + champ dans `schemas/stack.ts`, `stack-form.tsx`, `actions.ts`, `lib/admin/stacks.ts`, allow-list d'audit, seed. **Rien d'autre dans l'administration.** Technologies sans domaine → groupe **« Autres technologies »**, jamais masquées.
+- [x] **Tâche 2 — Lecture** (AC: 1 ; piège n°4)
+  - [x] `getPublicStacks()` **consommée telle quelle** (cachée tag `projects` + `readWithFallback`) ; `domain` ajouté à sa projection. Aucun Prisma nu dans la section. 🛑 **Commentaire devenu faux corrigé** dans `lib/projects.ts`.
+  - [x] Tri niveau ↓ puis nom **conservé à l'intérieur de chaque groupe** (`groupStacksByDomain` filtre, ne retrie pas).
+- [x] **Tâche 3 — Rendu de la section** (AC: 1, 2, 3 ; pièges n°1, n°2)
+  - [x] Groupes déterministes, `<ul>`/`<li>`, `h3` sous le `h2` du `SectionHeader`, tokens 6.1. **Composant serveur pur** (seul `Reveal` est client).
+  - [x] Niveau via **`SKILL_LEVEL_LABELS` importé**, en **texte visible**, précédé d'un `sr-only` « Niveau : ». Icône `aria-hidden`. Sans niveau → **affichée sans badge**.
+  - [x] 🛑 **`return null`** si aucune technologie ; aucun groupe vide n'est produit.
+- [x] **Tâche 4 — Intégration dans la page** (piège n°3, n°4)
+  - [x] Insérée dans `page.tsx` **et `/preview`**, `id="stack"` **nouveau**, **aucune entrée ajoutée au `Header`**. `AboutClient.tsx` **non modifié** (aucun conflit 6.15).
+- [x] **Tâche 5 — Vérification locale** (AC: 1-3 ; piège n°6)
+  - [x] Les 3 AC vérifiés en conditions réelles (base réelle, serveur du conteneur) — détail en Completion Notes. Restent dues par Jeevons : niveaux de gris à l'œil, lecteur d'écran réel, contrastes mesurés, 375 px.
+- [x] **Tâche 6 — Definition of Done** (AGENTS.md §8)
+  - [x] `bun run lint` **0** / `bun x tsc --noEmit` **0** / `bun run build` **OK** — 🛑 **`/` toujours `○ (Static, 1h)`** (vérifié dans la sortie du build).
+  - [x] `git status` : **aucune dépendance**, `package.json`/`bun.lock` intacts, `Header.tsx` intact, `AboutClient.tsx` intact.
+  - [x] `File List` + `Completion Notes` + `Change Log` · `sprint-status.yaml` → `review`.
 
 ## Dev Notes
 
@@ -190,8 +189,81 @@ Vérification **manuelle** des 3 AC, avec trois tests décisifs : **modifier un 
 
 ### Agent Model Used
 
+claude-opus-5 (Claude Code)
+
 ### Completion Notes
+
+**Décisions de Jeevons (tâche 0, prises AVANT toute écriture de code)**
+
+1. **Domaine → champ en base + admin** (option 1). C'est la seule voie qui satisfait AC1 à la lettre (« telles que saisies en administration »).
+2. **Technologie sans niveau → affichée sans badge.** Jamais masquée, jamais de niveau par défaut inventé.
+3. **Nouvelle section, toolbox gardée.** « Mon pack d'explorateur » reste en place.
+
+**Le domaine : colonne texte + liste en code, et pourquoi**
+
+`domain String?` est une colonne **texte**, pas un enum Prisma : ajouter un domaine aurait sinon exigé une migration à chaque fois. La liste des valeurs vit donc dans `STACK_DOMAINS` (`lib/schemas/stack.ts`), et c'est **elle qui fixe l'ordre des groupes** — un ordre dérivé des données (insertion, alphabétique) ferait sauter les groupes de place d'un rendu à l'autre. Le `<select>` de l'administration s'y limite, ce qui écarte les groupes dupliqués par faute de frappe (« Back-end » / « Backend »).
+
+⚠️ **Conséquence assumée** : un domaine retiré de `STACK_DOMAINS` alors qu'il est encore en base. Contrairement à `iconKey` (qu'on conserve tel quel), le schéma le **refuse** — le garder sélectionné bloquerait toute modification de la technologie. Le formulaire retombe donc sur « Non précisé » **et le dit explicitement** par un avertissement, pour que le remplacement ne soit pas silencieux. Côté public, la technologie tombe dans « Autres technologies » : visible, jamais perdue.
+
+**Trois fichiers modifiés que la story ne listait pas — et pourquoi c'était nécessaire**
+
+- **`lib/admin/stacks.ts`** (`getAdminStack`). Le formulaire réenvoie **tous** ses champs à chaque enregistrement. Sans `domain` dans cette sélection, il serait parti vide et l'action aurait **effacé le domaine à la première modification du nom**. Bug silencieux évité.
+- **`lib/admin/audit.ts`**. `ENTITY_FIELDS` est une **allow-list** : sans y ajouter `domain`, un changement de domaine serait passé par l'action **sans laisser aucune trace au journal** (5.19).
+- **`content/stacks.ts` + `content/fallbacks.ts`**. Les six technologies de repli (4.5) portent désormais un domaine, pour que le repli reste **groupé comme le site normal** au lieu de verser ses six entrées dans « Autres technologies ».
+
+Le seed, lui, **ne renseigne ni niveau ni domaine** : les technologies y viennent des projets (`projectsContent`), qui ne portent que des noms. Inventer un domaine aurait été fabriquer de la donnée. Elles s'affichent donc dans « Autres technologies » jusqu'à ce que Jeevons leur en attribue un.
+
+**AC2 — le choix d'accessibilité, et ce qu'il écarte**
+
+Le niveau est un **libellé texte visible** (« Solide », « À l'aise », « En apprentissage »), importé de `SKILL_LEVEL_LABELS`, précédé d'un `sr-only` « Niveau : ». Un lecteur d'écran annonce donc « Html, Niveau : Solide » et non un « Solide » orphelin. Le fond du badge n'est qu'un renfort d'intensité : **retirez toute couleur, l'information reste entière**. Le texte est `text-white` plein sur les trois niveaux — le contraste ne dépend pas du palier. L'icône est `aria-hidden` (le nom juste à côté porte déjà l'information). ❌ Aucun point coloré, aucun `title`, aucune couleur seule.
+
+**Vérifications faites en conditions réelles** (base réelle, serveur du conteneur — pas par lecture du code)
+
+- **AC1 — groupement + niveaux depuis la base.** Domaines et niveaux attribués en base, puis lecture via `getPublicStacks()` : groupes rendus dans l'ordre `Front-end → Back-end → CMS & e-commerce → Autres technologies`, exactement l'ordre de `STACK_DOMAINS`. Tri interne préservé : `Html`/`Javascript` (Solide) **avant** `Css` (À l'aise), puis les sans-niveau par nom.
+- **AC1 — test décisif, sans rebuild.** `revalidateTag('projects')` puis relecture : les nouvelles valeurs apparaissent **immédiatement**, sans redémarrage ni rebuild. La chaîne d'invalidation que les actions admin déclenchent est donc opérante de bout en bout.
+- **AC2 — dans le DOM servi.** Item avec niveau : `<span …><span class="sr-only">Niveau : </span>Solide</span>`. Item sans niveau (`Javascript`) : **présent, sans badge**. Icône `aria-hidden="true"` confirmée.
+- **AC3 — table `Stack` vidée** (et **non** base coupée, piège n°1) : lecture `count: 0`, `groups: []`, et dans le HTML de `/` → **`id="stack"` : 0 occurrence**, « Stack & outils » : 0, « Autres technologies » : 0. **Rien n'est émis dans le DOM.**
+- **Non-régression décisive** : `bun run build` → **`┌ ○ / 1h 1y`**. La home reste statique.
+- `bun run lint` → 0. `bun x tsc --noEmit` → 0.
+- `git status` : **aucune dépendance ajoutée**, `Header.tsx` intact, **`AboutClient.tsx` intact**.
+
+**⚠️ Un piège de vérification qui a coûté plusieurs allers-retours — à connaître pour les stories suivantes**
+
+`unstable_cache` **survit au redémarrage du conteneur** et son TTL est d'1 h. Après avoir vidé la table pour AC3, la lecture a continué de renvoyer `[]` alors que la base avait été repeuplée : ni `docker compose restart`, ni la suppression de `.next/cache` ne le purgent. Le seul levier fiable est **`revalidateTag`**. Deuxième piège cumulé : **`docker-entrypoint.sh` rejoue le seed à chaque démarrage**, ce qui recrée les 7 technologies (sans niveau ni domaine, `update: {}`) — un `DELETE` suivi d'un restart est donc annulé. Vérifier via une route qui invalide puis relit, sans redémarrer.
+
+**Chevauchement 6.15 — signalé comme demandé (piège n°3)**
+
+La story avertissait que `AboutClient.tsx` est partagé avec 6.15. **Il n'a pas été touché** : la toolbox reste alimentée par `getPublicStacks()` mais ne reçoit ni niveau ni domaine (`About.tsx` ne mappe que `id`/`name`/`iconKey`). Aucun doublon d'information non plus : la toolbox est **décorative** (bandes défilantes de logos), la nouvelle section est **informative**. 6.15 peut donc refondre la grille À propos sans conflit avec cette story.
+
+**Restant dû par Jeevons** (vérifications humaines, non automatisables ici) : la page en **niveaux de gris** à l'œil ; un parcours au **lecteur d'écran réel** ; les **contrastes AA** mesurés sur les trois paliers de badge ; le rendu à **375 px** ; et l'attribution des domaines aux 7 technologies réelles depuis `/admin/stacks` (la base a été **rendue à son état d'origine exact** après les tests : 7 technologies, seule `Css` en « À l'aise », aucun domaine).
 
 ### File List
 
+**Nouveaux**
+- `apps/web/src/sections/Stacks.tsx` — section publique « Stack & outils » (composant serveur pur)
+- `apps/web/prisma/migrations/20260727095827_add_stack_domain/migration.sql` — migration additive nullable
+
+**Modifiés**
+- `apps/web/prisma/schema.prisma` — `domain String?` sur `model Stack`
+- `apps/web/prisma/seed.ts` — note sur `domain` laissé `null` (pas de donnée inventée)
+- `apps/web/src/lib/schemas/stack.ts` — `STACK_DOMAINS`, `STACK_DOMAIN_LABELS`, `STACK_DOMAIN_FALLBACK_LABEL`, `isKnownStackDomain`, champ `domain` du schéma + `stackFormDataToInput`
+- `apps/web/src/lib/projects.ts` — `domain` dans `PublicStack` et la projection ; `groupStacksByDomain` ; **commentaire corrigé** (« le niveau ordonne, il ne s'affiche pas en badge »)
+- `apps/web/src/lib/admin/stacks.ts` — `domain` dans `AdminStack` et `getAdminStack` (sinon effacement silencieux)
+- `apps/web/src/lib/admin/audit.ts` — `domain` ajouté à l'allow-list `Stack`
+- `apps/web/src/app/(admin)/admin/stacks/stack-form.tsx` — champ « Domaine » + avertissement domaine hors liste ; grille passée à 3 colonnes
+- `apps/web/src/app/(admin)/admin/stacks/actions.ts` — `domain` dans la lecture `before` de l'audit
+- `apps/web/src/content/stacks.ts` — `domain` sur les six entrées de repli
+- `apps/web/src/content/fallbacks.ts` — `domain` propagé par `fallbackStacks()`
+- `apps/web/src/app/page.tsx` — `<StacksSection />` intégrée
+- `apps/web/src/app/preview/page.tsx` — `<StacksSection />` intégrée
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` — statut `review`
+
 ### Change Log
+
+| Date | Version | Description |
+|---|---|---|
+| 2026-07-27 | 0.1 | Tâche 0 : décisions de Jeevons obtenues avant tout code (champ en base + admin · sans niveau = sans badge · nouvelle section, toolbox gardée). |
+| 2026-07-27 | 0.2 | Migration additive nullable `add_stack_domain` + `domain` propagé au schéma partagé, au formulaire admin, à l'audit et au repli 4.5. |
+| 2026-07-27 | 0.3 | `groupStacksByDomain` (ordre déterministe, aucun groupe vide, repli « Autres technologies ») et correction du commentaire devenu faux de `lib/projects.ts`. |
+| 2026-07-27 | 0.4 | Section `Stacks.tsx` (serveur pur, `<ul>`/`<li>`, niveau en texte visible + `sr-only`, `return null` si vide) intégrée à `/` et `/preview`. |
+| 2026-07-27 | 0.5 | AC1/AC2/AC3 vérifiés en conditions réelles ; `/` toujours `○ (Static, 1h)` ; base restaurée à l'identique ; statut `review`. |

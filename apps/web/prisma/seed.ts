@@ -42,6 +42,12 @@ async function main() {
   for (const p of projects) {
     // Stacks : upsert par `name` (dédupliqués entre projets). SkillLevel reste
     // null au seed (données d'origine ne le portent pas — piège n°3).
+    //
+    // ⚠️ Story 6.13 — `domain` reste null lui aussi, et pour la MÊME raison : les
+    // technologies viennent des projets (`projectsContent`), qui ne portent que
+    // des noms. Inventer un domaine ici serait fabriquer de la donnée. Elles
+    // s'affichent donc dans « Autres technologies » tant que Jeevons ne leur en
+    // attribue pas un depuis `/admin/stacks` — jamais masquées.
     const stackRecords = await Promise.all(
       p.stacks.map((name) =>
         prisma.stack.upsert({

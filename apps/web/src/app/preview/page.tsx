@@ -7,6 +7,7 @@ import { Header } from "@/sections/Header";
 import { HeroSection } from "@/sections/Hero";
 import { ProjectsSection } from "@/sections/Projects";
 import { SelfProjectsSection } from "@/sections/SelfProject";
+import { StacksSection } from "@/sections/Stacks";
 import { TapeSection } from "@/sections/Tape";
 import { TestimonialsSection } from "@/sections/Testimonials";
 import type { Metadata } from "next";
@@ -65,6 +66,11 @@ export default async function PreviewPage() {
       <ProjectsSection preview={preview} />
       <SelfProjectsSection preview={preview} />
       <TapeSection />
+      {/* Story 6.13 — même composition que la home : l'aperçu doit rendre
+          exactement ce que verra un visiteur. `Stack` n'a pas de notion de
+          brouillon (aucune colonne `published`), donc pas de drapeau `preview`
+          à passer ici. */}
+      <StacksSection />
       <TestimonialsSection />
       <AboutSection />
       <ContactSection />

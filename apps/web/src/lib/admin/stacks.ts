@@ -77,6 +77,14 @@ export type AdminStack = {
   name: string;
   iconKey: string | null;
   level: SkillLevel | null;
+  /**
+   * Story 6.13 — domaine de regroupement public.
+   *
+   * 🛑 DOIT être lu ici : le formulaire réenvoie TOUS ses champs à chaque
+   * enregistrement. Absent de cette sélection, il partirait vide et l'action
+   * effacerait silencieusement le domaine à la première modification du nom.
+   */
+  domain: string | null;
 };
 
 /**
@@ -86,7 +94,13 @@ export type AdminStack = {
 export async function getAdminStack(id: string): Promise<AdminStack | null> {
   return prisma.stack.findUnique({
     where: { id },
-    select: { id: true, name: true, iconKey: true, level: true },
+    select: {
+      id: true,
+      name: true,
+      iconKey: true,
+      level: true,
+      domain: true,
+    },
   });
 }
 

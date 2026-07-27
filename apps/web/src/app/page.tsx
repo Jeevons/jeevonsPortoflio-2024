@@ -6,6 +6,7 @@ import { Header } from "@/sections/Header";
 import { HeroSection } from "@/sections/Hero";
 import { ProjectsSection } from "@/sections/Projects";
 import { SelfProjectsSection } from "@/sections/SelfProject";
+import { StacksSection } from "@/sections/Stacks";
 import { TapeSection } from "@/sections/Tape";
 import { TestimonialsSection } from "@/sections/Testimonials";
 
@@ -45,6 +46,10 @@ export default function Home() {
       <ProjectsSection />
       <SelfProjectsSection />
       <TapeSection />
+      {/* Story 6.13 — « Stack & outils », après les projets qu'elle éclaire et
+          avant les témoignages. Aucune entrée de menu ne la vise : la section
+          disparaît si aucune technologie n'est enregistrée (AC3). */}
+      <StacksSection />
       <TestimonialsSection />
       <AboutSection />
       <ContactSection />

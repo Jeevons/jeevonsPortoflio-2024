@@ -50,7 +50,9 @@ const ENTITY_FIELDS: Record<string, readonly string[]> = {
     "endYear",
     "published",
   ],
-  Stack: ["name", "iconKey", "level"],
+  // `domain` ajouté en 6.13 : sans lui dans l'allow-list, un changement de
+  // domaine passerait par l'action sans laisser aucune trace au journal.
+  Stack: ["name", "iconKey", "level", "domain"],
   SiteSetting: ["key"],
   ContactMessage: ["read"],
   Media: ["path", "alt"],

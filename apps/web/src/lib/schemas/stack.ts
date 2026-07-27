@@ -35,6 +35,49 @@ export const SKILL_LEVEL_LABELS: Record<SkillLevel, string> = {
 };
 
 /**
+ * Story 6.13 — DOMAINES, dans l'ordre d'affichage de la section publique.
+ *
+ * 🛑 C'EST CETTE LISTE QUI FIXE L'ORDRE DES GROUPES, et c'est délibéré : un
+ * ordre dérivé de l'itération des données (ordre d'insertion, alphabétique)
+ * ferait sauter les groupes de place d'un rendu à l'autre. Ici, l'ordre est
+ * explicite et se lit comme la hiérarchie voulue.
+ *
+ * ⚠️ Liste EN CODE sur une colonne `String?` en base, plutôt qu'un enum Prisma :
+ * ajouter un domaine ne demande alors aucune migration. Le `<select>` de
+ * l'administration s'y limite, ce qui évite les groupes dupliqués par faute de
+ * frappe (« Back-end » / « Backend »), tout en laissant les valeurs déjà en base
+ * intactes si la liste évolue — elles retombent dans le groupe de repli.
+ */
+export const STACK_DOMAINS = [
+  "frontend",
+  "backend",
+  "cms",
+  "tooling",
+  "design",
+] as const;
+
+export type StackDomain = (typeof STACK_DOMAINS)[number];
+
+/** Libellés français des domaines, affichés en administration ET sur le site. */
+export const STACK_DOMAIN_LABELS: Record<StackDomain, string> = {
+  frontend: "Front-end",
+  backend: "Back-end",
+  cms: "CMS & e-commerce",
+  tooling: "Outils & méthodes",
+  design: "Design & UI",
+};
+
+/**
+ * Groupe de repli des technologies SANS domaine (colonne nullable) ou portant un
+ * domaine retiré de la liste. 🛑 Elles restent AFFICHÉES — jamais masquées.
+ */
+export const STACK_DOMAIN_FALLBACK_LABEL = "Autres technologies";
+
+export function isKnownStackDomain(value: string): value is StackDomain {
+  return (STACK_DOMAINS as readonly string[]).includes(value);
+}
+
+/**
  * Règles d'une technologie (AC1 : nom, clé d'icône, niveau).
  *
  * ⚠️ L'UNICITÉ DU NOM n'est PAS vérifiable ici. Un schéma est une fonction pure :
@@ -67,6 +110,19 @@ export const stackSchema = z.object({
   level: z
     .union([z.literal(""), z.null(), z.undefined(), skillLevelSchema])
     .transform((value) => (value === "" || value === undefined ? null : value)),
+  // Story 6.13 — Vide → `null` : le domaine est FACULTATIF, exactement comme le
+  // niveau. Une technologie sans domaine reste parfaitement valide et s'affiche
+  // dans le groupe de repli. ❌ Ne pas le rendre obligatoire : les technologies
+  // déjà en base n'en ont pas, et toute modification depuis l'administration
+  // serait alors refusée tant qu'un domaine n'aurait pas été choisi.
+  domain: z
+    .union([
+      z.literal(""),
+      z.null(),
+      z.undefined(),
+      z.enum(STACK_DOMAINS, { message: "Choisissez un domaine de la liste." }),
+    ])
+    .transform((value) => (value === "" || value === undefined ? null : value)),
 });
 
 /** Valeurs validées d'une technologie — contrat unique client ↔ serveur. */
@@ -95,5 +151,6 @@ export function stackFormDataToInput(formData: FormData): unknown {
     name: text("name"),
     iconKey: text("iconKey"),
     level: text("level"),
+    domain: text("domain"),
   };
 }

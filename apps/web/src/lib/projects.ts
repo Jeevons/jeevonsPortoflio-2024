@@ -6,6 +6,12 @@ import { fallbackProjects, fallbackStacks } from "@/content/fallbacks";
 import { CACHE_TAGS, REVALIDATE_SECONDS } from "@/lib/cache-tags";
 import { prisma } from "@/lib/db";
 import { readWithFallback } from "@/lib/read-with-fallback";
+import {
+  isKnownStackDomain,
+  STACK_DOMAIN_FALLBACK_LABEL,
+  STACK_DOMAIN_LABELS,
+  STACK_DOMAINS,
+} from "@/lib/schemas/stack";
 import type { ProjectCategory, SkillLevel } from "@/generated/prisma/enums";
 
 // Lecture serveur des projets publiés d'une catégorie (Story 4.1, AC3/AC4).
@@ -168,11 +174,15 @@ export async function getPublishedProjectSlugs() {
 /**
  * Toutes les technologies, pour la toolbox publique (« Mon pack d'explorateur »).
  *
- * ⚠️ TRI PAR NIVEAU DÉCROISSANT, et c'est ce qui rend l'AC3 observable
- * (décision Jeevons : le niveau ordonne, il ne s'affiche pas en badge).
- * Modifier un niveau depuis l'administration déplace donc visiblement la
- * technologie dans la bande — sans quoi « les niveaux sont reflétés côté
- * public » n'aurait aucune traduction à l'écran.
+ * ⚠️ TRI PAR NIVEAU DÉCROISSANT, ce qui rend l'AC3 de 5.15 observable : modifier
+ * un niveau depuis l'administration déplace visiblement la technologie.
+ *
+ * 🛑 CORRECTION story 6.13 — ce commentaire affirmait « décision Jeevons : le
+ * niveau ordonne, il ne s'affiche pas en badge ». **Ce n'est plus vrai** : la
+ * section « Stack & outils » (6.13, AC1) AFFICHE désormais le niveau en toutes
+ * lettres, à côté de chaque technologie. Le tri reste, il s'y ajoute — il ne
+ * remplace plus l'affichage. La toolbox « Mon pack d'explorateur », elle,
+ * continue de n'en montrer que l'ordre.
  *
  * `level` est NULLABLE (schéma 4.1, et le seed ne le renseigne pas) : les
  * technologies sans niveau passent en dernier plutôt que d'être masquées.
@@ -186,7 +196,13 @@ export async function getPublishedProjectSlugs() {
  */
 function queryPublicStacks() {
   return prisma.stack.findMany({
-    select: { id: true, name: true, iconKey: true, level: true },
+    select: {
+      id: true,
+      name: true,
+      iconKey: true,
+      level: true,
+      domain: true,
+    },
     orderBy: [{ name: "asc" }],
   });
 }
@@ -248,7 +264,69 @@ export type PublicStack = {
   name: string;
   iconKey: string | null;
   level: SkillLevel | null;
+  /**
+   * Story 6.13 — domaine de regroupement, NULLABLE : les technologies sans
+   * domaine sont regroupées à part, jamais masquées.
+   */
+  domain: string | null;
 };
+
+// ---------------------------------------------------------------------------
+// Story 6.13 — REGROUPEMENT PAR DOMAINE (AC1).
+// ---------------------------------------------------------------------------
+
+/** Un domaine et ses technologies, prêt à rendre. Jamais vide (voir plus bas). */
+export type StackGroup = {
+  /** Clé stable pour `key` React — le libellé peut changer, pas elle. */
+  key: string;
+  label: string;
+  stacks: PublicStack[];
+};
+
+/**
+ * Regroupe les technologies par domaine, dans l'ORDRE DÉTERMINISTE de
+ * `STACK_DOMAINS` (AC1).
+ *
+ * 🛑 AUCUN GROUPE VIDE N'EST RENVOYÉ. C'est la moitié d'AC3 à l'échelle du
+ * groupe : un domaine sans technologie ne doit produire ni titre ni liste — un
+ * lecteur d'écran annoncerait sinon un intitulé suivi de « liste, 0 élément ».
+ *
+ * 🛑 LE GROUPE DE REPLI PASSE EN DERNIER, et il existe : les technologies dont
+ * `domain` est `null` — ou porte une valeur retirée de `STACK_DOMAINS` — y sont
+ * versées. ❌ Elles ne sont JAMAIS écartées : la colonne est nullable par
+ * construction (aucune technologie existante n'avait de domaine avant 6.13), les
+ * omettre viderait le site de son contenu.
+ *
+ * ⚠️ L'ORDRE INTERNE EST CELUI REÇU — niveau décroissant puis nom, décidé par
+ * `getPublicStacks`. ❌ On ne retrie SURTOUT pas ici : ce serait annuler la
+ * hiérarchie que le tri exprime.
+ */
+export function groupStacksByDomain(stacks: PublicStack[]): StackGroup[] {
+  const groups: StackGroup[] = [];
+
+  for (const domain of STACK_DOMAINS) {
+    const matching = stacks.filter((stack) => stack.domain === domain);
+    if (matching.length === 0) continue;
+    groups.push({
+      key: domain,
+      label: STACK_DOMAIN_LABELS[domain],
+      stacks: matching,
+    });
+  }
+
+  const ungrouped = stacks.filter(
+    (stack) => stack.domain === null || !isKnownStackDomain(stack.domain),
+  );
+  if (ungrouped.length > 0) {
+    groups.push({
+      key: "__fallback",
+      label: STACK_DOMAIN_FALLBACK_LABEL,
+      stacks: ungrouped,
+    });
+  }
+
+  return groups;
+}
 
 // ---------------------------------------------------------------------------
 // Story 5.11 — Lecture d'APERÇU (AC2). Brouillons INCLUS, JAMAIS cachée.
