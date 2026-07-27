@@ -8,7 +8,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { SkillLevel } from "@/generated/prisma/enums";
 import {
+  isKnownStackDomain,
   SKILL_LEVEL_LABELS,
+  STACK_DOMAIN_LABELS,
+  STACK_DOMAINS,
   stackSchema,
   type StackFormValues,
 } from "@/lib/schemas/stack";
@@ -60,6 +63,8 @@ type StackFormProps = {
     name: string;
     iconKey: string | null;
     level: SkillLevel | null;
+    /** Story 6.13 — domaine de regroupement public, nullable par construction. */
+    domain: string | null;
   };
 };
 
@@ -79,6 +84,14 @@ export function StackForm({ stack }: StackFormProps) {
 
   const [iconKey, setIconKey] = useState<string>(initialIconKey);
 
+  // Story 6.13 — Un domaine hors liste (valeur retirée de `STACK_DOMAINS`) est
+  // ramené à « Non précisé » : contrairement à `iconKey`, le schéma le REFUSE,
+  // donc le conserver bloquerait toute modification de la technologie.
+  const storedDomain = stack?.domain ?? "";
+  const hasUnknownDomain =
+    storedDomain !== "" && !isKnownStackDomain(storedDomain);
+  const initialDomain = hasUnknownDomain ? "" : storedDomain;
+
   const {
     register,
     formState: { errors },
@@ -94,6 +107,12 @@ export function StackForm({ stack }: StackFormProps) {
       // Les `<select>` contrôlés exigent une chaîne : `null` ferait basculer
       // React en non-contrôlé et déclencherait un avertissement.
       level: stack?.level ?? "",
+      // Story 6.13 — même contrainte que `level` : un `<select>` contrôlé exige
+      // une chaîne. ⚠️ Un domaine en base RETIRÉ de `STACK_DOMAINS` ne peut pas
+      // être proposé : on retombe sur « Non précisé » plutôt que d'envoyer une
+      // valeur que le schéma refuserait — la technologie reste enregistrable et
+      // s'affiche dans le groupe de repli.
+      domain: initialDomain,
     },
   });
 
@@ -157,7 +176,7 @@ export function StackForm({ stack }: StackFormProps) {
         />
       </Field>
 
-      <div className="grid gap-6 sm:grid-cols-2">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <Field
           label="Icône"
           name="iconKey"
@@ -220,7 +239,47 @@ export function StackForm({ stack }: StackFormProps) {
             ))}
           </select>
         </Field>
+
+        {/* Story 6.13 — Domaine de regroupement de la section publique
+            « Stack & outils ». Facultatif : sans domaine, la technologie reste
+            affichée, dans un groupe de repli. */}
+        <Field
+          label="Domaine"
+          name="domain"
+          error={errorFor("domain")}
+          hint="Regroupe la technologie sur le site. Sans domaine, elle apparaît dans « Autres technologies »."
+        >
+          <select
+            id="domain"
+            className={fieldClass("domain")}
+            aria-describedby="domain-hint"
+            aria-invalid={errorFor("domain") ? true : undefined}
+            {...register("domain")}
+          >
+            <option value="">Non précisé</option>
+            {/* Ordre de la liste = ordre des groupes sur le site. */}
+            {STACK_DOMAINS.map((value) => (
+              <option key={value} value={value}>
+                {STACK_DOMAIN_LABELS[value]}
+              </option>
+            ))}
+          </select>
+        </Field>
       </div>
+
+      {/* Le domaine enregistré ne fait plus partie de la liste : on le dit, car
+          enregistrer le formulaire le remplacera par « Non précisé ». */}
+      {hasUnknownDomain ? (
+        <p
+          role="status"
+          className="rounded-lg border border-border bg-muted/40 p-3 text-sm text-muted-foreground"
+        >
+          Le domaine enregistré («&nbsp;{storedDomain}&nbsp;») ne fait plus
+          partie des domaines proposés. Choisissez-en un&nbsp;: sans quoi
+          l&apos;enregistrement le remplacera par «&nbsp;Non précisé&nbsp;» et
+          la technologie apparaîtra dans «&nbsp;Autres technologies&nbsp;».
+        </p>
+      ) : null}
 
       {/* AVERTISSEMENT, pas refus : la technologie reste enregistrable, le site
           affichera simplement une icône neutre. Refuser la ferait disparaître,

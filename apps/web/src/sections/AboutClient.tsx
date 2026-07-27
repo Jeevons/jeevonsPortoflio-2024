@@ -12,6 +12,7 @@ import { motion, useReducedMotion } from "motion/react";
 import { useRef } from "react";
 
 import Image from "next/image";
+import Link from "next/link";
 
 // Vue client de la section À propos (Story 4.2). Les hobbies viennent de la base
 // (props depuis le conteneur serveur). Le drag conditionné par useReducedMotion
@@ -80,31 +81,80 @@ export const AboutClient = ({
             description="Ce que j'aime faire, et ce qui me motive."
           />
         </Reveal>
-        <div className="mt-20 flex flex-col gap-8">
-          {/* Story 6.4 (AC1, piège n°5) — CASCADE SUR LES DEUX RANGÉES, pas sur
-              chaque carte.
+        {/* Story 6.15 (AC1) — UNE SEULE GRILLE MODULAIRE.
 
-              ⚠️ Les `Card` portent des `md:col-span-*` : les envelopper
-              individuellement appliquerait le span au wrapper et non à la
-              carte, ce qui casserait la grille. On révèle donc les rangées,
-              décalées l'une par rapport à l'autre (`index`). */}
-          <Reveal
-            index={0}
-            className="grid grid-cols-1 gap-8 md:grid-cols-5 lg:grid-cols-3"
-          >
-            <Card className="h-[380px] md:col-span-2 lg:col-span-1">
+            🛑 Auparavant : DEUX `div` de grille indépendants, et quatre cartes
+            TOUTES figées à `h-[380px]`. Deux rangées séparées ne sont pas une
+            grille — les blocs ne peuvent pas se répartir librement — et une
+            hauteur uniforme est l'inverse d'« une taille adaptée au contenu ».
+
+            🛑 LA TENSION AC1 / AC2, ET SA RÉSOLUTION. « Taille adaptée au
+            contenu » pousse à retirer les hauteurs fixes ; or l'aire de jeu des
+            centres d'intérêt a BESOIN d'une hauteur, sans quoi `dragConstraints`
+            s'effondre à 0 pixel et les vignettes deviennent indéplaçables — en
+            silence, sans la moindre erreur.
+
+            🛑 CORRECTION (retour Jeevons, capture du 27/07). Une première version
+            donnait à chaque carte une hauteur LIBRE, avec `items-start`. Résultat
+            constaté à l'écran : la carte CV descendait bien plus bas que la
+            toolbox, les hobbies dépassaient la carte/memoji — quatre blocs qui ne
+            s'alignaient plus sur rien. ❌ Ce n'est pas un bento, c'est du
+            désordre.
+
+            ✅ CE QU'EST RÉELLEMENT UN BENTO : des blocs de tailles DIFFÉRENTES
+            qui S'IMBRIQUENT. Ce sont les LARGEURS qui varient (1/3 vs 2/3), les
+            rangées, elles, restent alignées. La « taille adaptée au contenu »
+            d'AC1 se lit donc sur la largeur — un CV étroit, une toolbox large —
+            et non sur une hauteur propre à chaque carte.
+
+            D'où : ❌ PAS de `items-start` (on garde `stretch`, le défaut), et
+            `h-full` sur chaque wrapper ET sa carte, pour que les deux cartes
+            d'une même rangée s'alignent. ⚠️ Le `h-full` doit être sur les DEUX :
+            le wrapper s'étire via `stretch`, mais la carte ne suit pas d'
+            elle-même.
+
+            ⚠️ L'aire de jeu des hobbies conserve en plus une hauteur MINIMALE
+            (`min-h-[380px]`) : elle doit exister même si sa rangée était courte.
+
+            ⚠️ AC3 — la grille s'effondre en `grid-cols-1` sur petit écran, et
+            l'ordre du DOM est l'ordre de lecture : ❌ aucun `order`, ❌ aucun
+            `hidden`, ❌ aucune troncature. */}
+        <div className="mt-20 grid grid-cols-1 gap-8 md:grid-cols-5 lg:grid-cols-3">
+          {/* Story 6.4 (AC1) — CASCADE PAR CARTE, désormais possible.
+
+              ⚠️ Le commentaire précédent notait, à raison, qu'envelopper une
+              carte appliquerait le `col-span` au wrapper et non à la carte. La
+              grille étant maintenant unique, la correction est de déplacer les
+              spans SUR les `Reveal` : le wrapper EST l'élément de grille, et la
+              carte porte sa propre hauteur (explicite ou libre). On gagne une
+              cascade carte par carte au lieu de deux rangées en bloc. */}
+          {/* CARTE CV — étroite (1/3), alignée sur la toolbox. */}
+          <Reveal index={0} className="h-full md:col-span-2 lg:col-span-1">
+            <Card className="flex h-full flex-col pb-6">
               <CardHeader
                 title="CV"
                 description="Découvrez mon parcours, mes compétences et mes expériences."
                 indication="(Cliquez sur le cv pour l'ouvrir)"
               />
               {cv ? (
-                <a
-                  href={cv.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex w-40 mx-auto mt-2 md:mt-0"
-                >
+                // Story 6.11 — la carte ne pointe PLUS le PDF brut mais la page
+                // `/cv`, qui l'affiche dans le site avec un bouton de
+                // téléchargement (PLAN §4.3, « au lieu du lien brut actuel »).
+                //
+                // 🛑 `target="_blank"` et `rel="noopener noreferrer"` ONT DISPARU,
+                // et c'est délibéré : `/cv` est une page INTERNE, pas un lien
+                // sortant — la règle AGENTS.md §6 ne s'y applique pas. Et
+                // `next/link` plutôt qu'un `<a>` nu, pour une navigation
+                // client interne.
+                //
+                // ⚠️ `cv.url` (= `/api/cv`) reste consommé par la page `/cv`
+                // elle-même ; ici seul le lien de la carte change. Le texte
+                // « (Cliquez sur le cv pour l'ouvrir) » du `CardHeader` reste
+                // juste : le CV s'ouvre toujours, simplement dans le site.
+                // `my-auto` : la carte étant maintenant étirée à la hauteur de
+                // sa rangée, la vignette se centre dans l'espace restant au lieu
+                // de laisser un grand vide sous elle.
+                <Link href="/cv" className="mx-auto my-auto flex w-40">
                   {/* Vignette déjà normalisée en WebP par sharp (5.17, comme
                       les covers 5.12) : `<img>` plutôt que `next/image`,
                       `width`/`height` explicites réservent la place (anti-CLS). */}
@@ -115,37 +165,67 @@ export const AboutClient = ({
                     width={cv.thumbnailWidth}
                     height={cv.thumbnailHeight}
                   />
-                </a>
+                </Link>
               ) : (
                 // État neutre : aucun CV téléversé pour l'instant (piège n°5).
-                <p className="mx-auto mt-2 max-w-[10rem] text-center text-sm text-muted-foreground md:mt-0">
+                <p className="mx-auto my-auto max-w-[10rem] text-center text-sm text-muted-foreground">
                   CV bientôt disponible.
                 </p>
               )}
             </Card>
-            <Card className="h-[380px] md:col-span-3 lg:col-span-2">
+          </Reveal>
+
+          {/* CARTE TOOLBOX — hauteur LIBRE, réglée par ses deux bandes.
+
+              ⚠️ La toolbox est CONSERVÉE : décision Jeevons prise en 6.13, où la
+              nouvelle section « Stack & outils » a été ajoutée SANS la
+              remplacer. Elle est décorative (deux bandes défilantes de logos) là
+              où l'autre est informative (domaine + niveau) — pas de doublon.
+              ❌ Hors périmètre de cette story de toute façon. */}
+          <Reveal index={1} className="h-full md:col-span-3 lg:col-span-2">
+            <Card className="flex h-full flex-col pb-6">
               <CardHeader
                 title="Mon pack d'explorateur"
                 description="Découvrez les technologies et outils qui m'accompagnent dans mes aventures, pour créer et innover dans cet univers digital."
                 className=""
               />
-              <ToolboxItems
-                items={toolboxItems}
-                className=""
-                itemsWrapperClassName="animate-move-left [animation-duration:30s]"
-              />
-              <ToolboxItems
-                items={toolboxItems}
-                className="mt-6"
-                itemsWrapperClassName="animate-move-right [animation-duration:50s]"
-              />
+              {/* `my-auto` : les deux bandes se centrent dans la hauteur
+                  restante, la carte étant désormais étirée à celle de sa
+                  rangée. ⚠️ `ToolboxItems` n'expose pas de conteneur commun —
+                  d'où cette enveloppe, qui ne touche pas au composant partagé. */}
+              <div className="my-auto">
+                <ToolboxItems
+                  items={toolboxItems}
+                  className=""
+                  itemsWrapperClassName="animate-move-left [animation-duration:30s]"
+                />
+                <ToolboxItems
+                  items={toolboxItems}
+                  className="mt-6"
+                  itemsWrapperClassName="animate-move-right [animation-duration:50s]"
+                />
+              </div>
             </Card>
           </Reveal>
-          <Reveal
-            index={1}
-            className="grid grid-cols-1 md:grid-cols-5 gap-8 lg:grid-cols-3"
-          >
-            <Card className="h-[380px] p-0 flex flex-col md:col-span-3 lg:col-span-2">
+          {/* CARTE CENTRES D'INTÉRÊT — 🛑 HAUTEUR EXPLICITE, DÉLIBÉRÉMENT.
+
+              🛑 NE JAMAIS LAISSER CETTE CARTE SANS HAUTEUR. C'est le piège
+              central de la story, et son échec est SILENCIEUX. Sans hauteur,
+              `flex-1` n'a plus rien à remplir : le conteneur de contrainte
+              s'effondre à 0 pixel, `dragConstraints` référence une aire vide, et
+              les vignettes — positionnées en `absolute` à des pourcentages —
+              deviennent indéplaçables ou invisibles. Aucune erreur, aucun
+              avertissement.
+
+              ⚠️ D'où `min-h-[380px]` EN PLUS de `h-full` : `h-full` l'aligne sur
+              sa rangée (bento), et le `min-h` garantit que l'aire de jeu existe
+              même si cette rangée était courte. ❌ L'un sans l'autre ne suffit
+              pas.
+
+              🛑 `relative`, `flex-1` et le `ref` restent EXACTEMENT où ils sont
+              (piège n°1 : les déplacer fausse les contraintes). */}
+          <Reveal index={2} className="h-full md:col-span-3 lg:col-span-2">
+            <Card className="flex h-full min-h-[380px] flex-col p-0">
               <CardHeader
                 title="Quand je ne code pas"
                 description="Toujours entrain d'explorer ! Que ce soit à travers le design,
@@ -173,13 +253,24 @@ export const AboutClient = ({
                 ))}
               </div>
             </Card>
-            <Card className="h-[380px] p-0 relative md:col-span-2 lg:col-span-1">
+          </Reveal>
+
+          {/* CARTE / MEMOJI — étroite (1/3), alignée sur les hobbies.
+
+              ⚠️ Son contenu est une IMAGE DE FOND en `object-cover` : elle n'a
+              pas de hauteur intrinsèque à suivre, c'est le cadre qui la découpe.
+              `h-full` lui donne celle de sa rangée, et l'image s'y adapte. */}
+          <Reveal index={3} className="h-full md:col-span-2 lg:col-span-1">
+            <Card className="relative h-full min-h-[320px] p-0">
               <Image
                 src={mapImage}
                 alt="Map"
                 className="h-full w-full object-cover object-left-top"
               />
-              <div className="absolute flex items-center justify-center top-32 left-1/2 -translate-x-1/2 -translate-y-1/2 size-20 rounded-full   after:content-[''] after:absolute after:inset-0 after:outline after:outline-2 after:outline-offset-2 after:rounded-full after:outline-surface-sunken/30">
+              {/* ⚠️ `top-1/2` et non `top-32` : la carte s'étire désormais à la
+                  hauteur de sa rangée, un décalage fixe en pixels ne la
+                  centrerait plus. */}
+              <div className="absolute flex items-center justify-center top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-20 rounded-full   after:content-[''] after:absolute after:inset-0 after:outline after:outline-2 after:outline-offset-2 after:rounded-full after:outline-surface-sunken/30">
                 <div className="absolute inset-0 rounded-full bg-gradient-accent -z-20 animate-ping [animation-duration:2s]"></div>
                 <div className="absolute inset-0 rounded-full bg-gradient-accent -z-10"></div>
                 <Image

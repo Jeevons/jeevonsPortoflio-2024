@@ -168,11 +168,15 @@ export async function getPublishedProjectSlugs() {
 /**
  * Toutes les technologies, pour la toolbox publique (« Mon pack d'explorateur »).
  *
- * ⚠️ TRI PAR NIVEAU DÉCROISSANT, et c'est ce qui rend l'AC3 observable
- * (décision Jeevons : le niveau ordonne, il ne s'affiche pas en badge).
- * Modifier un niveau depuis l'administration déplace donc visiblement la
- * technologie dans la bande — sans quoi « les niveaux sont reflétés côté
- * public » n'aurait aucune traduction à l'écran.
+ * ⚠️ TRI PAR NIVEAU DÉCROISSANT, ce qui rend l'AC3 de 5.15 observable : modifier
+ * un niveau depuis l'administration déplace visiblement la technologie.
+ *
+ * 🛑 CORRECTION story 6.13 — ce commentaire affirmait « décision Jeevons : le
+ * niveau ordonne, il ne s'affiche pas en badge ». **Ce n'est plus vrai** : la
+ * section « Stack & outils » (6.13, AC1) AFFICHE désormais le niveau en toutes
+ * lettres, à côté de chaque technologie. Le tri reste, il s'y ajoute — il ne
+ * remplace plus l'affichage. La toolbox « Mon pack d'explorateur », elle,
+ * continue de n'en montrer que l'ordre.
  *
  * `level` est NULLABLE (schéma 4.1, et le seed ne le renseigne pas) : les
  * technologies sans niveau passent en dernier plutôt que d'être masquées.
@@ -186,7 +190,13 @@ export async function getPublishedProjectSlugs() {
  */
 function queryPublicStacks() {
   return prisma.stack.findMany({
-    select: { id: true, name: true, iconKey: true, level: true },
+    select: {
+      id: true,
+      name: true,
+      iconKey: true,
+      level: true,
+      domain: true,
+    },
     orderBy: [{ name: "asc" }],
   });
 }
@@ -248,6 +258,17 @@ export type PublicStack = {
   name: string;
   iconKey: string | null;
   level: SkillLevel | null;
+  /**
+   * Domaine saisi en administration, NULLABLE.
+   *
+   * ⚠️ PLUS AUCUN RENDU PUBLIC NE LE LIT depuis le retrait de la section
+   * « Stack & outils » (27/07, doublon avec « Mon pack d'explorateur »). Il est
+   * conservé de bout en bout — colonne, schéma, formulaire admin — pour que la
+   * donnée reste éditable et prête à resservir. Ne pas le retirer de cette
+   * projection en croyant nettoyer du mort : c'est ce qui alimente le `<select>`
+   * de `/admin/stacks`.
+   */
+  domain: string | null;
 };
 
 // ---------------------------------------------------------------------------

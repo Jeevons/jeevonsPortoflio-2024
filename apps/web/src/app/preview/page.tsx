@@ -7,6 +7,7 @@ import { Header } from "@/sections/Header";
 import { HeroSection } from "@/sections/Hero";
 import { ProjectsSection } from "@/sections/Projects";
 import { SelfProjectsSection } from "@/sections/SelfProject";
+import { StatsSection } from "@/sections/Stats";
 import { TapeSection } from "@/sections/Tape";
 import { TestimonialsSection } from "@/sections/Testimonials";
 import type { Metadata } from "next";
@@ -64,7 +65,16 @@ export default async function PreviewPage() {
       <HeroSection />
       <ProjectsSection preview={preview} />
       <SelfProjectsSection preview={preview} />
+      {/* Story 6.14 — même composition et même ordre que la home.
+          ⚠️ AUCUN drapeau `preview` : les chiffres décrivent le site PUBLIÉ.
+          Les gonfler avec les brouillons donnerait à Jeevons un aperçu de
+          chiffres que ses visiteurs ne verront pas — l'inverse du but d'AC2. */}
+      <StatsSection />
       <TapeSection />
+      {/* 🛑 PAS DE SECTION « Stack & outils » — retirée du site le 27/07 (voir
+          `app/page.tsx` pour le motif). L'aperçu doit rendre EXACTEMENT ce que
+          verra un visiteur : la réintroduire ici seule mentirait à Jeevons sur
+          l'état de sa page. */}
       <TestimonialsSection />
       <AboutSection />
       <ContactSection />

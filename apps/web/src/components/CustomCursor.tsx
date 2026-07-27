@@ -114,7 +114,50 @@ const ActiveCursor = () => {
   // immédiatement ; et si le composant disparaît pour une raison quelconque, le
   // site redevient utilisable de lui-même. Aucune règle `cursor: none` n'existe
   // dans la feuille de style globale — c'est délibéré.
+  // 🛑 SUSPENDU TANT QU'UNE MODALE EST OUVERTE (retour Jeevons, 27/07 : « le
+  // curseur est invisible dans la modale »).
+  //
+  // Un `<dialog>` ouvert par `showModal()` est promu dans la TOP LAYER, qui se
+  // peint au-dessus de TOUT `z-index`, si haut soit-il — `z-[60]` compris. Le
+  // curseur maison passait donc derrière la modale, pendant que `cursor: none`
+  // continuait de masquer le curseur système : plus aucun curseur visible.
+  //
+  // ⚠️ On ne peut pas « monter » le curseur maison dans la top layer : seuls un
+  // `<dialog>` modal et l'API Fullscreen y donnent accès. On rétablit donc le
+  // curseur système le temps de la modale — qui a d'ailleurs ses formes
+  // contextuelles (`text` dans les champs de saisie), bienvenues dans un
+  // formulaire.
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   useEffect(() => {
+    // `:modal` ne correspond qu'aux dialogues ouverts par `showModal()` — un
+    // `<dialog open>` simple n'étant pas en top layer, il ne pose pas le
+    // problème et ne doit donc pas suspendre le curseur.
+    const syncModalState = () => {
+      setIsModalOpen(Boolean(document.querySelector("dialog:modal")));
+    };
+
+    syncModalState();
+
+    // ⚠️ Aucun événement ne signale l'entrée en top layer : `close` existe, mais
+    // `showModal()` n'a pas de pendant. On observe donc l'attribut `open`, que
+    // le navigateur pose et retire dans les deux cas.
+    const observer = new MutationObserver(syncModalState);
+    observer.observe(document.body, {
+      subtree: true,
+      childList: true,
+      attributes: true,
+      attributeFilter: ["open"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (isModalOpen) {
+      return;
+    }
+
     const root = document.documentElement;
     const previousCursor = root.style.cursor;
     root.style.cursor = "none";
@@ -122,7 +165,7 @@ const ActiveCursor = () => {
     return () => {
       root.style.cursor = previousCursor;
     };
-  }, []);
+  }, [isModalOpen]);
 
   useEffect(() => {
     // ⚠️ UN SEUL listener de mouvement pour tout le site, sur `window` — pas un
@@ -176,7 +219,10 @@ const ActiveCursor = () => {
       // `z-[60]` : au-dessus du header (`z-10`), de la barre de progression de la
       // story 6.5 (`z-20`) et des CTA révélés du hero (`z-30`).
       className="pointer-events-none fixed inset-0 z-[60]"
-      style={{ opacity: hasMoved ? 1 : 0 }}
+      // ⚠️ Masqué pendant une modale, sinon DEUX curseurs cohabiteraient : le
+      // système (rétabli ci-dessus) et le point maison, visible sur la portion
+      // de page restée hors de la modale.
+      style={{ opacity: hasMoved && !isModalOpen ? 1 : 0 }}
     >
       {/* Halo — dégradé d'accent tokenisé (story 6.1).
 

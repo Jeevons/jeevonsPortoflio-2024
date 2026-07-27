@@ -1,10 +1,11 @@
 "use client";
 
+import { MobileNavDialog } from "@/components/MobileNavDialog";
 import { ScrollProgress } from "@/components/ScrollProgress";
 import { useActiveSection } from "@/lib/use-active-section";
 import { useMotionValueEvent, useScroll } from "motion/react";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { twMerge } from "tailwind-merge";
 
 // Story 6.5 — NAVIGATION VIVANTE : progression (AC1), compactage au défilement
@@ -37,6 +38,22 @@ const NAV_ITEMS = [
 const COMPACT_THRESHOLD = 80;
 
 /**
+ * Largeur à partir de laquelle la pilule remplace le menu déroulant.
+ *
+ * 🛑 DOIT VALOIR EXACTEMENT LE PALIER `nav` DE `tailwind.config.ts` (500 px).
+ * Les classes `nav:` décident de ce qui est VISIBLE, cette constante décide de
+ * quand le panneau mobile se referme tout seul : si les deux divergent, il
+ * existe une plage de largeurs où le panneau reste ouvert alors que le bouton
+ * qui l'a ouvert a déjà disparu — plus rien à l'écran ne permet de le fermer.
+ *
+ * ⚠️ Ce dédoublement est INÉVITABLE : une media query CSS n'est pas lisible
+ * depuis JavaScript sans la réécrire. Il est donc rendu explicite ici plutôt que
+ * laissé implicite. Une valeur en dur dans le `matchMedia` (640 px, réflexe du
+ * Tailwind par défaut) est exactement le défaut corrigé le 27/07.
+ */
+const NAV_BREAKPOINT = "(min-width: 500px)";
+
+/**
  * Les pages qui PORTENT les sections ancrées.
  *
  * 🛑 Ailleurs, un `href="#projects"` ne désigne RIEN : le navigateur ne trouve
@@ -50,6 +67,8 @@ const ANCHORED_PAGES = ["/", "/preview"];
 export const Header = () => {
   const activeNavId = useActiveSection();
   const [isCompact, setIsCompact] = useState(false);
+  const [isMobileNavOpen, setMobileNavOpen] = useState(false);
+  const mobileNavId = useId();
   const { scrollY } = useScroll();
 
   // ⚠️ `usePathname` plutôt qu'une prop à passer depuis chaque page : les trois
@@ -69,13 +88,42 @@ export const Header = () => {
     setIsCompact((current) => (current === next ? current : next));
   });
 
+  // 🛑 FERMER LE MENU MOBILE DÈS QUE L'ÉCRAN REDEVIENT LARGE. Sans cela, une
+  // rotation de téléphone ou un redimensionnement de fenêtre laisse le panneau
+  // ouvert PAR-DESSUS la page alors que le bouton qui l'a ouvert vient de
+  // disparaître (`nav:hidden`) : plus rien à l'écran ne permet de le refermer,
+  // sinon `Échap`. Le seuil vient de `NAV_BREAKPOINT` — ⚠️ lire son commentaire
+  // avant d'y toucher.
+  useEffect(() => {
+    if (!isMobileNavOpen) return;
+
+    const wide = window.matchMedia(NAV_BREAKPOINT);
+    const close = () => {
+      if (wide.matches) setMobileNavOpen(false);
+    };
+
+    close();
+    wide.addEventListener("change", close);
+    return () => wide.removeEventListener("change", close);
+  }, [isMobileNavOpen]);
+
   return (
     <>
       {/* AC1 — hors du `<header>` : la barre couvre toute la largeur de l'écran,
           alors que le header est une pilule centrée. */}
       <ScrollProgress />
 
-      <header className="flex justify-center items-center fixed top-3 w-full z-10">
+      {/* ⚠️ `--scrollbar-compensation` est posée par `ContactDialog` le temps de
+          la modale, qui gèle le défilement de la page. Comme ce header est
+          `fixed w-full`, il se dimensionne sur le VIEWPORT et non sur le `body` :
+          la compensation appliquée à ce dernier ne l'atteint pas, et sans cette
+          règle il serait le seul élément à sauter à l'ouverture — d'autant plus
+          visible qu'il est en haut de l'écran. Vaut 0 le reste du temps, et là
+          où la barre de défilement est en superposition (macOS par défaut). */}
+      <header
+        className="flex justify-center items-center fixed top-3 w-full z-10"
+        style={{ paddingRight: "var(--scrollbar-compensation, 0px)" }}
+      >
         {/* AC2 — « se compacte et se floute pour se faire discrète SANS
             DISPARAÎTRE ».
 
@@ -93,10 +141,66 @@ export const Header = () => {
             La transition CSS est couverte par la règle globale reduced-motion de
             la story 6.2 (durées ET délais neutralisés) : AC5 est satisfait pour
             le header sans code conditionnel ici. */}
+        {/* 🛑 BOUTON D'OUVERTURE DU MENU, SOUS 500 px (palier `nav`).
+
+            ⚠️ CE N'EST PAS `sm:` — piège corrigé le 27/07. `sm` vaut 375 px
+            dans CE projet (voir `tailwind.config.ts`, les paliers sont
+            redéfinis) et non 640 px : un `sm:hidden` faisait donc réapparaître
+            la pilule dès 375 px, exactement la largeur où elle se dégrade. Le
+            palier `nav` est calé sur la largeur MESURÉE de la pilule.
+
+            ⚠️ C'est un VRAI `<button type="button">` : focusable nativement,
+            actionné à l'Entrée comme à l'Espace, annoncé comme bouton. Un `<div
+            onClick>` aurait tout cela à réimplémenter.
+
+            ⚠️ `aria-expanded` est ce qui rend l'état AUDIBLE : sans lui, un
+            lecteur d'écran annonce « Menu, bouton » sans jamais dire si le
+            panneau est ouvert ou fermé. `aria-controls` le relie au panneau.
+
+            ⚠️ `ml-auto mr-4` — ALIGNÉ À DROITE (demande de Jeevons), là où le
+            pouce l'atteint sans traverser l'écran. Le `<header>` reste
+            `justify-center` pour la pilule : la marge automatique ne joue que
+            lorsque le bouton est le SEUL enfant présent dans le flex, ce qui est
+            exactement le cas sous 500 px puisque la pilule y est en
+            `display:none` et sort donc du flux. ❌ Ne pas passer le `<header>`
+            en `justify-between` pour obtenir le même effet : au-delà de 500 px
+            la pilule cesserait d'être centrée. */}
+        <button
+          type="button"
+          className="nav:hidden ml-auto mr-4 inline-flex size-11 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white backdrop-blur transition-colors duration-200 hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+          aria-expanded={isMobileNavOpen}
+          aria-controls={mobileNavId}
+          aria-label="Ouvrir le menu de navigation"
+          onClick={() => setMobileNavOpen(true)}
+        >
+          {/* Décoratif : `aria-label` ci-dessus porte déjà le sens. */}
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            className="size-5"
+          >
+            <path d="M4 7h16M4 12h16M4 17h16" />
+          </svg>
+        </button>
+
+        {/* ⚠️ `hidden nav:flex` — LA PILULE NE VIT QU'À PARTIR DE 500 px, la
+            largeur qu'elle MESURE réellement (~455 px) plus sa marge de
+            respiration : en deçà elle touchait les bords de l'écran avant même
+            de se dégrader (retour Jeevons). Le seuil est le même que celui du
+            `matchMedia` ci-dessus — les deux doivent changer ENSEMBLE, sinon le
+            menu mobile peut rester ouvert sans bouton pour le fermer.
+
+            ⚠️ `whitespace-nowrap` : c'est le retour à la ligne de « À propos »
+            qui déformait les pastilles en ovales et faisait déborder « Contact »
+            du bord arrondi. Une entrée de menu ne se coupe jamais. */}
         <nav
           aria-label="Navigation principale"
           className={twMerge(
-            "flex border border-white/15 rounded-full bg-white/10 transition-all duration-300",
+            "hidden nav:flex whitespace-nowrap border border-white/15 rounded-full bg-white/10 transition-all duration-300",
             isCompact
               ? "gap-0.5 p-0 backdrop-blur-xl"
               : "gap-1 p-0.5 backdrop-blur",
@@ -146,6 +250,27 @@ export const Header = () => {
           })}
         </nav>
       </header>
+
+      {/* 🛑 LE PANNEAU EST MONTÉ HORS DU `<header>`, ET C'EST NÉCESSAIRE. Une
+          `<dialog>` modale est promue dans le TOP LAYER, mais un ancêtre portant
+          un `transform`, un `filter` ou un `backdrop-filter` crée un CONTEXTE DE
+          POSITIONNEMENT qui la ramène de force dans le flux — le panneau se
+          retrouverait alors coincé dans la pilule. Le même piège avait imposé de
+          sortir `ContactDialog` du `Reveal` (transformé) en 6.12.
+
+          ⚠️ Les `href` sont calculés ICI avec la même règle que la pilule : hors
+          d'une page ancrée, le fragment est préfixé par `/`, sinon le clic ne
+          fait rien (voir `ANCHORED_PAGES`). ❌ Ne pas passer `NAV_ITEMS` brut. */}
+      <MobileNavDialog
+        id={mobileNavId}
+        open={isMobileNavOpen}
+        onClose={() => setMobileNavOpen(false)}
+        activeNavId={activeNavId}
+        items={NAV_ITEMS.map((item) => ({
+          ...item,
+          href: isOnAnchoredPage ? item.href : `/${item.href}`,
+        }))}
+      />
     </>
   );
 };

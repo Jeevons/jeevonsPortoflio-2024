@@ -1,4 +1,7 @@
 import type { SkillLevel } from "@/generated/prisma/enums";
+// ⚠️ Import de TYPE uniquement : effacé à la compilation, donc ce module reste
+// du pur data sans dépendance runtime (il est importé par le seed).
+import type { StackDomain } from "@/lib/schemas/stack";
 
 // Story 5.15 — Contenu statique des technologies (« Mon pack d'explorateur »).
 //
@@ -21,20 +24,57 @@ export type StackContent = {
   /** Clé du registre `lib/stack-icons.ts`. */
   iconKey: string;
   level: SkillLevel;
+  /**
+   * Story 6.13 — domaine de regroupement de la section « Stack & outils ».
+   * Renseigné ici pour que le repli 4.5 reste GROUPÉ comme le site normal, au
+   * lieu de verser ses six entrées dans « Autres technologies ».
+   */
+  domain: StackDomain;
   /** Ordre d'affichage du repli, à défaut de tri par niveau en base. */
   sortOrder: number;
 };
 
 export const stacksContent: StackContent[] = [
-  { name: "Javascript", iconKey: "javascript", level: "STRONG", sortOrder: 0 },
-  { name: "HTML", iconKey: "html", level: "STRONG", sortOrder: 1 },
-  { name: "CSS", iconKey: "css", level: "STRONG", sortOrder: 2 },
-  { name: "React", iconKey: "react", level: "COMFORTABLE", sortOrder: 3 },
-  { name: "Github", iconKey: "github", level: "COMFORTABLE", sortOrder: 4 },
+  {
+    name: "Javascript",
+    iconKey: "javascript",
+    level: "STRONG",
+    domain: "frontend",
+    sortOrder: 0,
+  },
+  {
+    name: "HTML",
+    iconKey: "html",
+    level: "STRONG",
+    domain: "frontend",
+    sortOrder: 1,
+  },
+  {
+    name: "CSS",
+    iconKey: "css",
+    level: "STRONG",
+    domain: "frontend",
+    sortOrder: 2,
+  },
+  {
+    name: "React",
+    iconKey: "react",
+    level: "COMFORTABLE",
+    domain: "frontend",
+    sortOrder: 3,
+  },
+  {
+    name: "Github",
+    iconKey: "github",
+    level: "COMFORTABLE",
+    domain: "tooling",
+    sortOrder: 4,
+  },
   {
     name: "Chrome Dev Tools",
     iconKey: "chrome",
     level: "COMFORTABLE",
+    domain: "tooling",
     sortOrder: 5,
   },
 ];

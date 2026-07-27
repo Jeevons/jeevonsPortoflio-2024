@@ -40,14 +40,29 @@ export const HeroSection = async () => {
             ses nœuds. Et le `pointer-events-none` du conteneur ci-dessus reste
             en place : les orbites couvrent les CTA, les laisser capter le
             pointeur les rendrait incliquables. */}
-        <HeroParallax depth={0.4}>
+        {/* 🛑 `absolute inset-0` SUR LES DEUX CALQUES — NE PAS RETIRER (retour
+            Jeevons, 27/07 : « la constellation se colle en haut »).
+
+            `hero-ring` et `HeroOrbit` se placent en `absolute top-1/2 left-1/2`,
+            donc relativement à leur ANCÊTRE POSITIONNÉ le plus proche. Un
+            wrapper sans position ni dimension est une boîte de hauteur nulle
+            collée en haut : `top-1/2` de zéro vaut zéro, et toute la
+            constellation remonte au bord supérieur.
+
+            ⚠️ Le symptôme n'apparaissait qu'au SURVOL parce que `HeroParallax`
+            ne rend son `motion.div` — dont le `transform` crée un contexte de
+            positionnement — qu'une fois le pointeur fin détecté, après
+            hydratation. Avant cela le wrapper restait un `<div>` nu, et les
+            enfants se référaient encore au conteneur `inset-0` : le décor était
+            correct au chargement, puis sautait. */}
+        <HeroParallax depth={0.4} className="absolute inset-0">
           <div className="size-[620px] hero-ring "></div>
           <div className="size-[820px] hero-ring "></div>
           <div className="size-[1020px] hero-ring "></div>
           <div className="size-[1220px] hero-ring "></div>
         </HeroParallax>
 
-        <HeroParallax depth={1}>
+        <HeroParallax depth={1} className="absolute inset-0">
           <HeroOrbit
             size={570}
             rotation={-14}

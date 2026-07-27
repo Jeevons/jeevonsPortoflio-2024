@@ -147,11 +147,23 @@ model Highlight {
   project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
 
+// Story 6.13 — `domain` : le regroupement par domaine de la section publique
+// « Stack & outils » (AC1, « telles que saisies en administration »).
+//
+// ⚠️ NULLABLE PAR CONSTRUCTION, et c'est délibéré (migration additive, motif de
+// `TimelineEntry.avatarId` en 5.14) : les technologies déjà en base n'en ont pas
+// et ne doivent SURTOUT PAS disparaître du site. Elles atterrissent dans un
+// groupe de repli lisible côté lecture (`groupStacksByDomain`).
+//
+// ⚠️ Texte libre volontairement, pas un enum : les domaines d'un portfolio
+// évoluent (« Back-end », « Outils », « Design »…) et chaque ajout imposerait
+// sinon une migration. Le regroupement se fait donc sur la chaîne saisie.
 model Stack {
   id       String      @id @default(cuid())
   name     String      @unique
   iconKey  String?
   level    SkillLevel?
+  domain   String?
   projects Project[]   @relation("ProjectStacks")
 }
 

@@ -4,7 +4,7 @@ baseline_commit: c408eae7818fb33ef915a70085775688fbf80640
 
 # Story 6.15: Découvrir la personnalité de Jeevons
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -140,14 +140,14 @@ Inventaire vérifié, à traiter **une par une** :
 
 ## Tasks / Subtasks
 
-- [ ] **Tâche 0 — Prérequis, état réel & décisions** (AC: 1, 2)
-  - [ ] 6.1 et 6.2 `done`. 🛑 **Relire l'état RÉEL de `AboutClient.tsx` sur `DEV`** : 6.11 / 6.13 / 6.4 sont-elles fusionnées ? **Le noter dans les notes de complétion.**
-  - [ ] 🛑 **Décider et documenter** : quels blocs gardent une **hauteur explicite** (⚠️ le bloc manipulable en a **besoin**, piège n°1) et lesquels s'ajustent · disposition cible aux trois paliers.
-- [ ] **Tâche 1 — Grille unifiée** (AC: 1, 3 ; pièges n°3, n°4)
-  - [ ] Fusionner les **deux `div` de grille** en **une seule grille modulaire**, tailles **différenciées par bloc**. ✅ Réutiliser `Card`/`CardHeader`/`SectionHeader` (`className` + `twMerge`), **tokens 6.1**. ❌ Aucune valeur en dur, ❌ aucune dépendance.
-  - [ ] 🛑 **`id="about"` PRÉSERVÉ**. ⚠️ Ne pas neutraliser le `after:` de `Card` (liseré, story 1.8).
-- [ ] **Tâche 2 — Bloc manipulable** (AC: 2 ; piège n°1)
-  - [ ] 🛑 **Conserver** `constraintRef`, le conteneur **`relative`** ET **sa hauteur**, `dragConstraints`, `drag={!shouldReduceMotion}`, le `transition` conditionnel, et les **`posLeft`/`posTop` venant de la base**.
+- [x] **Tâche 0 — Prérequis, état réel & décisions** (AC: 1, 2)
+  - [x] 6.1 et 6.2 `done`. 🛑 **Relire l'état RÉEL de `AboutClient.tsx` sur `DEV`** : 6.11 / 6.13 / 6.4 sont-elles fusionnées ? **Le noter dans les notes de complétion.**
+  - [x] 🛑 **Décider et documenter** : quels blocs gardent une **hauteur explicite** (⚠️ le bloc manipulable en a **besoin**, piège n°1) et lesquels s'ajustent · disposition cible aux trois paliers.
+- [x] **Tâche 1 — Grille unifiée** (AC: 1, 3 ; pièges n°3, n°4)
+  - [x] Fusionner les **deux `div` de grille** en **une seule grille modulaire**, tailles **différenciées par bloc**. ✅ Réutiliser `Card`/`CardHeader`/`SectionHeader` (`className` + `twMerge`), **tokens 6.1**. ❌ Aucune valeur en dur, ❌ aucune dépendance.
+  - [x] 🛑 **`id="about"` PRÉSERVÉ**. ⚠️ Ne pas neutraliser le `after:` de `Card` (liseré, story 1.8).
+- [x] **Tâche 2 — Bloc manipulable** (AC: 2 ; piège n°1)
+  - [x] 🛑 **Conserver** `constraintRef`, le conteneur **`relative`** ET **sa hauteur**, `dragConstraints`, `drag={!shouldReduceMotion}`, le `transition` conditionnel, et les **`posLeft`/`posTop` venant de la base**.
   - [ ] Vérifier **après refonte** que les vignettes restent **dans le cadre** — y compris au redimensionnement.
 - [ ] **Tâche 3 — Mobile** (AC: 3 ; piège n°3)
   - [ ] Lecture **verticale**, ❌ **aucun `hidden`** ni troncature, ❌ **aucun défilement horizontal**, ordre du DOM = ordre visuel. ⚠️ Vérifier les **vignettes hors cadre** et la **capture du défilement** par le drag.
@@ -155,10 +155,10 @@ Inventaire vérifié, à traiter **une par une** :
   - [ ] Vérifier **à l'œil** les **trois** animations (drag, deux bandes, memoji). 🛑 **Et que rien n'est masqué** une fois figé. Tout effet **ajouté** porte sa neutralisation via `useReducedMotion` (6.2).
 - [ ] **Tâche 5 — Vérification locale** (AC: 1-4 ; piège n°6)
   - [ ] Les 4 AC un par un, dont **drag après redimensionnement** (AC2), **vrai téléphone** (AC3), **mouvement réduit avec contenu atteignable** (AC4). Cas limites : aucun hobby, aucun CV, base injoignable. Clavier + contrastes.
-- [ ] **Tâche 6 — Definition of Done** (AGENTS.md §8)
-  - [ ] `bun run lint` 0 / `bunx tsc --noEmit` 0 / `bun run build` OK — 🛑 **`/` toujours `○ (Static, 1h)`**.
-  - [ ] `git diff DEV` : **`AboutClient.tsx` essentiellement seul**. ❌ Aucune migration, aucune dépendance, lectures / `About.tsx` / `/admin` / `Header.tsx` intacts. 🛑 **Aucun travail de 6.8, 6.11 ou 6.13 aspiré.**
-  - [ ] `File List` + `Completion Notes` (⚠️ **dont l'état des stories concurrentes**) + `Change Log` · `sprint-status.yaml`.
+- [x] **Tâche 6 — Definition of Done** (AGENTS.md §8)
+  - [x] `bun run lint` 0 / `bunx tsc --noEmit` 0 / `bun run build` OK — 🛑 **`/` toujours `○ (Static, 1h)`**.
+  - [x] `git diff DEV` : **`AboutClient.tsx` essentiellement seul**. ❌ Aucune migration, aucune dépendance, lectures / `About.tsx` / `/admin` / `Header.tsx` intacts. 🛑 **Aucun travail de 6.8, 6.11 ou 6.13 aspiré.**
+  - [x] `File List` + `Completion Notes` (⚠️ **dont l'état des stories concurrentes**) + `Change Log` · `sprint-status.yaml`.
 
 ## Dev Notes
 
@@ -202,8 +202,63 @@ Vérification **manuelle** des 4 AC, avec trois tests décisifs : **déplacer le
 
 ### Agent Model Used
 
+claude-opus-5 (Claude Code)
+
 ### Completion Notes
+
+**🛑 État RÉEL de `AboutClient.tsx` au moment de l'implémentation** (première action obligatoire, tâche 0). Le fichier avait déjà divergé de la description de la story :
+
+| Story | Attendu par la story | État constaté |
+|---|---|---|
+| **6.11** (CV) | `ready-for-dev` | ✅ **DÉJÀ FUSIONNÉE** — la carte pointe `/cv` via `next/link`, sans `target="_blank"`. **Conservée telle quelle.** |
+| **6.4** (révélation) | `ready-for-dev` | ✅ **DÉJÀ FUSIONNÉE** — deux `Reveal` enveloppaient les deux rangées de grille, avec cascade par `index`. |
+| **6.13** (compétences) | pouvait remplacer la toolbox | ✅ Fusionnée, mais **la toolbox est INTACTE** : décision Jeevons, la nouvelle section « Stack & outils » a été ajoutée **sans** la remplacer (décorative vs informative). |
+| **6.8** (halo cartes) | non listée | ✅ **DÉJÀ FUSIONNÉE** dans `Card.tsx` (prop `as` + calque de halo, inertes par défaut). **`Card.tsx` non touché.** |
+
+**Décisions de dimensionnement** (tâche 0 — résolution documentée de la tension AC1/AC2) :
+
+| Bloc | Hauteur | Justification |
+|---|---|---|
+| Centres d'intérêt | **explicite, `h-[380px]`** | 🛑 C'est une **aire de jeu**, pas du contenu qui coule : sa « taille adaptée » *est* une hauteur. Sans elle, `flex-1` n'a rien à remplir, le conteneur de contrainte s'effondre à 0 px et les vignettes deviennent indéplaçables — **échec silencieux**, sans erreur. |
+| Carte / memoji | **explicite, `h-[320px]`** | Contenu = image de fond en `object-cover`, sans hauteur intrinsèque. **Valeur différente des hobbies** : rien n'oblige les blocs à s'aligner, c'est le point d'AC1. |
+| CV | **libre** | Se règle sur la vignette, et se réduit franchement dans l'état neutre. |
+| Toolbox | **libre** | Se règle sur ses deux bandes. |
+
+**Points d'implémentation :**
+
+- **Grille unique** : les deux `div` de grille indépendants ont fusionné en une seule (`grid-cols-1 md:grid-cols-5 lg:grid-cols-3`). Vérifié sur le HTML servi : `md:grid-cols-5` passe de **2 occurrences à 1**.
+- 🛑 **`items-start` est indispensable** et non cosmétique : sans lui, `align-items: stretch` réétirerait les cartes à hauteur libre jusqu'à la hauteur de leur rangée — rétablissant exactement l'uniformité qu'AC1 corrige.
+- **Cascade 6.4 préservée, et même améliorée.** Le commentaire de 6.4 notait à raison qu'envelopper une carte appliquerait le `col-span` au wrapper. La grille étant désormais unique, la correction propre était de **déplacer les `col-span` sur les `Reveal`** : le wrapper devient l'élément de grille. On passe ainsi d'une cascade en deux rangées à une **cascade carte par carte** (`index` 0→3), sans rien perdre.
+- 🛑 **AC2 intégralement préservé** : `constraintRef`, le conteneur `relative flex-1`, `dragConstraints`, `drag={!shouldReduceMotion}` et le `transition` conditionnel sont **inchangés, au même endroit**. Les `posLeft`/`posTop` restent ceux de la **base** (vérifié : 7 vignettes rendues aux coordonnées `5%`→`70%`).
+- ⚠️ Les coordonnées étant en **pourcentages**, elles sont relatives au conteneur et donc **robustes au redimensionnement et au passage sur mobile** — le risque « vignettes hors cadre » d'AC3 est structurellement écarté (`posTop` max 70 % d'une aire d'environ 245 px ≈ 172 px).
+- **Aucune animation ajoutée** par cette story, donc aucun nouveau critère de neutralisation à porter. Les trois animations existantes sont inchangées.
+
+**Vérifications effectuées** (HTML servi par le conteneur, base réelle) :
+
+- **AC1** — une seule grille (`md:grid-cols-5` × 1) ; hauteurs **différenciées** : un `h-[380px]`, un `h-[320px]`, deux cartes **sans hauteur**. ❌ Plus aucune uniformité à 380 px.
+- **AC2** — conteneur `relative flex-1` porteur du `ref` présent × 1, à l'intérieur d'une carte qui conserve sa hauteur ; 7 vignettes aux coordonnées de la base.
+- **AC3** (structurel) — `grid-cols-1` sur petit écran ; **0 `order-*`** (ordre du DOM = ordre visuel) ; **0 `hidden`** (aucune perte de contenu).
+- **AC4** — règle globale 6.2 (`prefers-reduced-motion`) confirmée dans `globals.css` ; `animate-move-left/right` et `animate-ping` toujours présents et couverts ; `drag` neutralisé en JS.
+- **Non-régressions** — `id="about"` préservé (×1) ; **liseré `after:` de `Card` (story 1.8) intact** (15 occurrences) ; `/preview` répond normalement (181 Ko) avec la section ; `bun run build` → **`┌ ○ / 1h 1y`**.
+- **Périmètre** — `git diff` : **`AboutClient.tsx` seul** (+ `sprint-status.yaml`). Aucune migration, aucune dépendance ; `About.tsx`, les lectures, `Card.tsx`, `ToolboxItems.tsx`, `/admin` et `Header.tsx` **non touchés**. Aucun travail de 6.8 / 6.11 / 6.13 aspiré.
+- `bunx tsc --noEmit` : 0. `eslint .` : 0.
+
+**🛑 Restant à vérifier par Jeevons** (hors de portée d'un contrôle sur le HTML servi) :
+
+- **AC2, test décisif** : déplacer les vignettes à la souris, **puis redimensionner la fenêtre et recommencer** — elles doivent rester dans leur cadre.
+- **AC3, vrai téléphone** : lecture verticale, aucune troncature, **aucun défilement horizontal**, et surtout **le défilement vertical de la page ne doit pas être capturé** par le bloc manipulable au doigt.
+- **AC4, mouvement réduit activé** : drag désactivé, bandes immobiles, memoji sans pulsation — **et surtout que rien ne soit masqué** une fois figé. ⚠️ **Point d'attention signalé mais NON traité** : `ToolboxItems` combine `flex-none` et un `mask-image` en dégradé ; figée, la bande peut laisser certains éléments hors du cadre visible. Ce comportement est **antérieur à cette story** (`ToolboxItems.tsx` n'a pas été modifié) et le corriger relèverait de la toolbox elle-même, hors périmètre ici. À arbitrer.
+- **Cas limite « aucun hobby »** : **non vérifié**. La suppression des hobbies en base n'est pas observable sans purger le tag de cache (`getHobbies()` passe par `unstable_cache`, que `/preview` ne contourne pas). La base a été **restaurée à l'identique** (7 hobbies). À contrôler depuis `/admin` si le cas doit être couvert.
+- Parcours **clavier** complet, focus visibles, contrastes AA.
 
 ### File List
 
+**Modifiés :**
+- `apps/web/src/sections/AboutClient.tsx` — grille modulaire unique, hauteurs différenciées par bloc, cascade de révélation déplacée sur les wrappers de grille
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` — statut de la story
+
 ### Change Log
+
+| Date | Version | Description |
+| --- | --- | --- |
+| 2026-07-27 | 1.0 | Fusion des deux grilles de la section « À propos » en une grille modulaire unique, chaque bloc dimensionné selon son contenu (hauteur explicite conservée pour l'aire de jeu des centres d'intérêt et la carte, hauteur libre pour le CV et la toolbox). Mécanisme de déplacement intégralement préservé. `/` reste `○ (Static, 1h)`. |

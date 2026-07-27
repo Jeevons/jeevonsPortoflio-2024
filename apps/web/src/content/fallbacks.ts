@@ -110,6 +110,7 @@ export function fallbackStacks(): PublicStack[] {
       name: s.name,
       iconKey: s.iconKey,
       level: s.level,
+      domain: s.domain,
     }));
 }
 
