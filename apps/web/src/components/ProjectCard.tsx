@@ -249,10 +249,21 @@ export const ProjectCard = ({
               }}
             />
           ) : project.image ? (
+            // Story 6.18 (AC1, AC2) — REPLI sur un asset du dépôt (import
+            // statique), quand le projet n'a pas de couverture administrée.
+            // ✅ `sizes` justifié : l'image occupe la pleine largeur de la carte
+            // en mobile puis est plafonnée à `max-w-[450px]` en `lg`.
+            // ⚠️ `placeholder="blur"` est sûr ICI parce que la source est un
+            // IMPORT STATIQUE : Next génère le `blurDataURL` au build. ❌ Sur une
+            // source dynamique (chaîne d'URL), il exigerait un `blurDataURL`
+            // explicite et jetterait à l'exécution — attention si ce repli
+            // devenait un jour dynamique.
             <Image
               className="mt-8 -mb-4 md:mb-0 lg:mt-0 lg:absolute lg:h-full lg:w-auto lg:max-w-[450px]"
               src={project.image}
               alt={`Capture d'écran du projet ${project.title}`}
+              sizes="(min-width: 1200px) 450px, 100vw"
+              placeholder="blur"
             />
           ) : null}
         </div>

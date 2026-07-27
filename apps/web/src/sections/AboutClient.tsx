@@ -164,6 +164,14 @@ export const AboutClient = ({
                     alt="Première page du CV"
                     width={cv.thumbnailWidth}
                     height={cv.thumbnailHeight}
+                    /* Story 6.18 (AC3) — `loading="lazy"` : la carte CV est
+                       loin sous la ligne de flottaison.
+                       ⚠️ Pas de `blurDataUrl` en fond ici, contrairement aux
+                       covers : `CurrentCv` (5.17) ne stocke QUE
+                       `thumbnailPath` + dimensions. L'anti-CLS est assuré par
+                       les `width`/`height` réels, qui suffisent à réserver la
+                       place. */
+                    loading="lazy"
                   />
                 </Link>
               ) : (
@@ -262,10 +270,21 @@ export const AboutClient = ({
               `h-full` lui donne celle de sa rangée, et l'image s'y adapte. */}
           <Reveal index={3} className="h-full md:col-span-2 lg:col-span-1">
             <Card className="relative h-full min-h-[320px] p-0">
+              {/* Story 6.18 (AC1, AC2) — ✅ `sizes` JUSTIFIÉ ICI : contrairement
+                  aux memojis, cette image est rendue en `w-full` dans une carte
+                  dont la largeur CHANGE aux points de rupture (pleine largeur en
+                  mobile, 2/3 en `md`, 1/3 en `lg`). Sans `sizes`, le navigateur
+                  téléchargerait la même largeur sur un téléphone que sur un
+                  écran large — précisément le « format unique » que l'AC1
+                  dénonce. Valeurs calées sur les paliers DU PROJET
+                  (`tailwind.config.ts` : md 768px, lg 1200px), pas sur ceux de
+                  Tailwind par défaut. */}
               <Image
                 src={mapImage}
                 alt="Map"
                 className="h-full w-full object-cover object-left-top"
+                sizes="(min-width: 1200px) 33vw, (min-width: 768px) 66vw, 100vw"
+                placeholder="blur"
               />
               {/* ⚠️ `top-1/2` et non `top-32` : la carte s'étire désormais à la
                   hauteur de sa rangée, un décalage fixe en pixels ne la
@@ -273,10 +292,13 @@ export const AboutClient = ({
               <div className="absolute flex items-center justify-center top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-20 rounded-full   after:content-[''] after:absolute after:inset-0 after:outline after:outline-2 after:outline-offset-2 after:rounded-full after:outline-surface-sunken/30">
                 <div className="absolute inset-0 rounded-full bg-gradient-accent -z-20 animate-ping [animation-duration:2s]"></div>
                 <div className="absolute inset-0 rounded-full bg-gradient-accent -z-10"></div>
+                {/* ⚠️ Taille FIXE (`size-16`) : pas de `sizes`, même raison que
+                    le memoji du hero. */}
                 <Image
                   src={smileMemoji}
                   alt="Smiling Memoji"
                   className="size-16"
+                  placeholder="blur"
                 />
               </div>
             </Card>

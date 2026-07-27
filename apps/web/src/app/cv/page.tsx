@@ -142,6 +142,11 @@ const CvPage = async () => {
                 width={cv.thumbnailWidth}
                 height={cv.thumbnailHeight}
                 alt="Première page du CV"
+                /* Story 6.18 (AC3) — `loading="lazy"`, comme les autres
+                   médias publics. Même remarque que dans `AboutClient` :
+                   `CurrentCv` (5.17) n'expose pas de `blurDataUrl`, les
+                   `width`/`height` réels portent seuls l'anti-CLS. */
+                loading="lazy"
               />
 
               {/* Titre et bouton sur UNE SEULE LIGNE en desktop : l'en-tête

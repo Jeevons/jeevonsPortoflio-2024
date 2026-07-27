@@ -185,6 +185,11 @@ const ProjectPage = async ({ params }: ProjectPageProps) => {
                 width={cover.width}
                 height={cover.height}
                 alt={cover.alt ?? ""}
+                /* Story 6.18 (AC3) — `loading="lazy"`, aligné sur
+                   `ProjectCard`. L'illustration est SOUS le titre et le
+                   résumé : elle n'est pas garantie visible à l'ouverture, et
+                   la charger d'emblée disputerait la bande passante au LCP. */
+                loading="lazy"
                 style={{
                   backgroundImage: `url(${cover.blurDataUrl})`,
                   backgroundSize: "cover",

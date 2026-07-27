@@ -197,10 +197,14 @@ export const TestimonialsClient = ({
                         d'avatar, et `<Image src={undefined}>` plantait. */}
                     {avatar ? (
                       <div className="inline-flex size-14 flex-shrink-0 items-center justify-center rounded-full bg-gray-700">
+                        {/* Story 6.18 (AC2) — ⚠️ Taille FIXE (le cadre parent est
+                            `size-14`) : pas de `sizes`. Le `blurDataURL` est
+                            généré au build (import statique). */}
                         <Image
                           src={avatar}
                           alt={entry.title}
                           className="max-h-full"
+                          placeholder="blur"
                         />
                       </div>
                     ) : null}

@@ -139,10 +139,24 @@ export const HeroSection = async () => {
       </div>
       <div className="container">
         <div className="flex flex-col items-center">
+          {/* Story 6.18 (AC1, AC2) — IMAGE DU HERO.
+              ⚠️ PAS DE `sizes` ICI, VOLONTAIREMENT : l'image est rendue à
+              `size-[100px]` — une taille FIXE à toutes les largeurs. Un `sizes`
+              n'aurait aucun effet et n'ajouterait que du bruit (la story
+              l'exclut explicitement pour les images à taille fixe).
+              🛑 `priority` : le memoji est AU-DESSUS DE LA LIGNE DE FLOTTAISON et
+              participe au LCP (cible < 2 s) ; le lazy-loading par défaut le
+              retarderait. ⚠️ C'est la SEULE image du site à le porter — en
+              mettre sur plusieurs saturerait la file de chargement et
+              DÉGRADERAIT le LCP au lieu de l'améliorer.
+              ⚠️ `placeholder="blur"` : le `blurDataURL` est généré AU BUILD par
+              Next, l'import étant statique. */}
           <Image
             src={memojiImage}
             className="size-[100px]"
             alt="Person peeking from behind laptop"
+            priority
+            placeholder="blur"
           />
           {/* Story 6.1 — surfaces et rayon par tokens (`surface-sunken` =
               gray-950, `surface-raised` = gray-800, `rounded-badge` = 0.5rem,

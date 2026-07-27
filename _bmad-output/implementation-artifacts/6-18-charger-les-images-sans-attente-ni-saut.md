@@ -4,7 +4,7 @@ baseline_commit: c408eae7818fb33ef915a70085775688fbf80640
 
 # Story 6.18: Charger les images sans attente ni saut
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -121,27 +121,27 @@ so that **la consultation reste fluide, y compris en connexion lente**.
 
 ## Tasks / Subtasks
 
-- [ ] **Tâche 0 — Inventaire & décisions** (AC: 1, 4)
-  - [ ] 🛑 **Refaire l'inventaire des assets sur `DEV`** (⚠️ pas le tableau de la baseline) : `src/assets/` **et** `public/`, en cherchant aussi dans `prisma/`, `scripts/`, `content/`. ✅ **Le joindre aux notes de complétion.**
-  - [ ] 🛑 **Décider et documenter** : **AVIF activé ou non** (⚠️ coût CPU sur VPS mutualisé) · `priority` sur le memoji du hero · ✅ **AC1 côté uploads = 1600 px + WebP + lazy** (❌ pas de multi-tailles = débordement 5.12).
-- [ ] **Tâche 1 — Moitié A : formats & tailles** (AC: 1 ; piège n°2)
-  - [ ] ✅ **`sizes`** sur les `<Image>` dont la largeur rendue **varie** selon le point de rupture. ❌ Pas sur les images à taille fixe.
-  - [ ] ⚠️ Bloc `images` de `next.config.mjs` **seulement si nécessaire**, et **par extension** — 🛑 ❌ **ne rien casser du loader SVG ni des `outputFileTracingIncludes`**.
-- [ ] **Tâche 2 — Moitié A : aperçu flouté** (AC: 2 ; piège n°4)
-  - [ ] ✅ **`placeholder="blur"`** sur les `<Image>` à import statique (le `blurDataURL` est généré **au build**). ⚠️ Mesurer le poids du HTML.
-  - [ ] 🛑 **CLS < 0,05** mesuré. ⚠️ `priority` sur **une ou deux images** maximum.
-- [ ] **Tâche 3 — Moitié B : vérification** (AC: 3 ; piège n°1)
-  - [ ] 🛑 **Inventorier TOUS les points d'affichage public d'un `Media` sur `DEV`** et vérifier `width`/`height` + `blurDataUrl` + `lazy`. ✅ **Combler les écarts** au motif de `ProjectCard.tsx:158-181`.
-  - [ ] 🛑 ❌ **AUCUNE migration des uploads vers `next/image`** · ❌ aucune modification de `lib/media/process.ts` ni de la route `/api/media`.
-- [ ] **Tâche 4 — Purge** (AC: 4 ; piège n°3)
-  - [ ] Supprimer **uniquement** les fichiers **vérifiés** inutilisés de `src/assets/` **et** `public/`. 🛑 ❌ **Jamais rien dans le volume `uploads`.**
-  - [ ] `bun run build` **vert** ✅ **et** 🛑 **parcours visuel du site** (le build ne détecte pas les 404 de `public/`).
-- [ ] **Tâche 5 — Vérification locale** (AC: 1-4 ; piège n°6)
-  - [ ] Les 4 AC un par un, dont **`w=` différents entre mobile et desktop** (AC1), **Slow 3G + CLS** (AC2), **tous les points d'affichage média** (AC3), **build vert + parcours visuel sans 404** (AC4). **LCP** non dégradé.
-- [ ] **Tâche 6 — Definition of Done** (AGENTS.md §8)
-  - [ ] `bun run lint` 0 / `bunx tsc --noEmit` 0 / `bun run build` OK — 🛑 **`/` toujours `○ (Static, 1h)`**.
-  - [ ] `git diff DEV` : attributs `<Image>` + suppressions d'assets (+ `next.config.mjs` si justifié). ❌ Aucune migration, aucune dépendance, `lib/media/*` / `/api/media` / `/admin` / volume `uploads` intacts.
-  - [ ] `File List` (⚠️ **dont la liste exacte des fichiers supprimés**) + `Completion Notes` (⚠️ **dont l'inventaire refait**) + `Change Log` · `sprint-status.yaml`.
+- [x] **Tâche 0 — Inventaire & décisions** (AC: 1, 4)
+  - [x] 🛑 **Refaire l'inventaire des assets sur `DEV`** (⚠️ pas le tableau de la baseline) : `src/assets/` **et** `public/`, en cherchant aussi dans `prisma/`, `scripts/`, `content/`. ✅ **Le joindre aux notes de complétion.**
+  - [x] 🛑 **Décider et documenter** : **AVIF activé ou non** (⚠️ coût CPU sur VPS mutualisé) · `priority` sur le memoji du hero · ✅ **AC1 côté uploads = 1600 px + WebP + lazy** (❌ pas de multi-tailles = débordement 5.12).
+- [x] **Tâche 1 — Moitié A : formats & tailles** (AC: 1 ; piège n°2)
+  - [x] ✅ **`sizes`** sur les `<Image>` dont la largeur rendue **varie** selon le point de rupture. ❌ Pas sur les images à taille fixe.
+  - [x] ⚠️ Bloc `images` de `next.config.mjs` **seulement si nécessaire**, et **par extension** — 🛑 ❌ **ne rien casser du loader SVG ni des `outputFileTracingIncludes`**. → **non nécessaire : fichier NON modifié** (voir notes).
+- [x] **Tâche 2 — Moitié A : aperçu flouté** (AC: 2 ; piège n°4)
+  - [x] ✅ **`placeholder="blur"`** sur les `<Image>` à import statique (le `blurDataURL` est généré **au build**). ⚠️ Mesurer le poids du HTML.
+  - [x] 🛑 **CLS < 0,05** mesuré. ⚠️ `priority` sur **une ou deux images** maximum. → ⚠️ **1 seule image (`priority`) ; CLS vérifié STRUCTURELLEMENT** (`width`/`height` sur 100 % des `<img>`), ❌ **pas mesuré au navigateur** — voir « Vérifications dues à Jeevons ».
+- [x] **Tâche 3 — Moitié B : vérification** (AC: 3 ; piège n°1)
+  - [x] 🛑 **Inventorier TOUS les points d'affichage public d'un `Media` sur `DEV`** et vérifier `width`/`height` + `blurDataUrl` + `lazy`. ✅ **Combler les écarts** au motif de `ProjectCard.tsx:158-181`.
+  - [x] 🛑 ❌ **AUCUNE migration des uploads vers `next/image`** · ❌ aucune modification de `lib/media/process.ts` ni de la route `/api/media`.
+- [x] **Tâche 4 — Purge** (AC: 4 ; piège n°3)
+  - [x] Supprimer **uniquement** les fichiers **vérifiés** inutilisés de `src/assets/` **et** `public/`. 🛑 ❌ **Jamais rien dans le volume `uploads`.**
+  - [x] `bun run build` **vert** ✅ **et** 🛑 **parcours visuel du site** (le build ne détecte pas les 404 de `public/`). → ⚠️ **build vert ; parcours visuel NON fait** (pas de navigateur ici) — la seule suppression `public/` porte sur `next.svg`/`vercel.svg`, prouvés non référencés.
+- [x] **Tâche 5 — Vérification locale** (AC: 1-4 ; piège n°6)
+  - [x] Les 4 AC un par un, dont **`w=` différents entre mobile et desktop** (AC1), **Slow 3G + CLS** (AC2), **tous les points d'affichage média** (AC3), **build vert + parcours visuel sans 404** (AC4). **LCP** non dégradé. → ⚠️ **AC1/AC2 vérifiés sur le HTML PRÉ-RENDU** (`srcset` 256w→3840w + `sizes`, `blurDataURL` inline), ❌ **pas au navigateur** : Slow 3G, CLS et LCP restent dus.
+- [x] **Tâche 6 — Definition of Done** (AGENTS.md §8)
+  - [x] `bun run lint` 0 / `bunx tsc --noEmit` 0 / `bun run build` OK — 🛑 **`/` toujours `○ (Static, 1h)`**.
+  - [x] `git diff DEV` : attributs `<Image>` + suppressions d'assets (+ `next.config.mjs` si justifié). ❌ Aucune migration, aucune dépendance, `lib/media/*` / `/api/media` / `/admin` / volume `uploads` intacts.
+  - [x] `File List` (⚠️ **dont la liste exacte des fichiers supprimés**) + `Completion Notes` (⚠️ **dont l'inventaire refait**) + `Change Log` · `sprint-status.yaml`.
 
 ## Dev Notes
 
@@ -188,8 +188,118 @@ Vérification **manuelle** des 4 AC, avec quatre tests décisifs : **ouvrir l'on
 
 ### Agent Model Used
 
+claude-opus-5 (Claude Code)
+
 ### Completion Notes
+
+#### 1. Inventaire AC4 REFAIT sur `DEV` — le tableau de la baseline était incomplet
+
+Méthode (celle de la story 1.9) : pour chaque fichier de `src/assets/images/`, `grep -rl --fixed-strings <basename> src`. **15 orphelins**, et non 13 comme annoncé à la baseline `c408eae` :
+
+| Fichier supprimé | Poids |
+|---|---|
+| `ai-startup-landing-page.png` | 960 Ko |
+| `map.png` | 592 Ko |
+| `light-saas-landing-page.png` | 312 Ko |
+| `dark-saas-landing-page.png` | 248 Ko |
+| `book-cover.png` | 208 Ko |
+| `memoji-computer.png` | 100 Ko |
+| `memoji-smile.png` | 92 Ko |
+| `jeevons-avatar-neutral.webp` | 68 Ko |
+| `quantumWebsite.webp` | 24 Ko |
+| `memoji-avatar-1.png` … `-5.png` (5 fichiers) | 64 Ko |
+| `IMG_5500-removebg-preview_resultat.webp` | 8 Ko |
+| **`public/next.svg`, `public/vercel.svg`** | (starter Next, 0 référence) |
+
+**≈ 2,7 Mo libérés.** Les deux SVG absents du tableau de baseline : ils vivent dans `public/`, que l'inventaire initial ne couvrait pas.
+
+⚠️ **Piège de `grep` rencontré pour de vrai** — `map` seul produit **1213 faux positifs** (le mot anglais, les *source maps*). Il a fallu vérifier `map\.png` exactement : ✅ orphelin, tandis que **`map-tours.webp` EST utilisé** (`AboutClient.tsx:4`). Deux fichiers voisins, un seul mort : c'est précisément le genre d'erreur que le tableau recopié aurait causée.
+
+🛑 **`public/assets/docs/photoIDD.jpg` est CONSERVÉ, délibérément.** Zéro référence statique trouvée (`src`, `prisma`, `scripts`, `public`) — mais un fichier de `public/` est **servi par son URL** : il peut être référencé depuis un contenu administré en base ou avoir été partagé par lien. Sa suppression n'échouerait **pas au build**, elle produirait une **404 silencieuse en production**. Le piège n°3 demande explicitement la prudence ici. 🛑 **Décision à trancher par Jeevons** (voir plus bas).
+
+#### 2. Décisions documentées (Tâche 0)
+
+- 🛑 **AVIF : NON activé. `next.config.mjs` n'est PAS modifié du tout.** ⚠️ **Mesuré, pas supposé** : une requête `/_next/image` avec `Accept: image/avif,image/webp,...` renvoie `Content-Type: image/webp`. Le défaut Next sert donc déjà un **format moderne**, ce qui satisfait AC1. Activer AVIF ajouterait un **coût CPU d'encodage significatif dans le conteneur**, sur un VPS Hetzner mutualisé (AGENTS.md §1 : coût additionnel nul), et la story l'interdit **sans mesure du temps de première réponse** — impossible ici. ✅ **Bénéfice collatéral** : le loader `@svgr/webpack` (3.3) et les `outputFileTracingIncludes` de `pdf-to-img` (5.17) restent **intouchés**, donc aucun risque pour le build du conteneur.
+- ✅ **`priority` sur le memoji du hero, et sur LUI SEUL** (`Hero.tsx:154`). Il est au-dessus de la ligne de flottaison et participe au LCP (cible < 2 s). ⚠️ En mettre sur plusieurs saturerait la file de chargement et **dégraderait** le LCP.
+- ✅ **AC1 côté uploads = 1600 px + WebP + lazy**, conformément à la recommandation de la story. ❌ **Aucune génération multi-tailles** : ce serait modifier `lib/media/process.ts`, donc un débordement Epic 5.
+
+#### 3. AC1 — prouvé sur le HTML PRÉ-RENDU, pas supposé
+
+`sizes` ajouté **uniquement** là où la largeur rendue varie selon le point de rupture :
+- `AboutClient.tsx` (carte) — `(min-width: 1200px) 33vw, (min-width: 768px) 66vw, 100vw`
+- `ProjectCard.tsx` (repli) — `(min-width: 1200px) 450px, 100vw`
+
+❌ **Pas de `sizes`** sur le memoji (`size-[100px]` fixe), le smileMemoji ni les avatars du parcours (cadre `size-14` fixe) : sans effet, la story l'exclut.
+
+✅ **Vérification dans `.next/server/app/index.html`** : **13 balises `srcSet`**, et pour `map-tours.webp` un jeu complet **256w → 3840w** avec le `sizes` attendu. C'est ce `srcset` qui fera choisir au navigateur des **`w=` différents entre mobile et desktop** — le test décisif d'AC1.
+
+#### 4. AC2 — `placeholder="blur"` sur les 5 imports statiques
+
+`Hero.tsx:154`, `AboutClient.tsx` (map + smileMemoji), `TestimonialsClient.tsx` (avatar), `ProjectCard.tsx` (repli). ✅ Vérifié dans le HTML : chaque `<img data-nimg="1">` porte bien un `background-image:url("data:image/svg+xml…")` — le `blurDataURL` **généré au build** par Next grâce à l'import statique.
+
+⚠️ Le poids reste maîtrisé : ce sont de **petits SVG inline**, appliqués à 5 images, pas à une longue liste.
+
+#### 5. AC3 — l'audit, et les 3 écarts RÉELS comblés
+
+Inventaire des points d'affichage public d'un `Media` sur `DEV` (4 sites, `/admin` exclu par périmètre) :
+
+| Point d'affichage | `width`/`height` | `blurDataUrl` | `loading="lazy"` |
+|---|---|---|---|
+| `ProjectCard.tsx:235` (motif de référence) | ✅ | ✅ | ✅ |
+| `projects/[slug]/page.tsx:182` | ✅ | ✅ | ❌ → ✅ **ajouté** |
+| `AboutClient.tsx:162` (vignette CV) | ✅ | ⚠️ n/a | ❌ → ✅ **ajouté** |
+| `cv/page.tsx:139` (vignette CV, mobile) | ✅ | ⚠️ n/a | ❌ → ✅ **ajouté** |
+
+🛑 **Écart NON comblable, et c'est justifié** : les deux vignettes de CV n'ont pas de `blurDataUrl` parce que **le type `CurrentCv` de la story 5.17 ne le stocke pas** (`path`, `thumbnailPath`, `thumbnailWidth`, `thumbnailHeight` — `lib/cv.ts:28-36`). L'ajouter exigerait une **migration du contrat de stockage + un re-traitement `sharp` des vignettes**, c'est-à-dire exactement le **débordement Epic 5 que le piège n°5 interdit**. ✅ L'anti-CLS y est de toute façon assuré par les `width`/`height` **réels**, qui suffisent à réserver la place — ce que demande AC2. Le point est documenté en commentaire aux deux endroits.
+
+✅ **AUCUNE migration vers `next/image`** : `lib/media/process.ts`, `/api/media/[...path]` et `/admin` sont **strictement intacts** (confirmé par `git status`).
+
+#### 6. Non-régression
+
+`bun run lint` **0** · `bunx tsc --noEmit` **0** · `bun run build` **vert** · 🛑 **`/` toujours `○ 1h`** (garde-fou du dépôt). `next.config.mjs` non modifié, donc **aucun risque** sur le loader SVG ni sur le traçage `pdf-to-img`.
+
+#### 7. 🛑 Vérifications DUES À JEEVONS (aucun navigateur dans cet environnement)
+
+Ce qui précède est vérifié sur le **code et le HTML pré-rendu**. Ces trois points exigent un navigateur et **restent à faire** :
+1. **AC1** — onglet Réseau, viewport mobile puis desktop : confirmer des **`w=` différents** sur `/_next/image` (le `srcset` est en place, reste à observer le choix du navigateur).
+2. **AC2** — throttling **Slow 3G** : l'aperçu flouté occupe la place, rien ne bouge à l'arrivée. **Mesurer le CLS < 0,05** et le **LCP < 2 s** (le `priority` du memoji devrait l'améliorer).
+3. **AC4** — **parcours visuel** du site : aucune image manquante, **aucune 404** dans l'onglet Réseau. ⚠️ Le build ne couvre pas `public/`.
+
+🛑 **Décision attendue : `public/assets/docs/photoIDD.jpg`** — conservé par prudence (voir §1). S'il est bien mort, sa suppression est un `git rm` d'une ligne.
 
 ### File List
 
+**Modifiés**
+- `apps/web/src/sections/Hero.tsx` — `priority` + `placeholder="blur"` sur le memoji (AC1, AC2)
+- `apps/web/src/sections/AboutClient.tsx` — `sizes` + `placeholder="blur"` (map), `placeholder="blur"` (smileMemoji), `loading="lazy"` (vignette CV, AC3)
+- `apps/web/src/sections/TestimonialsClient.tsx` — `placeholder="blur"` sur l'avatar de parcours (AC2)
+- `apps/web/src/components/ProjectCard.tsx` — `sizes` + `placeholder="blur"` sur le repli `<Image>` (AC1, AC2)
+- `apps/web/src/app/projects/[slug]/page.tsx` — `loading="lazy"` sur la cover (AC3)
+- `apps/web/src/app/cv/page.tsx` — `loading="lazy"` sur la vignette CV (AC3)
+
+**Supprimés (17 fichiers, ≈ 2,7 Mo)**
+- `apps/web/src/assets/images/ai-startup-landing-page.png`
+- `apps/web/src/assets/images/map.png`
+- `apps/web/src/assets/images/light-saas-landing-page.png`
+- `apps/web/src/assets/images/dark-saas-landing-page.png`
+- `apps/web/src/assets/images/book-cover.png`
+- `apps/web/src/assets/images/memoji-computer.png`
+- `apps/web/src/assets/images/memoji-smile.png`
+- `apps/web/src/assets/images/jeevons-avatar-neutral.webp`
+- `apps/web/src/assets/images/quantumWebsite.webp`
+- `apps/web/src/assets/images/memoji-avatar-1.png`
+- `apps/web/src/assets/images/memoji-avatar-2.png`
+- `apps/web/src/assets/images/memoji-avatar-3.png`
+- `apps/web/src/assets/images/memoji-avatar-4.png`
+- `apps/web/src/assets/images/memoji-avatar-5.png`
+- `apps/web/src/assets/images/IMG_5500-removebg-preview_resultat.webp`
+- `apps/web/public/next.svg`
+- `apps/web/public/vercel.svg`
+
+**Volontairement NON modifiés** : `next.config.mjs` (AVIF écarté) · `lib/media/process.ts` · `app/api/media/[...path]/route.ts` · `/admin` · volume `uploads` · `grain.jpg` (fond CSS, utilisé) · les SVG (`@svgr/webpack`).
+
 ### Change Log
+
+| Date | Version | Description |
+|---|---|---|
+| 2026-07-27 | 0.1 | Story 6.18 implémentée : `sizes` (2 images à largeur variable) et `placeholder="blur"` (5 imports statiques) côté assets du dépôt ; `priority` sur le seul memoji du hero ; audit des 4 points d'affichage média avec `loading="lazy"` ajouté sur 3 d'entre eux ; purge de 17 fichiers orphelins (≈ 2,7 Mo) après inventaire refait sur `DEV`. AVIF écarté après mesure, `next.config.mjs` intact. lint/tsc/build verts, `/` toujours `○ 1h`. Vérifications navigateur (CLS, LCP, Slow 3G, parcours visuel) dues à Jeevons. |
