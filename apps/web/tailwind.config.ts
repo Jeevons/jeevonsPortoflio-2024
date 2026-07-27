@@ -9,8 +9,30 @@ const config: Config = {
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
+    // 🛑 CES PALIERS SONT REDÉFINIS, ILS NE SONT PAS CEUX DE TAILWIND. `sm` vaut
+    // ici 375 px (et non 640 px) : une classe `sm:` s'applique donc DÈS le plus
+    // petit téléphone courant, pas à partir d'une tablette. ⚠️ Piège vérifié le
+    // 27/07 — un `sm:hidden` écrit avec les valeurs par défaut en tête faisait
+    // réapparaître la barre de navigation à 375 px, précisément la largeur où
+    // elle est illisible.
     screens: {
       sm: "375px",
+      // Palier DÉDIÉ à la barre de navigation, et à elle seule.
+      //
+      // ⚠️ LA VALEUR EST UNE MESURE, PAS UNE PRÉFÉRENCE : les cinq entrées
+      // (`px-4` + `text-sm` + `gap-1`) totalisent ~455 px, auxquels s'ajoute la
+      // marge latérale nécessaire pour que la pilule ne touche pas les bords de
+      // l'écran (retour Jeevons). Elle apparaît donc exactement quand elle tient
+      // proprement — jamais avant.
+      //
+      // ❌ NE PAS UTILISER AILLEURS : ce palier n'a de sens que pour cette
+      // barre. ⚠️ Il est lu en DEUX endroits — les classes `nav:` du `Header` et
+      // le `matchMedia` qui referme le menu mobile en grand écran. Changer l'un
+      // sans l'autre laisse le panneau ouvert sans bouton pour le fermer.
+      //
+      // ⚠️ Ajouter ou renommer une entrée de menu change la largeur requise :
+      // remesurer alors cette valeur.
+      nav: "500px",
       md: "768px",
       lg: "1200px",
     },

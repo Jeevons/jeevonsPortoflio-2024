@@ -38,6 +38,22 @@ const NAV_ITEMS = [
 const COMPACT_THRESHOLD = 80;
 
 /**
+ * Largeur à partir de laquelle la pilule remplace le menu déroulant.
+ *
+ * 🛑 DOIT VALOIR EXACTEMENT LE PALIER `nav` DE `tailwind.config.ts` (500 px).
+ * Les classes `nav:` décident de ce qui est VISIBLE, cette constante décide de
+ * quand le panneau mobile se referme tout seul : si les deux divergent, il
+ * existe une plage de largeurs où le panneau reste ouvert alors que le bouton
+ * qui l'a ouvert a déjà disparu — plus rien à l'écran ne permet de le fermer.
+ *
+ * ⚠️ Ce dédoublement est INÉVITABLE : une media query CSS n'est pas lisible
+ * depuis JavaScript sans la réécrire. Il est donc rendu explicite ici plutôt que
+ * laissé implicite. Une valeur en dur dans le `matchMedia` (640 px, réflexe du
+ * Tailwind par défaut) est exactement le défaut corrigé le 27/07.
+ */
+const NAV_BREAKPOINT = "(min-width: 500px)";
+
+/**
  * Les pages qui PORTENT les sections ancrées.
  *
  * 🛑 Ailleurs, un `href="#projects"` ne désigne RIEN : le navigateur ne trouve
@@ -73,15 +89,15 @@ export const Header = () => {
   });
 
   // 🛑 FERMER LE MENU MOBILE DÈS QUE L'ÉCRAN REDEVIENT LARGE. Sans cela, une
-  // rotation de tablette ou un redimensionnement de fenêtre laisse le panneau
+  // rotation de téléphone ou un redimensionnement de fenêtre laisse le panneau
   // ouvert PAR-DESSUS la page alors que le bouton qui l'a ouvert vient de
-  // disparaître (`sm:hidden`) : plus rien à l'écran ne permet de le refermer,
-  // sinon `Échap`. Le seuil `640px` est celui de `sm` — ⚠️ le changer ici sans
-  // changer les classes `sm:` (ou l'inverse) recrée exactement ce piège.
+  // disparaître (`nav:hidden`) : plus rien à l'écran ne permet de le refermer,
+  // sinon `Échap`. Le seuil vient de `NAV_BREAKPOINT` — ⚠️ lire son commentaire
+  // avant d'y toucher.
   useEffect(() => {
     if (!isMobileNavOpen) return;
 
-    const wide = window.matchMedia("(min-width: 640px)");
+    const wide = window.matchMedia(NAV_BREAKPOINT);
     const close = () => {
       if (wide.matches) setMobileNavOpen(false);
     };
@@ -125,9 +141,13 @@ export const Header = () => {
             La transition CSS est couverte par la règle globale reduced-motion de
             la story 6.2 (durées ET délais neutralisés) : AC5 est satisfait pour
             le header sans code conditionnel ici. */}
-        {/* 🛑 BOUTON D'OUVERTURE DU MENU, SOUS `sm` UNIQUEMENT (retour Jeevons,
-            27/07 : la pilule à cinq entrées ne tient pas sur une ligne à 375 px
-            — « À propos » passait à la ligne et déformait toute la barre).
+        {/* 🛑 BOUTON D'OUVERTURE DU MENU, SOUS 500 px (palier `nav`).
+
+            ⚠️ CE N'EST PAS `sm:` — piège corrigé le 27/07. `sm` vaut 375 px
+            dans CE projet (voir `tailwind.config.ts`, les paliers sont
+            redéfinis) et non 640 px : un `sm:hidden` faisait donc réapparaître
+            la pilule dès 375 px, exactement la largeur où elle se dégrade. Le
+            palier `nav` est calé sur la largeur MESURÉE de la pilule.
 
             ⚠️ C'est un VRAI `<button type="button">` : focusable nativement,
             actionné à l'Entrée comme à l'Espace, annoncé comme bouton. Un `<div
@@ -138,7 +158,7 @@ export const Header = () => {
             panneau est ouvert ou fermé. `aria-controls` le relie au panneau. */}
         <button
           type="button"
-          className="sm:hidden inline-flex size-11 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white backdrop-blur transition-colors duration-200 hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+          className="nav:hidden inline-flex size-11 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white backdrop-blur transition-colors duration-200 hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
           aria-expanded={isMobileNavOpen}
           aria-controls={mobileNavId}
           aria-label="Ouvrir le menu de navigation"
@@ -158,10 +178,12 @@ export const Header = () => {
           </svg>
         </button>
 
-        {/* ⚠️ `hidden sm:flex` — LA PILULE NE VIT QU'À PARTIR DE `sm`. Le seuil
-            est le même que celui du `matchMedia` ci-dessus : les deux doivent
-            changer ENSEMBLE, sinon le menu mobile peut rester ouvert sans bouton
-            pour le fermer.
+        {/* ⚠️ `hidden nav:flex` — LA PILULE NE VIT QU'À PARTIR DE 500 px, la
+            largeur qu'elle MESURE réellement (~455 px) plus sa marge de
+            respiration : en deçà elle touchait les bords de l'écran avant même
+            de se dégrader (retour Jeevons). Le seuil est le même que celui du
+            `matchMedia` ci-dessus — les deux doivent changer ENSEMBLE, sinon le
+            menu mobile peut rester ouvert sans bouton pour le fermer.
 
             ⚠️ `whitespace-nowrap` : c'est le retour à la ligne de « À propos »
             qui déformait les pastilles en ovales et faisait déborder « Contact »
@@ -169,7 +191,7 @@ export const Header = () => {
         <nav
           aria-label="Navigation principale"
           className={twMerge(
-            "hidden sm:flex whitespace-nowrap border border-white/15 rounded-full bg-white/10 transition-all duration-300",
+            "hidden nav:flex whitespace-nowrap border border-white/15 rounded-full bg-white/10 transition-all duration-300",
             isCompact
               ? "gap-0.5 p-0 backdrop-blur-xl"
               : "gap-1 p-0.5 backdrop-blur",
