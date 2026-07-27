@@ -26,6 +26,17 @@ RUN apk add --no-cache vips-dev
 COPY --from=oven/bun:1.3.3-alpine /usr/local/bin/bun /usr/local/bin/bun
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# 🛑 APRÈS le `COPY . .`, JAMAIS AVANT — sous peine d'être écrasé.
+#
+# Prisma 7 exige un `output` explicite : le client est généré dans
+# `src/generated/prisma` (schema.prisma:11), un dossier GITIGNORÉ. Il est donc
+# absent de l'arbre copié ci-dessus, alors que le code l'importe via l'alias
+# `@/generated/prisma/enums` (schémas Zod, formulaires admin).
+#
+# Le `postinstall` de l'étage `deps` l'a bien produit, mais on n'y récupérait
+# que `node_modules` : le build échouait en `Module not found` dès que le
+# cache Docker de cet étage était froid.
+COPY --from=deps /app/src/generated ./src/generated
 # Les NEXT_PUBLIC_* sont inlinées par Next au moment du build : les passer
 # au runtime n'aurait aucun effet. Changer de domaine impose un rebuild.
 ARG NEXT_PUBLIC_SITE_URL
@@ -52,6 +63,9 @@ RUN apk add --no-cache vips
 COPY --from=oven/bun:1.3.3-alpine /usr/local/bin/bun /usr/local/bin/bun
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# Même correctif qu'à l'étage `builder` (voir le commentaire détaillé plus
+# haut) : le client Prisma généré est gitignoré, donc absent du `COPY . .`.
+COPY --from=deps /app/src/generated ./src/generated
 EXPOSE 3000
 CMD ["bun", "run", "dev"]
 
