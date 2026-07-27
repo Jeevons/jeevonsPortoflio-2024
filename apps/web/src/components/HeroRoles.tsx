@@ -149,10 +149,26 @@ export const HeroRoles = ({ roles }: HeroRolesProps) => {
             le premier rendu ; `invisible` la retire de l'affichage sans la
             retirer du flux (contrairement à `hidden`, qui ne réserverait rien).
             Le texte animé, lui, est superposé en `absolute` : il peut donc
-            grandir et rétrécir sans jamais déplacer quoi que ce soit. */}
-        <span className="invisible">{longestRole}</span>
+            grandir et rétrécir sans jamais déplacer quoi que ce soit.
 
-        <span className="text-gradient-accent absolute inset-0 font-semibold md:text-lg">
+            🛑 LA CALE PORTE LES MÊMES CLASSES DE FONTE QUE LE TEXTE ANIMÉ, ET
+            RÉSERVE AUSSI LA PLACE DU CURSEUR (retour Jeevons, 27/07 : sur
+            « Développeur Full-Stack », le curseur repassait à la ligne et la fin
+            du mot disparaissait).
+
+            ❌ Sans `font-semibold md:text-lg`, la cale était mesurée dans la
+            fonte du paragraphe — plus étroite que le texte animé, donc trop
+            courte : le rôle le plus long débordait.
+            ❌ Sans la réplique du curseur, il manquait encore sa largeur plus
+            sa marge, et c'est LUI qui passait à la ligne.
+            ⚠️ `whitespace-nowrap` est la ceinture de sécurité : même à quelques
+            pixels près, plus rien ne peut se replier. */}
+        <span className="invisible whitespace-nowrap font-semibold md:text-lg">
+          {longestRole}
+          <span className="ml-0.5 inline-block w-0.5" />
+        </span>
+
+        <span className="text-gradient-accent absolute inset-0 whitespace-nowrap font-semibold md:text-lg">
           {visibleText}
           {/* Le curseur de frappe. Il clignote par une animation CSS, donc la
               règle globale de la story 6.2 le fige sous mouvement réduit — et

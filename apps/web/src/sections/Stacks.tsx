@@ -48,7 +48,23 @@ const LEVEL_BADGE_CLASS: Record<string, string> = {
 
 export const StacksSection = async () => {
   const stacks = await getPublicStacks();
-  const groups = groupStacksByDomain(stacks);
+
+  // 🛑 LE GROUPE DE REPLI N'EST PAS AFFICHÉ (demande de Jeevons, 27/07 :
+  // « masque la section autres technologies »).
+  //
+  // ⚠️ LE FILTRAGE EST FAIT ICI, AU RENDU, ET NON DANS `groupStacksByDomain`.
+  // Cette fonction est la règle métier du regroupement (story 6.13) : elle doit
+  // continuer de renvoyer le groupe de repli, que l'aperçu et les tests
+  // exercent. C'est l'AFFICHAGE PUBLIC qui l'écarte — un choix éditorial, donc
+  // réversible en supprimant ce seul filtre.
+  //
+  // ⚠️ CONSÉQUENCE À CONNAÎTRE : une technologie sans domaine n'apparaît alors
+  // NULLE PART sur le site. Tant qu'aucun domaine n'est assigné depuis
+  // `/admin/stacks`, la section entière disparaît (garde ci-dessous). C'est le
+  // comportement demandé, pas un oubli.
+  const groups = groupStacksByDomain(stacks).filter(
+    (group) => group.key !== "__fallback",
+  );
 
   // 🛑 AC3 — RIEN DANS LE DOM. Pas `hidden`, pas `display:none`, pas `sr-only` :
   // un lecteur d'écran annoncerait tout de même un titre suivi de vide, et le
