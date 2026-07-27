@@ -1,3 +1,4 @@
+import { AuroraBackground } from "@/components/AuroraBackground";
 import { CustomCursor } from "@/components/CustomCursor";
 import { AboutSection } from "@/sections/About";
 import { ContactSection } from "@/sections/Contact";
@@ -41,6 +42,15 @@ export default function Home() {
           en rendu dynamique — `/` reste `○ (Static, 1h)`, vérifié au build
           (garde-fou documenté plus haut). */}
       <CustomCursor />
+      {/* Story 6.16 (AC2) — Dégradé d'ambiance animé, monté ICI et non dans
+          `layout.tsx`, pour la MÊME raison que le curseur ci-dessus : le layout
+          racine est partagé avec `/admin` (qui a sa propre identité, tokens
+          shadcn 5.7) et `/login`. Le poser au layout aurait injecté l'aurora
+          dans l'admin — un débordement sur l'Epic 5. Monté à la page, `/admin`
+          est intact PAR CONSTRUCTION, sans vérification à faire.
+          ⚠️ Composant SERVEUR, 100 % CSS : aucun JavaScript ajouté au bundle,
+          et `/` reste `○ (Static, 1h)`. */}
+      <AuroraBackground />
       <Header />
       <HeroSection />
       <ProjectsSection />

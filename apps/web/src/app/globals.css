@@ -88,6 +88,122 @@
     @apply absolute inset-0;
     opacity: var(--grain-opacity);
   }
+
+  /* --------------------------------------------------------------------------
+     Story 6.16 (AC2, AC3, AC4) — AURORA : les trois blobs du fond d'ambiance.
+
+     ⚠️ LE GRAIN N'EST NI REMPLACÉ NI RETIRÉ. AC2 dit « un dégradé S'Y AJOUTE » :
+     `.surface-grain` ci-dessus et ses trois usages (Hero, ContactClient, Card)
+     sont intacts. L'aurora est une couche NOUVELLE, au fond de la page — il n'y
+     avait aucun fond décoratif global auparavant (`layout.tsx` ne pose que
+     `bg-surface`).
+
+     🛑 COULEURS VIA LES TOKENS 6.1 (`--accent-from` / `--accent-to`), jamais en
+     dur : c'est le dégradé de signature du site (PLAN §4.1). Le troisième blob
+     mélange les deux bornes pour éviter un fond bicolore trop lisible.
+
+     🛑 SEULS `transform` ET `opacity` VARIENT dans les keyframes. Le `filter:
+     blur()` est déclaré une fois, hors keyframes : il est peint au premier
+     rendu puis seulement composé. ❌ L'animer serait la propriété la plus
+     coûteuse à repeindre du CSS (AC3, piège n°4).
+
+     🛑 CHAQUE CYCLE EST FERMÉ : la frame `100%` reproduit EXACTEMENT la frame
+     `0%`. C'est ce qui rend AC4 correct — la règle `prefers-reduced-motion`
+     globale (`animation-duration: 0.01ms`, plus bas) fait sauter l'animation à
+     sa DERNIÈRE frame, qui est donc ici la position de repos. Le fond figé est
+     identique au fond au repos : présentable, jamais une position extrême ni
+     une opacité nulle. ⚠️ Aucune seconde media-query n'est ajoutée : la règle de
+     6.2 suffit et prime déjà sur les utilitaires.
+
+     ⚠️ Durées très longues (25-40 s) et désynchronisées : l'effet doit être
+     perçu comme une variation d'ambiance, pas comme un mouvement. */
+  .aurora-blob {
+    position: absolute;
+    /* Plus large que le viewport pour que les bords du dégradé radial ne soient
+       jamais visibles. Le parent porte `overflow-hidden` : aucun débordement. */
+    width: 70vmax;
+    height: 70vmax;
+    border-radius: 9999px;
+    /* Blur STATIQUE — jamais animé. */
+    filter: blur(100px);
+  }
+
+  .aurora-blob-1 {
+    top: -20vmax;
+    left: -15vmax;
+    background: radial-gradient(
+      circle,
+      hsl(var(--accent-from)) 0%,
+      transparent 70%
+    );
+    animation: aurora-drift-1 32s ease-in-out infinite;
+  }
+
+  .aurora-blob-2 {
+    top: 20vmax;
+    right: -25vmax;
+    background: radial-gradient(
+      circle,
+      hsl(var(--accent-to)) 0%,
+      transparent 70%
+    );
+    animation: aurora-drift-2 40s ease-in-out infinite;
+  }
+
+  .aurora-blob-3 {
+    bottom: -30vmax;
+    left: 20vmax;
+    background: radial-gradient(
+      circle,
+      hsl(var(--accent-from)) 0%,
+      hsl(var(--accent-to) / 0.5) 40%,
+      transparent 70%
+    );
+    animation: aurora-drift-3 25s ease-in-out infinite;
+  }
+}
+
+/* Story 6.16 — Keyframes de l'aurora. Hors `@layer` : les `@keyframes` ne sont
+   pas des règles en cascade, les placer dans une couche n'a aucun effet utile.
+
+   ⚠️ Les opacités PLAFONNENT à 0.07 : au-delà, la teinte devient une forme
+   perceptible au lieu d'une ambiance, et le risque sur le contraste cesse d'être
+   théorique. Ces valeurs ÉCLAIRCISSENT un fond gray-900 sous du texte blanc :
+   elles augmentent le contraste, elles ne le réduisent pas. */
+@keyframes aurora-drift-1 {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.07;
+  }
+  50% {
+    transform: translate3d(10vmax, 8vmax, 0) scale(1.2);
+    opacity: 0.05;
+  }
+}
+
+@keyframes aurora-drift-2 {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1.1);
+    opacity: 0.06;
+  }
+  50% {
+    transform: translate3d(-12vmax, 10vmax, 0) scale(0.9);
+    opacity: 0.04;
+  }
+}
+
+@keyframes aurora-drift-3 {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.05;
+  }
+  50% {
+    transform: translate3d(8vmax, -10vmax, 0) scale(1.15);
+    opacity: 0.07;
+  }
 }
 
 @layer utilities {

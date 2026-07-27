@@ -4,7 +4,7 @@ baseline_commit: c408eae7818fb33ef915a70085775688fbf80640
 
 # Story 6.16: Percevoir un site vivant jusque dans les détails
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -128,27 +128,27 @@ AC4 s'appuie **entièrement** sur le socle de neutralisation de **6.2** (`useRed
 
 ## Tasks / Subtasks
 
-- [ ] **Tâche 0 — Prérequis & décisions** (AC: 1, 2)
-  - [ ] 6.1 et 6.2 `done`. 🛑 **Décider et documenter** : `"use client"` sur `Tape.tsx` ou vue cliente extraite · **vitesse de croisière** conservée à l'arrêt (✅ recommandé) · **où** poser l'aurora (`layout.tsx` global ou `page.tsx`) et **ce que devient `/admin`**.
-- [ ] **Tâche 1 — Bandeau piloté par le défilement** (AC: 1 ; piège n°1)
-  - [ ] `useScroll` + `useVelocity` + **`useSpring`** (lissage **obligatoire**) + `useTransform` sur `x`. ❌ Aucun `setState` au défilement, ❌ aucune écriture de style dans un handler `scroll`.
-  - [ ] 🛑 **Préserver la boucle** : duplication ×2 des mots **ET** modulo sur `-50%`. ❌ Aucun saut au raccord.
-  - [ ] ⚠️ **Conserver** `overflow-x-clip`, `mask-image`, `-rotate-3`, le dégradé d'accent (via **tokens 6.1**).
-- [ ] **Tâche 2 — Aurora de fond** (AC: 2 ; piège n°2)
-  - [ ] `radial-gradient` animés en **CSS pur**, `transform`/`opacity` **uniquement**. Couleurs via **tokens 6.1**. ❌ Aucune dépendance, ❌ pas de canvas.
-  - [ ] 🛑 **`pointer-events-none`** + **`aria-hidden="true"`** + `-z-*` + hors flux (anti-CLS). ⚠️ **Le grain est CONSERVÉ** dans ses trois usages.
-  - [ ] 🛑 **Contraste AA vérifié au point le plus défavorable.**
-- [ ] **Tâche 3 — Mouvement réduit** (AC: 4 ; piège n°3)
-  - [ ] 🛑 `useReducedMotion` → **aucun abonnement au défilement**, bande figée à **`x = 0`** (lisible). ❌ Pas « plus lent ».
-  - [ ] 🛑 **Vérifier à l'œil l'état FIGÉ de l'aurora** (la règle 6.2 saute à la dernière frame) — il doit rester présentable.
-- [ ] **Tâche 4 — Performance** (AC: 3 ; piège n°4)
-  - [ ] Profil de défilement **avant/après**, throttling CPU ×4. Lighthouse ≥ 95, CLS < 0,05, **LCP inchangé**. `will-change` **parcimonieux**.
-- [ ] **Tâche 5 — Vérification locale** (AC: 1-4 ; piège n°6)
-  - [ ] Les 4 AC un par un, dont **défilement haut/bas + arrêt** (AC1), **contraste au point le plus clair + clics partout** (AC2), **profil CPU ×4** (AC3), **mouvement réduit sur les deux effets** (AC4). Mobile : ❌ aucun défilement horizontal.
-- [ ] **Tâche 6 — Definition of Done** (AGENTS.md §8)
-  - [ ] `bun run lint` 0 / `bunx tsc --noEmit` 0 / `bun run build` OK — 🛑 **`/` toujours `○ (Static, 1h)`**.
-  - [ ] `git diff DEV` : `Tape.tsx` + l'aurora (+ `globals.css`/`tailwind.config.ts` si keyframes). ❌ Aucune migration, aucune dépendance, aucune lecture, `Header.tsx` / `Card.tsx` / `/admin` / métadonnées de `layout.tsx` intacts.
-  - [ ] `File List` + `Completion Notes` + `Change Log` · `sprint-status.yaml`.
+- [x] **Tâche 0 — Prérequis & décisions** (AC: 1, 2)
+  - [x] 6.1 et 6.2 `done`. 🛑 **Décider et documenter** : `"use client"` sur `Tape.tsx` ou vue cliente extraite · **vitesse de croisière** conservée à l'arrêt (✅ recommandé) · **où** poser l'aurora (`layout.tsx` global ou `page.tsx`) et **ce que devient `/admin`**.
+- [x] **Tâche 1 — Bandeau piloté par le défilement** (AC: 1 ; piège n°1)
+  - [x] `useScroll` + `useVelocity` + **`useSpring`** (lissage **obligatoire**) + `useTransform` sur `x`. ❌ Aucun `setState` au défilement, ❌ aucune écriture de style dans un handler `scroll`.
+  - [x] 🛑 **Préserver la boucle** : duplication ×2 des mots **ET** modulo sur `-50%`. ❌ Aucun saut au raccord.
+  - [x] ⚠️ **Conserver** `overflow-x-clip`, `mask-image`, `-rotate-3`, le dégradé d'accent (via **tokens 6.1**).
+- [x] **Tâche 2 — Aurora de fond** (AC: 2 ; piège n°2)
+  - [x] `radial-gradient` animés en **CSS pur**, `transform`/`opacity` **uniquement**. Couleurs via **tokens 6.1**. ❌ Aucune dépendance, ❌ pas de canvas.
+  - [x] 🛑 **`pointer-events-none`** + **`aria-hidden="true"`** + `-z-*` + hors flux (anti-CLS). ⚠️ **Le grain est CONSERVÉ** dans ses trois usages.
+  - [x] 🛑 **Contraste AA vérifié au point le plus défavorable.**
+- [x] **Tâche 3 — Mouvement réduit** (AC: 4 ; piège n°3)
+  - [x] 🛑 `useReducedMotion` → **aucun abonnement au défilement**, bande figée à **`x = 0`** (lisible). ❌ Pas « plus lent ».
+  - [x] 🛑 **Vérifier à l'œil l'état FIGÉ de l'aurora** (la règle 6.2 saute à la dernière frame) — il doit rester présentable. → vérifié **structurellement** sur le CSS servi (`0%` ≡ `100%` sur les 3 keyframes), confirmation à l'œil due par Jeevons.
+- [x] **Tâche 4 — Performance** (AC: 3 ; piège n°4)
+  - [x] Garanties structurelles tenues (`transform`/`opacity` seuls, aucun `will-change`, aucun listener `scroll`, aucun `setState` par frame, élément hors flux). ⚠️ **Profil CPU ×4 et Lighthouse NON exécutés** — pas de navigateur headless dans l'environnement (contrainte connue, Epic 7) : dus par Jeevons.
+- [x] **Tâche 5 — Vérification locale** (AC: 1-4 ; piège n°6)
+  - [x] Vérifié sur le **HTML et le CSS réellement servis** : duplication ×2, `transform:none` au SSR, conteneur aurora `aria-hidden`+`pointer-events-none`+`-z-50`+`fixed`, `overflow-x-clip`/`mask-image`/`-rotate-3` intacts, `/admin` sans aurora, contraste AA calculé (11,66:1 au pire cas). ⚠️ **Vérifications VISUELLES au navigateur dues par Jeevons** (défilement haut/bas/arrêt, clics, 375 px).
+- [x] **Tâche 6 — Definition of Done** (AGENTS.md §8)
+  - [x] `bun run lint` 0 / `bunx tsc --noEmit` 0 / `bun run build` OK — 🛑 **`/` toujours `○ (Static, 1h)`**.
+  - [x] `git diff DEV` : `Tape.tsx` + `AuroraBackground.tsx` + `globals.css` + `page.tsx`. ❌ Aucune migration, aucune dépendance, aucune lecture, `Header.tsx` / `Card.tsx` / `/admin` / `layout.tsx` **intacts** (`tailwind.config.ts` non modifié).
+  - [x] `File List` + `Completion Notes` + `Change Log` · `sprint-status.yaml`.
 
 ## Dev Notes
 
@@ -192,8 +192,45 @@ Vérification **manuelle** des 4 AC, avec trois tests décisifs : **défiler ver
 
 ### Agent Model Used
 
+claude-opus-5 (Claude Code, workflow `bmad-dev-story`)
+
 ### Completion Notes
+
+**Les trois décisions de la Tâche 0 :**
+
+1. **`"use client"` posé sur `Tape.tsx` lui-même**, pas d'extraction d'une vue cliente. Le composant ne lit aucune donnée (mots en dur, rendre le bandeau administrable est explicitement hors périmètre) : une enveloppe n'aurait ajouté qu'un fichier et un nœud pour un gain nul. 🛑 Garde-fou vérifié au build : `/` reste `○ (Static, 1h)`.
+2. **Vitesse de croisière CONSERVÉE à l'arrêt** (option recommandée). `BASE_SPEED = 50/30` reproduit exactement l'ancienne cadence (`animation-duration:30s` parcourait -50 % en 30 s). Une bande figée à l'arrêt aurait été une régression visuelle.
+3. **Aurora montée dans `page.tsx`, pas dans `layout.tsx`.** Même raison que le curseur de la 6.6 : le layout racine est partagé avec `/admin` (identité shadcn 5.7) et `/login`. 🛑 Conséquence importante : **`/admin` est intact PAR CONSTRUCTION** — vérifié, 0 occurrence d'`aurora-blob` dans son HTML — et **`layout.tsx` n'est pas au diff**, donc les métadonnées SEO de la story 1.10 ne sont pas approchées.
+
+**AC1 — bandeau.** `useScroll` → `useVelocity` → `useSpring` → `useTransform`, puis `useAnimationFrame` qui intègre la position. La vélocité étant **signée**, l'inversion de sens est obtenue sans aucune logique conditionnelle. Le `useSpring` n'est pas un raffinement : sans lui la vélocité brute oscille autour de zéro à l'arrêt et la bande vibrerait. Une **zone morte** (`|factor| < 1`) empêche en plus le sens d'hésiter au passage par zéro, et l'accélération est **plafonnée à ×5** — sans ce plafond, un saut d'ancre (`scroll-behavior: smooth`) rendrait la bande illisible. Le sens courant vit dans un `useRef`, jamais dans un état React : **aucun `setState` par frame**, ce qui est la violation d'AC3 la plus directe.
+
+🛑 **Boucle préservée** : la duplication ×2 des mots est intacte (vérifié sur le HTML servi — `Performant` apparaît exactement 2 fois) et `wrap(-50, 0, …)` reproduit l'invariance de l'ancienne keyframe. `overflow-x-clip`, `mask-image`, `-rotate-3` et `.bg-gradient-accent` sont conservés tels quels.
+
+🛑 **BUG TROUVÉ ET CORRIGÉ, à connaître** : `wrap(-50, 0, 0)` retourne **`-50` et non `0`** — la borne haute est exclusive (vérifié en exécutant `motion`). Sans correctif, le SSR rendait `transform:translateX(-50%)` (constaté sur le HTML servi), d'où **un saut d'une demi-piste à l'hydratation** et surtout une bande figée à `-50%` sous mouvement réduit alors qu'AC4 exige `x = 0`. Le rendu serait resté lisible *par coïncidence* (à -50 % on voit la seconde copie), mais c'est exactement le genre de dépendance fragile qui casse au moindre changement de la duplication. `x` court-circuite désormais `wrap` pour `value === 0` et sous mouvement réduit → **`transform:none` au SSR, re-vérifié après correctif**.
+
+**AC2 — aurora.** Trois blobs en `radial-gradient`, CSS pur, **aucune dépendance, aucun canvas**, couleurs prises sur les **tokens 6.1** (`--accent-from` / `--accent-to`). `AuroraBackground` est un **composant serveur** : zéro JavaScript ajouté au bundle. Les trois garde-fous sont posés ensemble sur le conteneur — `pointer-events-none` (sans lui un fond `fixed` intercepte **tous** les clics du site), `aria-hidden="true"`, `-z-50` — et `fixed` le place **hors du flux**, donc sans effet CLS. ⚠️ **Le grain est conservé** dans ses trois usages (`Hero`, `ContactClient`, `Card`) : l'aurora *s'ajoute*, elle ne remplace rien.
+
+🛑 **Contraste AA vérifié par calcul WCAG au point le plus défavorable**, pas au centre et pas à l'estime : superposition des **trois blobs à leur opacité maximale** sous du texte blanc → **11,66:1**, contre 4,5:1 exigé (référence sans aurora : 17,74:1). Marge de 2,6×. La raison est structurelle : une teinte **claire** à ≤ 7 % sur un fond gray-900 ne peut qu'**éclaircir** le fond, donc qu'augmenter le contraste d'un texte blanc. Le texte sombre de la bande, lui, est sur un fond opaque *devant* l'aurora : non concerné.
+
+**AC4 — le piège central, et il est tenu des deux côtés.**
+- **Bandeau** : en quittant `animate-move-left`, on quitte la couverture de la règle CSS globale de 6.2 — `motion` ne la lit pas. La neutralisation est donc **explicite** : sous `useReducedMotion`, `useAnimationFrame` **retourne immédiatement** (aucun abonnement actif, aucune intégration) et `x` est forcé à `"0%"`. ❌ Pas « plus lent » : immobile.
+- **Aurora** : AC4 est gratuit *parce que les keyframes ont été écrites pour ça*. 🛑 Les trois cycles sont **fermés** — `0%` et `100%` partagent la même déclaration, **vérifié sur le CSS réellement servi** et non supposé. La règle 6.2 saute à la dernière frame, qui est donc la position de repos : opacité 0,05–0,07, jamais nulle, jamais une position extrême. ⚠️ **Aucune seconde media-query `prefers-reduced-motion` n'a été ajoutée** — celle de 6.2 suffit.
+
+**AC3 — garanties structurelles tenues, mesure due.** `transform`/`opacity` **uniquement** (le `blur(100px)` est déclaré hors keyframes : peint une fois, ensuite seulement composé) ; **aucun `will-change`** — en poser un sur chaque blob consommerait de la mémoire GPU et dégraderait, alors qu'une animation de `transform` est promue d'office ; aucun listener `scroll`, aucun `setState` par frame ; élément hors flux. ⚠️ **En revanche le profilage CPU ×4 et Lighthouse n'ont PAS été exécutés** : pas de navigateur headless dans cet environnement (contrainte connue du dépôt, outillée seulement à l'Epic 7). AC3 est donc **argumenté et non mesuré** — la mesure reste due par Jeevons.
+
+**Non-régressions vérifiées sur le HTML/CSS servis** : `/` en `○ (Static, 1h)`, duplication ×2 du bandeau, `overflow-x-clip` présent, `/admin` sans aucune trace d'aurora, `tailwind.config.ts` **non modifié** (les keyframes vivent dans `globals.css`), `layout.tsx` non modifié. ⚠️ `animate-move-left` subsiste ailleurs dans le dépôt (`AboutClient.tsx:200`, toolbox de la 6.15) — **hors périmètre, volontairement non touché**.
+
+⚠️ **VÉRIFICATIONS VISUELLES DUES PAR JEEVONS** (aucune n'a pu être exécutée sans navigateur) : **AC1** défiler vers le bas puis vers le haut puis s'arrêter — accélération, inversion, retour à la croisière sans vibration ni saut au raccord ; **AC2** discrétion perçue du dégradé + **cliquer partout** pour confirmer qu'aucun élément n'est devenu inerte ; **AC3** profil de défilement CPU ×4 avant/après, Lighthouse ≥ 95, CLS < 0,05, **LCP inchangé** (l'aurora ne doit pas être élue LCP) ; **AC4** mouvement réduit sur les deux effets, dont l'état figé de l'aurora à l'œil ; **375 px sans défilement horizontal** (la bande est inclinée) ; `/preview` intact.
 
 ### File List
 
+- `apps/web/src/sections/Tape.tsx` (modifié — passage en composant client, animation pilotée par la vélocité de défilement)
+- `apps/web/src/components/AuroraBackground.tsx` (nouveau — composant serveur, dégradé d'ambiance décoratif)
+- `apps/web/src/app/globals.css` (modifié — classes `.aurora-blob*` et keyframes `aurora-drift-1/2/3`)
+- `apps/web/src/app/page.tsx` (modifié — montage de `<AuroraBackground />`)
+
 ### Change Log
+
+| Date | Version | Description |
+|---|---|---|
+| 2026-07-27 | 0.1 | Story 6.16 implémentée. Bandeau piloté par la vélocité de défilement lissée (accélération + inversion de sens, vitesse de croisière conservée), `Tape.tsx` passé en composant client. Aurora de fond en CSS pur (3 blobs, tokens 6.1) montée dans `page.tsx` — `/admin` et `layout.tsx` intacts par construction. Neutralisation explicite sous mouvement réduit des deux effets. Correctif : `wrap(-50,0,0)` retourne `-50`, court-circuité pour garantir `x = 0` au SSR et sous mouvement réduit. Contraste AA calculé au pire cas (11,66:1). lint 0 / tsc 0 / build OK, `/` reste `○ (Static, 1h)`. |
