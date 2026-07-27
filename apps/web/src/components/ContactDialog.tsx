@@ -71,6 +71,56 @@ export const ContactDialog = ({
     else if (!open && dialog.open) dialog.close();
   }, [open]);
 
+  // 🛑 LE DÉFILEMENT DE LA PAGE EST GELÉ PENDANT LA MODALE (retour Jeevons,
+  // 27/07). `showModal()` rend bien l'arrière-plan INERTE — plus aucun clic ni
+  // focus ne l'atteint — mais il ne bloque PAS le défilement : la molette
+  // continue de faire défiler la page derrière la boîte de dialogue. C'est le
+  // comportement natif, et il faut le corriger à la main.
+  //
+  // ⚠️ `overflow: hidden` SEUL DÉCALE TOUTE LA PAGE. Sur un navigateur à barre
+  // de défilement classique (Windows, Linux, ou macOS réglé pour l'afficher en
+  // permanence), masquer le débordement fait disparaître la barre : la page
+  // s'élargit d'un coup de sa largeur, et tout le contenu saute latéralement au
+  // moment précis où la modale s'ouvre. On compense donc par un padding de la
+  // largeur exacte de la barre — nulle là où elle est en superposition, auquel
+  // cas la compensation vaut 0 et ne change rien.
+  useEffect(() => {
+    if (!open) return;
+
+    const { body, documentElement } = document;
+    const scrollbarWidth = window.innerWidth - documentElement.clientWidth;
+
+    const previousOverflow = body.style.overflow;
+    const previousPaddingRight = body.style.paddingRight;
+
+    body.style.overflow = "hidden";
+    if (scrollbarWidth > 0) {
+      // ⚠️ On ADDITIONNE au padding calculé plutôt que d'écraser : le `body`
+      // pourrait en porter un venant de la feuille de style.
+      const currentPadding = parseFloat(
+        window.getComputedStyle(body).paddingRight,
+      );
+      body.style.paddingRight = `${currentPadding + scrollbarWidth}px`;
+
+      // ⚠️ LE HEADER EST `fixed w-full` : il se dimensionne sur le VIEWPORT et
+      // non sur le `body`, donc le padding ci-dessus ne l'atteint pas — sans
+      // cette variable il serait le seul élément à sauter, ce qui se voit
+      // d'autant plus qu'il est en haut de l'écran. `globals.css` la consomme.
+      documentElement.style.setProperty(
+        "--scrollbar-compensation",
+        `${scrollbarWidth}px`,
+      );
+    }
+
+    // Le nettoyage restaure les valeurs EN LIGNE d'origine — une chaîne vide
+    // rendant simplement la main à la feuille de style.
+    return () => {
+      body.style.overflow = previousOverflow;
+      body.style.paddingRight = previousPaddingRight;
+      documentElement.style.removeProperty("--scrollbar-compensation");
+    };
+  }, [open]);
+
   // ⚠️ Plus de `reset()` au succès : le formulaire est désormais DÉMONTÉ au
   // profit de l'écran de confirmation, il n'y a donc plus de champs à vider.
   // La remise à zéro pour une éventuelle seconde demande est assurée par le

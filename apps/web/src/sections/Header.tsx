@@ -75,7 +75,17 @@ export const Header = () => {
           alors que le header est une pilule centrée. */}
       <ScrollProgress />
 
-      <header className="flex justify-center items-center fixed top-3 w-full z-10">
+      {/* ⚠️ `--scrollbar-compensation` est posée par `ContactDialog` le temps de
+          la modale, qui gèle le défilement de la page. Comme ce header est
+          `fixed w-full`, il se dimensionne sur le VIEWPORT et non sur le `body` :
+          la compensation appliquée à ce dernier ne l'atteint pas, et sans cette
+          règle il serait le seul élément à sauter à l'ouverture — d'autant plus
+          visible qu'il est en haut de l'écran. Vaut 0 le reste du temps, et là
+          où la barre de défilement est en superposition (macOS par défaut). */}
+      <header
+        className="flex justify-center items-center fixed top-3 w-full z-10"
+        style={{ paddingRight: "var(--scrollbar-compensation, 0px)" }}
+      >
         {/* AC2 — « se compacte et se floute pour se faire discrète SANS
             DISPARAÎTRE ».
 
