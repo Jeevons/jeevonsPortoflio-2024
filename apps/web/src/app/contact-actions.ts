@@ -83,8 +83,35 @@ export async function submitContactMessage(
   //
   // ⚠️ On retourne le SUCCÈS, sans écrire ni notifier. Un message d'erreur, un
   // code distinct ou même un délai différent seraient autant de signaux.
+  // 🛑 SECONDE LIGNE DE DÉFENSE CONTRE L'AUTOFILL (constaté le 27/07 : le
+  // gestionnaire de Chrome a rempli le piège avec l'adresse du visiteur, dont la
+  // demande a été ignorée en silence). La vue pose désormais `readOnly` sur le
+  // champ, ce qui bloque l'autofill ; cette garde couvre le cas où un autre
+  // navigateur passerait outre.
+  //
+  // ⚠️ POURQUOI CETTE COMPARAISON EST SÛRE : un gestionnaire de mots de passe
+  // verse la MÊME valeur d'identité dans le piège et dans le champ e-mail. Un
+  // robot, lui, n'a aucune raison de faire coïncider les deux — il remplit le
+  // piège avec une URL, un nom, ou du texte publicitaire. Ignorer le piège dans
+  // ce seul cas ne lui ouvre donc pas la porte.
+  //
+  // ⚠️ Le coût des deux erreurs n'est PAS symétrique : un faux positif perd
+  // définitivement et silencieusement la demande d'un recruteur ; un faux
+  // négatif ajoute un message indésirable dans une boîte de réception. On
+  // arbitre en faveur du visiteur légitime.
   const honeypot = formData.get(HONEYPOT_FIELD);
-  if (typeof honeypot === "string" && honeypot.trim() !== "") {
+  const submittedEmail = formData.get("email");
+  const filledByAutofill =
+    typeof honeypot === "string" &&
+    typeof submittedEmail === "string" &&
+    honeypot.trim() !== "" &&
+    honeypot.trim().toLowerCase() === submittedEmail.trim().toLowerCase();
+
+  if (
+    typeof honeypot === "string" &&
+    honeypot.trim() !== "" &&
+    !filledByAutofill
+  ) {
     return SUCCESS;
   }
 

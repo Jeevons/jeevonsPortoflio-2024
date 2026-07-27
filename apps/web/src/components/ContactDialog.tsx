@@ -194,9 +194,26 @@ export const ContactDialog = ({
                   name={HONEYPOT_FIELD}
                   type="text"
                   tabIndex={-1}
-                  // ⚠️ Sans `autoComplete="off"`, le gestionnaire de mots de passe
-                  // du visiteur peut pré-remplir le piège et faire ignorer une
-                  // demande parfaitement légitime.
+                  // 🛑 CONSTATÉ EN VRAI, PAS THÉORIQUE (27/07) : le gestionnaire
+                  // de Chrome a rempli ce champ avec l'adresse de Jeevons, dont
+                  // la demande a donc été ignorée EN SILENCE — le formulaire
+                  // répondait « merci » et rien n'arrivait en base. C'est le
+                  // scénario que le commentaire d'origine redoutait ; il s'est
+                  // produit.
+                  //
+                  // ❌ `autoComplete="off"` NE SUFFIT PAS : Chrome l'ignore
+                  // délibérément pour l'autofill d'identité. Il reste posé, mais
+                  // c'est `readOnly` qui fait le travail — un champ en lecture
+                  // seule n'est jamais rempli par l'autofill, tout en étant
+                  // TOUJOURS soumis.
+                  //
+                  // ❌ SURTOUT PAS `disabled` : un champ désactivé est exclu du
+                  // `FormData`, le piège ne verrait plus jamais rien et
+                  // laisserait passer tous les robots.
+                  //
+                  // ⚠️ Un robot, lui, écrit dans le DOM ou retire l'attribut :
+                  // le piège reste donc efficace contre ce qu'il vise.
+                  readOnly
                   autoComplete="off"
                   defaultValue=""
                 />
