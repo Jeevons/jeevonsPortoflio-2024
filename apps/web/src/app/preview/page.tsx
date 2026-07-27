@@ -8,6 +8,7 @@ import { HeroSection } from "@/sections/Hero";
 import { ProjectsSection } from "@/sections/Projects";
 import { SelfProjectsSection } from "@/sections/SelfProject";
 import { StacksSection } from "@/sections/Stacks";
+import { StatsSection } from "@/sections/Stats";
 import { TapeSection } from "@/sections/Tape";
 import { TestimonialsSection } from "@/sections/Testimonials";
 import type { Metadata } from "next";
@@ -65,6 +66,11 @@ export default async function PreviewPage() {
       <HeroSection />
       <ProjectsSection preview={preview} />
       <SelfProjectsSection preview={preview} />
+      {/* Story 6.14 — même composition et même ordre que la home.
+          ⚠️ AUCUN drapeau `preview` : les chiffres décrivent le site PUBLIÉ.
+          Les gonfler avec les brouillons donnerait à Jeevons un aperçu de
+          chiffres que ses visiteurs ne verront pas — l'inverse du but d'AC2. */}
+      <StatsSection />
       <TapeSection />
       {/* Story 6.13 — même composition que la home : l'aperçu doit rendre
           exactement ce que verra un visiteur. `Stack` n'a pas de notion de

@@ -183,8 +183,62 @@ Vérification **manuelle** des 3 AC, avec quatre tests décisifs : **dépublier 
 
 ### Agent Model Used
 
+claude-opus-5 (Claude Code)
+
 ### Completion Notes
+
+**Décisions de tâche 0** (toutes avaient une recommandation explicite dans la story ; aucune ne demandait un chiffre non calculable ni un débordement sur l'Epic 5) :
+
+1. **Trois chiffres, tous calculés depuis la base** — projets publiés (TOUTES catégories), technologies, années d'expérience. ❌ Aucun chiffre codé en dur : AC1 l'exclut, et un chiffre faux sur un portfolio de recrutement est un risque en soi. Les « clients satisfaits » ou « années d'expérience saisies à la main » ont été écartés faute de source.
+2. **Années d'expérience = dérivation**, `année courante − min(startYear des entrées publiées)`. Pas de nouveau champ, pas de réglage : la donnée existe déjà dans `TimelineEntry`.
+3. **`once: true`, pas de `sessionStorage`** — « une seule fois par visite » entendu comme « par affichage de page ». Un état persistant introduirait un risque de divergence d'hydratation pour un bénéfice que personne ne remarque.
+4. **Tuile à zéro masquée, section entière masquée si toutes le sont** — standard « section absente plutôt que vide ». « 0 projet » est un chiffre juste qui dessert.
+
+**Points d'implémentation structurants :**
+
+- 🛑 **DEUX tags de cache** (`projects` ET `timeline`) sur `unstable_cache`. Sans le tag `timeline`, modifier une étape de parcours ne rafraîchirait jamais le chiffre des années. `readWithFallback` ne reçoit qu'un domaine (paramètre de journalisation, pas d'invalidation) : `projects`, dominant. La signature du module partagé n'a pas été touchée.
+- 🛑 **`count()` et non `findMany().length`** : on compte en base, on ne charge pas des projets avec leurs relations pour en tirer un entier. `published: true` est DANS la requête, jamais un filtre JS après coup.
+- 🛑 **AC3 passe par l'état initial, pas par la durée.** `useState(value)` : le HTML servi porte déjà la valeur finale. Partir de `0` en ne neutralisant que la durée laisserait, sous `prefers-reduced-motion`, un compteur **bloqué à zéro** — un contenu faux affiché en permanence, pire qu'une animation. Vérifié sur le HTML servi : les nombres finaux y sont présents.
+- 🛑 **❌ Aucun `aria-live`.** Un nombre qui défile produit des dizaines de mutations par seconde. Le nombre animé est `aria-hidden`, la valeur finale est exposée à côté en `sr-only`, en une phrase complète et en **une seule chaîne** (un assemblage de fragments JSX faisait insérer par React des marqueurs `<!-- -->` au milieu du texte annoncé — corrigé).
+- `deriveExperienceYears` renvoie `null`, jamais `0` / `NaN` / `-Infinity` : `Math.min()` sur un tableau vide vaut `Infinity`. Un `startYear` futur (saisie erronée) est également borné à `null` plutôt que d'afficher « −2 ans ».
+- `tabular-nums` : largeur de chiffre constante, donc **aucun CLS** pendant le défilement.
+- ⚠️ **Aucun drapeau `preview` sur `/preview`** : les chiffres décrivent le site PUBLIÉ. Les gonfler avec les brouillons donnerait à Jeevons un aperçu de chiffres que ses visiteurs ne verront pas.
+- ⚠️ **Aucune entrée ajoutée au `Header`** : la section peut disparaître entièrement (AC3), un lien de menu pointerait alors vers une ancre inexistante.
+- **Correction en cours de route** : un `setDisplay(0)` synchrone dans le corps de l'effet violait `react-hooks/set-state-in-effect` (rendus en cascade). Il était de surcroît redondant — la première frame de `tick` s'exécute à `progress ≈ 0` et écrit `0` d'elle-même. Supprimé.
+- **Aucune dépendance ajoutée** (`motion` 12 déjà présent).
+
+**Vérifications effectuées en conditions réelles** (base réelle, serveur conteneurisé, HTML servi — pas par lecture du source) :
+
+- **AC1** — `{publishedProjects: 6, stacks: 7, experienceYears: 6}`, conformes à la base (6 projets publiés, 7 stacks, `min(startYear) = 2020`). Accords au pluriel corrects.
+- **AC2/AC3 (HTML servi)** — les valeurs **finales** (`6`, `6`, `7`) sont dans le HTML, pas des zéros : justes sans JS, sous mouvement réduit et pour un crawler. Paire d'accessibilité en place, sans `aria-live`.
+- **AC3 (base vide)** — les trois sources vidées **sans redémarrer** (le seed se rejoue à chaque boot) : agrégats `{0, 0, null}` → **0 occurrence** de `id="chiffres"`, de l'eyebrow, du titre et de `tabular-nums`. Rien dans le DOM ; la page reste servie (104 Ko).
+- **Cas intermédiaire** — avec `{0, 0, 6}` : la section **reste**, avec **une seule tuile**. Aucun « 0 projet » affiché.
+- **Non-régression ISR** — `bun run build` : `┌ ○ / 1h 1y`. La home reste statique.
+- `tsc --noEmit` : 0 erreur. `eslint .` : 0 erreur.
+- **Base restaurée à l'identique** (6 projets publiés, 7 stacks, 17 liens `_ProjectStacks`, 5 entrées de parcours, 1 seul `level`, 0 `domain`) et **les deux routes temporaires de vérification ont été supprimées** (0 résidu).
+
+**Restant à vérifier par Jeevons** (hors de portée d'un contrôle automatisé) :
+
+- Le compteur ne se relance pas en descendant → remontant → redescendant (AC2), dans un vrai navigateur.
+- `prefers-reduced-motion: reduce` activé au niveau du système : le chiffre doit s'afficher **immédiatement à sa valeur finale**, sans défilement (AC3).
+- Passage au lecteur d'écran : chaque tuile doit être annoncée une seule fois, en phrase complète (« 6 ans d'expérience »), sans égrener les valeurs intermédiaires.
+- Rendu à 375 px et absence de saut de mise en page pendant l'animation.
 
 ### File List
 
+**Nouveaux :**
+- `apps/web/src/lib/stats.ts` — lecture d'agrégats (`server-only`), cache à deux tags, repli statique
+- `apps/web/src/components/AnimatedCounter.tsx` — compteur client (`useInView` `once`, ease-out, `tabular-nums`)
+- `apps/web/src/sections/Stats.tsx` — conteneur serveur, mise en forme et règles de masquage
+- `apps/web/src/sections/StatsClient.tsx` — vue cliente, grille de tuiles, paire d'accessibilité
+
+**Modifiés :**
+- `apps/web/src/app/page.tsx` — `<StatsSection />` après `<SelfProjectsSection />`
+- `apps/web/src/app/preview/page.tsx` — même composition, sans drapeau `preview`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml` — statut de la story
+
 ### Change Log
+
+| Date | Version | Description |
+| --- | --- | --- |
+| 2026-07-27 | 1.0 | Section « En quelques chiffres » : agrégats calculés en base (deux tags de cache), compteur animé une seule fois et neutralisé par l'état initial sous mouvement réduit, tuiles et section masquées lorsqu'elles sont vides. AC1/AC2/AC3 vérifiés sur le HTML servi ; `/` reste `○ (Static, 1h)`. |

@@ -7,6 +7,7 @@ import { HeroSection } from "@/sections/Hero";
 import { ProjectsSection } from "@/sections/Projects";
 import { SelfProjectsSection } from "@/sections/SelfProject";
 import { StacksSection } from "@/sections/Stacks";
+import { StatsSection } from "@/sections/Stats";
 import { TapeSection } from "@/sections/Tape";
 import { TestimonialsSection } from "@/sections/Testimonials";
 
@@ -45,6 +46,11 @@ export default function Home() {
       <HeroSection />
       <ProjectsSection />
       <SelfProjectsSection />
+      {/* Story 6.14 — « En quelques chiffres », placée APRÈS les projets
+          qu'elle dénombre : le visiteur vient d'en voir la matière, le chiffre
+          la résume au lieu de l'annoncer à vide. Aucune entrée de menu ne la
+          vise : la section disparaît si tous ses chiffres sont vides (AC3). */}
+      <StatsSection />
       <TapeSection />
       {/* Story 6.13 — « Stack & outils », après les projets qu'elle éclaire et
           avant les témoignages. Aucune entrée de menu ne la vise : la section
