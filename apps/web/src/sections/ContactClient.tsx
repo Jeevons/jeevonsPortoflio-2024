@@ -33,6 +33,18 @@ type ContactClientProps = {
 export const ContactClient = ({ linkedinUrl }: ContactClientProps) => {
   const [isDialogOpen, setDialogOpen] = useState(false);
 
+  // ⚠️ Incrémenté à CHAQUE ouverture, et servant de `key` à la modale : celle-ci
+  // se remonte donc avec un `useActionState` neuf. Sans cela, rouvrir le
+  // formulaire après un envoi réussi rejouerait l'écran de confirmation du
+  // message précédent — l'état d'une action survivant à la fermeture du
+  // `<dialog>`, qui ne démonte rien.
+  const [dialogKey, setDialogKey] = useState(0);
+
+  const openDialog = () => {
+    setDialogKey((key) => key + 1);
+    setDialogOpen(true);
+  };
+
   return (
     <section className="py-16 pt-12 lg:py-24 lg:pt-20" id="contact">
       <div className="container">
@@ -75,7 +87,7 @@ export const ContactClient = ({ linkedinUrl }: ContactClientProps) => {
             <div>
               <button
                 type="button"
-                onClick={() => setDialogOpen(true)}
+                onClick={openDialog}
                 className="text-white bg-surface items-center px-6 h-12 rounded-control gap-2 inline-flex w-max border border-surface hover:scale-110 transform transition duration-300 ease-in-out focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
               >
                 <span className="font-semibold">Me Contacter</span>
@@ -89,7 +101,11 @@ export const ContactClient = ({ linkedinUrl }: ContactClientProps) => {
       {/* ⚠️ Hors du `Reveal` : ce dernier applique un `transform` pendant sa
           révélation, et un ancêtre transformé crée un bloc conteneur qui
           casserait le positionnement en couche supérieure du `<dialog>`. */}
-      <ContactDialog open={isDialogOpen} onClose={() => setDialogOpen(false)} />
+      <ContactDialog
+        key={dialogKey}
+        open={isDialogOpen}
+        onClose={() => setDialogOpen(false)}
+      />
     </section>
   );
 };
