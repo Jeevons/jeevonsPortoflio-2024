@@ -45,7 +45,17 @@ const nextConfig = {
   // ⚠️ Ces trois paquets sont EXCLUSIVEMENT serveur (route `/api/admin/cv`) et
   // ne doivent jamais rejoindre un bundle : les déclarer externes les laisse
   // chargés par le `require`/`import` natif de Node, tel que le paquet l'attend.
-  serverExternalPackages: ["pdf-to-img", "pdfjs-dist", "@napi-rs/canvas"],
+  //
+  // Story 6.12 — `nodemailer` rejoint la liste pour la MÊME raison, appliquée
+  // en prévention plutôt qu'après coup : il est lui aussi importé dynamiquement
+  // (`lib/contact-notification.ts`) et repose sur des modules Node natifs
+  // (`net`, `tls`, `dns`) que le bundler n'a aucune raison de traiter.
+  serverExternalPackages: [
+    "pdf-to-img",
+    "pdfjs-dist",
+    "@napi-rs/canvas",
+    "nodemailer",
+  ],
   webpack(config) {
     // Grab the existing rule that handles SVG imports
     const fileLoaderRule = config.module.rules.find((rule) =>
