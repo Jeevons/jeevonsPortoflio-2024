@@ -125,6 +125,39 @@ export const highlightSchema = z.object({
 
 export type HighlightInput = z.infer<typeof highlightSchema>;
 
+/** Longueur max d'une légende — une phrase sous une image, pas un paragraphe. */
+const CAPTION_MAX = 300;
+
+/**
+ * Une image de GALERIE du projet (modèle `ProjectImage`).
+ *
+ * ⚠️ Même logique de réconciliation que `highlightSchema` : `id` présent = ligne
+ * existante à mettre à jour, absent = image ajoutée à créer. Les lignes
+ * existantes absentes de la soumission sont supprimées.
+ *
+ * ⚠️ `mediaId` est REQUIS, contrairement au `coverId` du projet : une ligne de
+ * galerie sans image n'a aucun sens (elle n'a pas d'autre contenu à porter),
+ * alors qu'un projet sans couverture reste valide. L'éditeur n'ajoute d'ailleurs
+ * une ligne qu'au moment où une image est choisie.
+ *
+ * `sortOrder` n'est pas transmis : le serveur le DÉRIVE de l'index du tableau,
+ * exactement comme pour les points forts — une seule source de vérité pour
+ * l'ordre.
+ */
+export const projectImageSchema = z.object({
+  id: z.string().trim().min(1).optional(),
+  mediaId: z.string().trim().min(1, "Une image de la galerie est invalide."),
+  // La légende est FACULTATIVE : elle commente l'image quand c'est utile (« Écran
+  // de validation des factures ») et reste vide sinon. Vide → `null`, et le site
+  // public n'affiche alors aucun bloc de légende.
+  caption: optionalText(
+    CAPTION_MAX,
+    `Une légende ne peut dépasser ${CAPTION_MAX} caractères.`,
+  ),
+});
+
+export type ProjectImageInput = z.infer<typeof projectImageSchema>;
+
 /**
  * Règles d'un projet, communes au client et au serveur (AC2 de 5.8).
  *
@@ -210,6 +243,21 @@ export const projectSchema = z.object({
     .trim()
     .transform((value) => (value === "" ? null : value))
     .nullable(),
+  // GALERIE — images secondaires du projet, sans limite arbitraire de nombre
+  // (même parti pris que les points forts). L'ordre du tableau EST l'ordre
+  // d'affichage sur la fiche publique.
+  //
+  // ⚠️ Le `refine` fait respecter, CÔTÉ APPLICATIF, la contrainte d'unicité
+  // `@@unique([projectId, mediaId])` de la base. Sans lui, ajouter deux fois la
+  // même image ferait remonter une erreur Prisma brute (P2002) au lieu d'un
+  // message compréhensible rattaché au champ.
+  images: z
+    .array(projectImageSchema)
+    .refine(
+      (images) =>
+        new Set(images.map((image) => image.mediaId)).size === images.length,
+      { message: "La même image est ajoutée plusieurs fois à la galerie." },
+    ),
 });
 
 /** Valeurs validées d'un projet — contrat unique client ↔ serveur. */
@@ -260,6 +308,7 @@ export function projectFormDataToInput(formData: FormData): unknown {
     // cochée ».
     published: formData.has("published"),
     highlights: formDataToHighlights(formData),
+    images: formDataToImages(formData),
     // `getAll` : les cases à cocher de technologies partagent le même nom, une
     // ligne par technologie sélectionnée. Aucune coché → tableau vide, donc
     // « le projet n'a aucune technologie », ce qui est un état légitime.
@@ -267,6 +316,47 @@ export function projectFormDataToInput(formData: FormData): unknown {
       .getAll("stackIds")
       .filter((value): value is string => typeof value === "string"),
   };
+}
+
+/**
+ * Reconstruit le tableau ordonné des images de galerie depuis le `FormData`.
+ *
+ * Même mécanique indexée que `formDataToHighlights` (voir son commentaire pour
+ * le détail) : `images[0].id`, `images[0].mediaId`, `images[0].caption`…
+ *
+ * ⚠️ Une ligne SANS `mediaId` est écartée en silence : elle ne désigne aucune
+ * image, il n'y a donc rien à persister. C'est le pendant exact du filtre des
+ * points forts vides — une ligne résiduelle ne doit pas faire échouer
+ * l'enregistrement du projet entier.
+ */
+function formDataToImages(formData: FormData): unknown[] {
+  const byIndex = new Map<
+    number,
+    { id?: string; mediaId: string; caption: string }
+  >();
+
+  for (const [key, value] of formData.entries()) {
+    const match = /^images\[(\d+)\]\.(id|mediaId|caption)$/.exec(key);
+    if (!match || typeof value !== "string") continue;
+
+    const index = Number(match[1]);
+    const entry = byIndex.get(index) ?? { mediaId: "", caption: "" };
+    if (match[2] === "id") {
+      // Ligne nouvellement ajoutée : `id` vide, qu'on ne conserve pas — sinon le
+      // serveur croirait devoir mettre à jour une ligne existante.
+      if (value.trim().length > 0) entry.id = value;
+    } else if (match[2] === "mediaId") {
+      entry.mediaId = value;
+    } else {
+      entry.caption = value;
+    }
+    byIndex.set(index, entry);
+  }
+
+  return [...byIndex.entries()]
+    .sort(([a], [b]) => a - b)
+    .map(([, entry]) => entry)
+    .filter((entry) => entry.mediaId.trim().length > 0);
 }
 
 /**

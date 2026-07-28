@@ -133,6 +133,33 @@ const STALE_COVER_ERROR =
   "L'image de couverture sélectionnée n'existe plus. Rafraîchissez la page puis choisissez-en une autre.";
 
 /**
+ * Distingue un P2003 venant de la GALERIE de celui venant de la couverture.
+ *
+ * ⚠️ POURQUOI CE TEST : les deux cas remontent le MÊME code d'erreur (contrainte
+ * de clé étrangère vers `Media`). Sans lui, une image de galerie supprimée
+ * entre-temps afficherait « l'image de couverture n'existe plus » — un message
+ * faux, qui enverrait chercher le problème au mauvais endroit.
+ *
+ * 🛑 LA FORME DE `meta` A ÉTÉ VÉRIFIÉE CONTRE UN VRAI P2003 (Prisma 7 + adapter
+ * pg), elle n'est pas devinée. Ce que Prisma remplit RÉELLEMENT :
+ *   { modelName: "ProjectImage",
+ *     driverAdapterError: { cause: { constraint: { index:
+ *       "ProjectImage_mediaId_fkey" } } } }
+ * ❌ Il n'y a PAS de `meta.field_name` sur ce chemin (il vaut `undefined`) : s'y
+ * fier ne détecterait jamais rien et laisserait passer le mauvais message.
+ * On teste donc `modelName`, stable et suffisant — seule la galerie écrit dans
+ * `ProjectImage`.
+ */
+function isMissingGalleryImage(error: unknown): boolean {
+  if (!isMissingCover(error)) return false;
+  const model = (error as { meta?: { modelName?: unknown } }).meta?.modelName;
+  return model === "ProjectImage";
+}
+
+const STALE_GALLERY_ERROR =
+  "Une image de la galerie n'existe plus. Rafraîchissez la page puis retirez-la de la galerie.";
+
+/**
  * Garde + validation communes à la création et à la modification (AC2).
  *
  * Renvoie soit les données validées, soit l'état d'erreur à retourner au
@@ -205,7 +232,7 @@ export async function createProjectAction(
 
   // Story 5.9 — les relations sont extraites des champs scalaires : Prisma
   // n'accepte pas un tableau brut là où il attend une écriture imbriquée.
-  const { highlights, stackIds, ...scalars } = guard.data;
+  const { highlights, stackIds, images, ...scalars } = guard.data;
 
   let createdId: string;
   try {
@@ -220,6 +247,15 @@ export async function createProjectAction(
         highlights: {
           create: highlights.map((highlight, index) => ({
             label: highlight.label,
+            sortOrder: index,
+          })),
+        },
+        // GALERIE — même règle que les points forts : l'ordre du tableau devient
+        // le `sortOrder` persisté, donc l'ordre affiché sur la fiche publique.
+        images: {
+          create: images.map((image, index) => ({
+            mediaId: image.mediaId,
+            caption: image.caption,
             sortOrder: index,
           })),
         },
@@ -254,6 +290,16 @@ export async function createProjectAction(
     }
     if (isMissingRelation(error)) {
       return { status: "error", message: STALE_STACK_ERROR, fieldErrors: {} };
+    }
+    // ⚠️ Testé AVANT `isMissingCover` : la galerie est un cas PARTICULIER du
+    // même code P2003, et l'ordre inverse le masquerait derrière un message
+    // parlant de la couverture.
+    if (isMissingGalleryImage(error)) {
+      return {
+        status: "error",
+        message: STALE_GALLERY_ERROR,
+        fieldErrors: { images: "Une image de la galerie n'existe plus." },
+      };
     }
     if (isMissingCover(error)) {
       return {
@@ -298,7 +344,7 @@ export async function updateProjectAction(
     return { status: "error", message: GENERIC_ERROR, fieldErrors: {} };
   }
 
-  const { highlights, stackIds, ...scalars } = guard.data;
+  const { highlights, stackIds, images, ...scalars } = guard.data;
 
   try {
     // ⚠️ TRANSACTION — points forts et technologies sont réconciliés en
@@ -372,6 +418,61 @@ export async function updateProjectAction(
         }
       }
 
+      // GALERIE — réconciliation par identifiant, à l'identique des points
+      // forts ci-dessus (mêmes raisons : ne pas churner les identifiants, ne pas
+      // perdre de ligne en cas d'échec).
+      //
+      // ⚠️ La suppression doit passer AVANT les mises à jour et créations : la
+      // contrainte `@@unique([projectId, mediaId])` refuserait sinon de
+      // réinsérer une image qu'on vient de déplacer d'une ligne à l'autre.
+      const existingImages = await tx.projectImage.findMany({
+        where: { projectId: id },
+        select: { id: true },
+      });
+      const existingImageIds = new Set(existingImages.map((image) => image.id));
+
+      // Un `id` posté n'appartenant pas à CE projet est ignoré (traité comme un
+      // ajout) : le formulaire reste une entrée utilisateur.
+      const submittedImageIds = new Set(
+        images
+          .map((image) => image.id)
+          .filter((value): value is string => value !== undefined)
+          .filter((value) => existingImageIds.has(value)),
+      );
+
+      const removedImageIds = [...existingImageIds].filter(
+        (existingId) => !submittedImageIds.has(existingId),
+      );
+      if (removedImageIds.length > 0) {
+        await tx.projectImage.deleteMany({
+          where: { id: { in: removedImageIds } },
+        });
+      }
+
+      for (const [index, image] of images.entries()) {
+        if (image.id !== undefined && submittedImageIds.has(image.id)) {
+          await tx.projectImage.update({
+            where: { id: image.id },
+            // `mediaId` est mis à jour aussi : l'éditeur permet de remplacer
+            // l'image d'une ligne existante sans la supprimer.
+            data: {
+              mediaId: image.mediaId,
+              caption: image.caption,
+              sortOrder: index,
+            },
+          });
+        } else {
+          await tx.projectImage.create({
+            data: {
+              mediaId: image.mediaId,
+              caption: image.caption,
+              sortOrder: index,
+              projectId: id,
+            },
+          });
+        }
+      }
+
       await tx.project.update({
         where: { id },
         data: {
@@ -408,6 +509,15 @@ export async function updateProjectAction(
     // rafraîchir — car l'utilisateur n'a pas à distinguer laquelle des deux.
     if (isMissingRelation(error)) {
       return { status: "error", message: STALE_STACK_ERROR, fieldErrors: {} };
+    }
+    // Une image de la galerie a disparu depuis l'ouverture du formulaire.
+    // ⚠️ Testé AVANT la couverture : même code P2003 (cf. `isMissingGalleryImage`).
+    if (isMissingGalleryImage(error)) {
+      return {
+        status: "error",
+        message: STALE_GALLERY_ERROR,
+        fieldErrors: { images: "Une image de la galerie n'existe plus." },
+      };
     }
     // Story 5.12 — L'image de couverture a été supprimée depuis l'ouverture du
     // formulaire (bibliothèque, 5.13), ou l'identifiant a été forgé.

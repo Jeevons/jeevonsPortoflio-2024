@@ -200,6 +200,14 @@ export type AdminProject = {
   stacks: { id: string; name: string }[];
   /** Story 5.12 — image de couverture, `null` si le projet n'est pas illustré. */
   coverId: string | null;
+  /**
+   * GALERIE — images secondaires, DÉJÀ ORDONNÉES par `sortOrder`.
+   *
+   * `id` est celui de la ligne `ProjectImage` (et non du média) : c'est lui qui
+   * permet la réconciliation à l'enregistrement, exactement comme pour les
+   * points forts.
+   */
+  images: { id: string; mediaId: string; caption: string | null }[];
 };
 
 /**
@@ -235,6 +243,12 @@ export async function getAdminProject(
       highlights: {
         orderBy: { sortOrder: "asc" },
         select: { id: true, label: true },
+      },
+      // Même exigence de tri que les points forts : l'éditeur doit présenter
+      // l'ordre RÉEL, celui que rend la fiche publique.
+      images: {
+        orderBy: { sortOrder: "asc" },
+        select: { id: true, mediaId: true, caption: true },
       },
       stacks: {
         orderBy: { name: "asc" },

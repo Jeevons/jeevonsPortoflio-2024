@@ -74,7 +74,26 @@ export async function findMediaUsages(mediaId: string): Promise<MediaUsage[]> {
     });
   }
 
-  // 3. Story 5.17 (CV) — À COMPLÉTER ICI quand une référence média sera
+  // 3. Images de GALERIE d'un projet (relation `ProjectImage`).
+  //
+  // ⚠️ Cet usage est DISTINCT de la couverture testée en 1 : la même image peut
+  // illustrer un projet sans en être la couverture, et ce cas passerait
+  // entièrement sous le radar sans ce test. Contrairement à `coverId`, la
+  // relation est en `onDelete: Cascade` — la base supprimerait donc la ligne de
+  // galerie sans rien signaler, et l'image disparaîtrait de la fiche publique.
+  const galleryEntries = await prisma.projectImage.findMany({
+    where: { mediaId },
+    select: { project: { select: { title: true, company: true } } },
+    orderBy: { project: { title: "asc" } },
+  });
+  for (const entry of galleryEntries) {
+    usages.push({
+      kind: "Galerie de projet",
+      label: `${entry.project.title} — ${entry.project.company}`,
+    });
+  }
+
+  // 4. Story 5.17 (CV) — À COMPLÉTER ICI quand une référence média sera
   //    ajoutée. Ne pas créer un second point de détection ailleurs.
 
   return usages;
@@ -126,6 +145,22 @@ export async function findAllMediaUsages(): Promise<Map<string, MediaUsage[]>> {
     push(entry.avatarId, {
       kind: "Parcours",
       label: `${entry.title} — ${entry.place}`,
+    });
+  }
+
+  // Galeries de projet. Une seule requête pour toutes les images, même raison
+  // qu'au-dessus : une par vignette rendrait l'écran de plus en plus lent.
+  const galleryEntries = await prisma.projectImage.findMany({
+    select: {
+      mediaId: true,
+      project: { select: { title: true, company: true } },
+    },
+    orderBy: { project: { title: "asc" } },
+  });
+  for (const entry of galleryEntries) {
+    push(entry.mediaId, {
+      kind: "Galerie de projet",
+      label: `${entry.project.title} — ${entry.project.company}`,
     });
   }
 
