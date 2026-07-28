@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { MediaDeleteButton } from "@/components/admin/media-delete-button";
 import { type MediaOption } from "@/components/admin/media-selector";
 import { cn } from "@/lib/utils";
 
@@ -84,6 +85,24 @@ export function GalleryEditor({
 
   // Bibliothèque chargée à l'affichage : elle évolue à chaque téléversement, y
   // compris depuis cet écran.
+  //
+  // ⚠️ Extrait de l'effet pour être RAPPELABLE après une suppression d'image
+  // (`MediaDeleteButton`) : cette grille est peuplée par `fetch`, donc un
+  // `router.refresh()` ne la mettrait pas à jour — l'image supprimée resterait
+  // affichée jusqu'au rechargement complet de la page.
+  const reloadLibrary = useCallback(async () => {
+    try {
+      const response = await fetch("/api/admin/media");
+      if (!response.ok) throw new Error(String(response.status));
+      const data = (await response.json()) as { media: MediaOption[] };
+      setLibrary(data.media);
+    } catch {
+      setUploadError("La bibliothèque n'a pas pu être chargée.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -452,47 +471,64 @@ export function GalleryEditor({
             {library.map((item) => {
               const already = usedIds.has(item.id);
               return (
-                <button
-                  key={item.id}
-                  type="button"
-                  // `disabled` plutôt que masqué : l'image reste visible, avec
-                  // la raison pour laquelle on ne peut pas la rajouter.
-                  disabled={already}
-                  onClick={() => addImage(item.id)}
-                  title={
-                    already ? "Déjà dans la galerie" : "Ajouter à la galerie"
-                  }
-                  aria-label={
-                    already
-                      ? `${item.alt ?? "Image"} — déjà dans la galerie`
-                      : `Ajouter ${item.alt ?? "cette image"} à la galerie`
-                  }
-                  className={cn(
-                    "relative overflow-hidden rounded-md border-2 border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                    already
-                      ? "cursor-not-allowed opacity-40"
-                      : "hover:border-primary",
-                  )}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={item.url}
-                    alt={item.alt ?? ""}
-                    width={item.width}
-                    height={item.height}
-                    loading="lazy"
-                    className="aspect-video w-full object-cover"
+                /* `group` + `relative` : conteneur nécessaire pour poser le
+                   bouton de suppression EN FRÈRE de la vignette. Il ne peut pas
+                   vivre à l'intérieur, la vignette étant elle-même un
+                   `<button>` (imbriquer deux contrôles est invalide). */
+                <div key={item.id} className="group relative">
+                  <button
+                    type="button"
+                    // `disabled` plutôt que masqué : l'image reste visible, avec
+                    // la raison pour laquelle on ne peut pas la rajouter.
+                    disabled={already}
+                    onClick={() => addImage(item.id)}
+                    title={
+                      already ? "Déjà dans la galerie" : "Ajouter à la galerie"
+                    }
+                    aria-label={
+                      already
+                        ? `${item.alt ?? "Image"} — déjà dans la galerie`
+                        : `Ajouter ${item.alt ?? "cette image"} à la galerie`
+                    }
+                    className={cn(
+                      "block w-full overflow-hidden rounded-md border-2 border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                      already
+                        ? "cursor-not-allowed opacity-40"
+                        : "hover:border-primary",
+                    )}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={item.url}
+                      alt={item.alt ?? ""}
+                      width={item.width}
+                      height={item.height}
+                      loading="lazy"
+                      className="aspect-video w-full object-cover"
+                    />
+                    {!item.alt ? (
+                      <span
+                        title="Texte alternatif manquant"
+                        className="absolute right-1 top-1 rounded bg-amber-500 px-1 text-xs text-white"
+                      >
+                        <span aria-hidden="true">⚠</span>
+                        <span className="sr-only">
+                          Texte alternatif manquant
+                        </span>
+                      </span>
+                    ) : null}
+                  </button>
+
+                  {/* Supprime le FICHIER de la bibliothèque — à distinguer du
+                      `✕` d'une ligne de galerie, qui ne fait que détacher
+                      l'image du projet. `reloadLibrary` remet la grille à jour,
+                      celle-ci étant chargée en `fetch` et non par le serveur. */}
+                  <MediaDeleteButton
+                    mediaId={item.id}
+                    label={item.alt ?? "cette image"}
+                    onDeleted={reloadLibrary}
                   />
-                  {!item.alt ? (
-                    <span
-                      title="Texte alternatif manquant"
-                      className="absolute right-1 top-1 rounded bg-amber-500 px-1 text-xs text-white"
-                    >
-                      <span aria-hidden="true">⚠</span>
-                      <span className="sr-only">Texte alternatif manquant</span>
-                    </span>
-                  ) : null}
-                </button>
+                </div>
               );
             })}
           </div>
