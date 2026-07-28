@@ -126,6 +126,39 @@ export const rolesSchema = z
       .max(ROLES_MAX, `Vous ne pouvez pas dépasser ${ROLES_MAX} rôles.`),
   );
 
+/** Borne haute des années d'expérience — garde-fou de saisie, pas règle métier. */
+const EXPERIENCE_YEARS_MAX = 70;
+const STAT_LABEL_MAX = 60;
+
+/**
+ * Années d'expérience FORCÉES (retour Jeevons, 28/07) — champ OPTIONNEL.
+ *
+ * 🛑 LA CHAÎNE VIDE EST UNE VALEUR VALIDE, ET C'EST TOUT L'INTÉRÊT DU RÉGLAGE :
+ * elle signifie « garde le calcul automatique » (année courante − plus ancienne
+ * année de début du parcours). ❌ Ne pas y appliquer `textSchema`, qui impose
+ * `min(1)` : le champ deviendrait obligatoire et il serait impossible de revenir
+ * au calcul après avoir saisi une valeur une fois.
+ *
+ * ⚠️ La valeur est stockée en CHAÎNE, jamais en nombre, pour que « vide » se
+ * représente sans ambiguïté. Côté public, `readOptionalPositiveInt`
+ * (lib/settings.ts) accepte les deux formes et convertit.
+ */
+export const experienceYearsSchema = z
+  .string()
+  .trim()
+  .refine(
+    (value) => {
+      if (value.length === 0) return true;
+      const parsed = Number(value);
+      return (
+        Number.isInteger(parsed) && parsed > 0 && parsed <= EXPERIENCE_YEARS_MAX
+      );
+    },
+    {
+      message: `Indiquez un nombre entier entre 1 et ${EXPERIENCE_YEARS_MAX}, ou laissez vide pour le calcul automatique.`,
+    },
+  );
+
 /** Traduit les rôles stockés vers la saisie « une ligne par rôle ». */
 export function rolesToText(roles: readonly string[]): string {
   return roles.join("\n");
@@ -214,6 +247,15 @@ export const settingsSchema = z.object({
   heroSubtitle: textSchema("Le sous-titre de l'accroche", SUBTITLE_MAX),
   heroStatusBadge: textSchema("Le badge de statut", BADGE_MAX),
   heroRoles: rolesSchema,
+  // Chiffres clés (retour Jeevons, 28/07). Les libellés sont saisis au PLURIEL,
+  // le singulier étant dérivé à l'affichage (`Stats.tsx`).
+  statsExperienceYears: experienceYearsSchema,
+  statsExperienceLabel: textSchema(
+    "Le libellé des années d'expérience",
+    STAT_LABEL_MAX,
+  ),
+  statsProjectsLabel: textSchema("Le libellé des projets", STAT_LABEL_MAX),
+  statsStacksLabel: textSchema("Le libellé des technologies", STAT_LABEL_MAX),
   socialTwitter: linkSchema("Le lien X (Twitter)"),
   socialInstagram: linkSchema("Le lien Instagram"),
   socialLinkedin: linkSchema("Le lien LinkedIn (pied de page)"),
@@ -249,6 +291,10 @@ export function settingsFormDataToInput(formData: FormData): unknown {
     // tableau, pas cette fonction (qui ne fait que changer de forme, jamais de
     // type).
     heroRoles: text("heroRoles"),
+    statsExperienceYears: text("statsExperienceYears"),
+    statsExperienceLabel: text("statsExperienceLabel"),
+    statsProjectsLabel: text("statsProjectsLabel"),
+    statsStacksLabel: text("statsStacksLabel"),
     socialTwitter: text("socialTwitter"),
     socialInstagram: text("socialInstagram"),
     socialLinkedin: text("socialLinkedin"),

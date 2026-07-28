@@ -23,6 +23,11 @@ export const SETTING_KEYS = {
   heroSubtitle: "hero.subtitle",
   heroStatusBadge: "hero.statusBadge",
   heroRoles: "hero.roles",
+  // Chiffres clés (retour Jeevons, 28/07). Voir `getStatsSettings`.
+  statsExperienceYears: "stats.experienceYears",
+  statsExperienceLabel: "stats.experienceLabel",
+  statsProjectsLabel: "stats.projectsLabel",
+  statsStacksLabel: "stats.stacksLabel",
   socialTwitter: "social.twitter",
   socialInstagram: "social.instagram",
   socialLinkedin: "social.linkedin",
@@ -128,6 +133,15 @@ export const SETTING_DEFAULTS = {
     "UI Engineer",
     "Créatif",
   ] as readonly string[],
+  // 🛑 CHAÎNE VIDE = CALCUL AUTOMATIQUE CONSERVÉ. Voir `getStatsSettings`.
+  statsExperienceYears: "",
+  // ⚠️ Libellés stockés au PLURIEL : c'est la forme la plus courante à l'écran,
+  // et le singulier en est dérivé automatiquement (voir `Stats.tsx`).
+  statsExperienceLabel: "ans d'expérience",
+  statsProjectsLabel: "projets livrés",
+  // ⚠️ « utilisées » ET NON « maîtrisées » (décision Jeevons, juillet 2026) : le
+  // compteur mesure ce que le portfolio RECENSE, pas un niveau revendiqué.
+  statsStacksLabel: "technologies utilisées",
   socialTwitter: "https://x.com/Jeevons__",
   socialInstagram:
     "https://www.instagram.com/jeevons_/profilecard/?igsh=eGE4YnBtazhobmk0",
@@ -157,6 +171,10 @@ export const SETTING_DEFAULTS = {
     // ✅ La comparaison passe par `JSON.stringify` : le tableau des rôles est
     // donc couvert par ce garde au même titre que les chaînes.
     [SETTING_KEYS.heroRoles]: SETTING_DEFAULTS.heroRoles,
+    [SETTING_KEYS.statsExperienceYears]: SETTING_DEFAULTS.statsExperienceYears,
+    [SETTING_KEYS.statsExperienceLabel]: SETTING_DEFAULTS.statsExperienceLabel,
+    [SETTING_KEYS.statsProjectsLabel]: SETTING_DEFAULTS.statsProjectsLabel,
+    [SETTING_KEYS.statsStacksLabel]: SETTING_DEFAULTS.statsStacksLabel,
     [SETTING_KEYS.socialTwitter]: SETTING_DEFAULTS.socialTwitter,
     [SETTING_KEYS.socialInstagram]: SETTING_DEFAULTS.socialInstagram,
     [SETTING_KEYS.socialLinkedin]: SETTING_DEFAULTS.socialLinkedin,
@@ -206,6 +224,81 @@ export async function getHeroSettings(): Promise<HeroSettings> {
       settings,
       SETTING_KEYS.heroRoles,
       SETTING_DEFAULTS.heroRoles,
+    ),
+  };
+}
+
+/**
+ * Réglages des chiffres clés (retour Jeevons, 28/07 : « il faut changer le
+ * "6 ans d'expérience" aussi, ou au moins que je puisse le modifier »).
+ */
+export type StatsSettings = {
+  /**
+   * Années d'expérience FORCÉES par l'administration.
+   *
+   * 🛑 `null` = AUCUNE valeur saisie → le calcul automatique fait foi
+   * (`deriveExperienceYears`, lib/stats.ts). C'est le défaut, et le comportement
+   * historique est donc strictement préservé tant que le champ reste vide.
+   */
+  experienceYears: number | null;
+  experienceLabel: string;
+  projectsLabel: string;
+  stacksLabel: string;
+};
+
+/**
+ * Lecture d'un ENTIER POSITIF OPTIONNEL.
+ *
+ * 🛑 NE PAS UTILISER `readString` ICI. Il retombe sur le défaut dès que la
+ * valeur est une chaîne vide (`value.length > 0`) — or « vide » est précisément
+ * la valeur SIGNIFIANTE de ce réglage : elle veut dire « garde le calcul
+ * automatique ». Il fallait donc un lecteur distinct qui distingue « non
+ * renseigné » d'« invalide », les deux menant à `null` mais pour des raisons
+ * différentes.
+ *
+ * ⚠️ Tolère le nombre ET la chaîne : `SiteSetting.value` est un `Json` libre, et
+ * le formulaire y écrit une chaîne. Une valeur ≤ 0, non entière ou non
+ * numérique est ignorée plutôt qu'affichée — même discipline défensive que les
+ * autres lecteurs de ce module.
+ */
+function readOptionalPositiveInt(
+  settings: Map<string, unknown>,
+  key: string,
+): number | null {
+  const value = settings.get(key);
+
+  if (typeof value === "number") {
+    return Number.isInteger(value) && value > 0 ? value : null;
+  }
+  if (typeof value !== "string" || value.trim().length === 0) {
+    return null;
+  }
+
+  const parsed = Number(value.trim());
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
+export async function getStatsSettings(): Promise<StatsSettings> {
+  const settings = await loadSettings();
+  return {
+    experienceYears: readOptionalPositiveInt(
+      settings,
+      SETTING_KEYS.statsExperienceYears,
+    ),
+    experienceLabel: readString(
+      settings,
+      SETTING_KEYS.statsExperienceLabel,
+      SETTING_DEFAULTS.statsExperienceLabel,
+    ),
+    projectsLabel: readString(
+      settings,
+      SETTING_KEYS.statsProjectsLabel,
+      SETTING_DEFAULTS.statsProjectsLabel,
+    ),
+    stacksLabel: readString(
+      settings,
+      SETTING_KEYS.statsStacksLabel,
+      SETTING_DEFAULTS.statsStacksLabel,
     ),
   };
 }

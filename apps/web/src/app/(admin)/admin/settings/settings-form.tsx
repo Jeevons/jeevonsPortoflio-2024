@@ -181,6 +181,99 @@ export function SettingsForm({ values }: SettingsFormProps) {
         </Field>
       </Section>
 
+      {/* --- Chiffres clés (section « En quelques chiffres ») ---
+          Retour Jeevons, 28/07 : « il faut changer le "6 ans d'expérience"
+          aussi, ou au moins que je puisse le modifier ». */}
+      <Section
+        id="stats"
+        title="Chiffres clés"
+        description="La section « En quelques chiffres » de la page d'accueil. Le nombre de projets et de technologies est toujours compté automatiquement ; seules les années d'expérience peuvent être forcées."
+      >
+        {/* 🛑 SEUL CHAMP FACULTATIF DE CET ÉCRAN, et son indice doit l'expliquer :
+            vide ne veut pas dire « rien afficher », mais « laisse le calcul
+            faire ». Sans cette phrase, un champ vide passerait pour un oubli et
+            Jeevons y saisirait une valeur figée sans nécessité. */}
+        <Field
+          label="Années d'expérience"
+          name="statsExperienceYears"
+          error={errorFor("statsExperienceYears")}
+          hint="Laissez vide pour le calcul automatique (année en cours moins la première année de votre parcours). Saisissez un nombre pour forcer la valeur affichée."
+        >
+          <input
+            id="statsExperienceYears"
+            type="text"
+            /* `inputMode="numeric"` fait apparaître le pavé numérique en mobile.
+               ⚠️ PAS `type="number"` : son champ vide renvoie `""` comme un
+               texte, mais il accepte aussi `e`, `+` et `-` (notation
+               scientifique) et masque la saisie invalide au lieu de la faire
+               valider par le schéma — l'erreur serait alors muette. */
+            inputMode="numeric"
+            placeholder="Automatique"
+            className={fieldClass("statsExperienceYears")}
+            aria-describedby="statsExperienceYears-hint"
+            aria-invalid={errorFor("statsExperienceYears") ? true : undefined}
+            {...register("statsExperienceYears")}
+          />
+        </Field>
+
+        {/* ⚠️ Libellés saisis AU PLURIEL : le singulier est dérivé
+            automatiquement quand le compteur vaut 1 (« 1 projet livré »). Faire
+            saisir les deux formes aurait doublé le nombre de champs pour un cas
+            marginal. L'indice le dit, sinon la règle resterait invisible. */}
+        <div className="grid gap-6 sm:grid-cols-2">
+          <Field
+            label="Libellé des années"
+            name="statsExperienceLabel"
+            required
+            error={errorFor("statsExperienceLabel")}
+            hint="Au pluriel. Ex. : ans d'expérience."
+          >
+            <input
+              id="statsExperienceLabel"
+              type="text"
+              className={fieldClass("statsExperienceLabel")}
+              aria-describedby="statsExperienceLabel-hint"
+              aria-invalid={errorFor("statsExperienceLabel") ? true : undefined}
+              {...register("statsExperienceLabel")}
+            />
+          </Field>
+
+          <Field
+            label="Libellé des projets"
+            name="statsProjectsLabel"
+            required
+            error={errorFor("statsProjectsLabel")}
+            hint="Au pluriel. Ex. : projets livrés."
+          >
+            <input
+              id="statsProjectsLabel"
+              type="text"
+              className={fieldClass("statsProjectsLabel")}
+              aria-describedby="statsProjectsLabel-hint"
+              aria-invalid={errorFor("statsProjectsLabel") ? true : undefined}
+              {...register("statsProjectsLabel")}
+            />
+          </Field>
+
+          <Field
+            label="Libellé des technologies"
+            name="statsStacksLabel"
+            required
+            error={errorFor("statsStacksLabel")}
+            hint="Au pluriel. Ex. : technologies utilisées."
+          >
+            <input
+              id="statsStacksLabel"
+              type="text"
+              className={fieldClass("statsStacksLabel")}
+              aria-describedby="statsStacksLabel-hint"
+              aria-invalid={errorFor("statsStacksLabel") ? true : undefined}
+              {...register("statsStacksLabel")}
+            />
+          </Field>
+        </div>
+      </Section>
+
       {/* --- Liens sociaux (pied de page) --- */}
       <Section
         id="social"

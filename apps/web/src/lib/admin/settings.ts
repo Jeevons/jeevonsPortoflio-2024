@@ -43,6 +43,29 @@ function readString(
   return typeof value === "string" && value.length > 0 ? value : fallback;
 }
 
+/**
+ * Lit le champ « années d'expérience » POUR LE FORMULAIRE (retour Jeevons, 28/07).
+ *
+ * 🛑 NE PAS UTILISER `readString` CI-DESSUS. Il remplace une chaîne vide par le
+ * défaut ; or ici le défaut EST la chaîne vide, et le vide est une valeur
+ * signifiante (« garde le calcul automatique »). Le piège serait invisible :
+ * `readString` renverrait `""` par le chemin du repli, donc le formulaire aurait
+ * l'air correct — mais toute valeur non conforme (un `Json` numérique, une
+ * saisie ancienne) serait silencieusement remplacée par du vide au lieu d'être
+ * montrée à Jeevons pour qu'il la corrige.
+ *
+ * ⚠️ Tolère le nombre comme la chaîne, exactement comme `readOptionalPositiveInt`
+ * côté public : les deux lectures doivent s'accorder sur ce qui est acceptable,
+ * sinon l'écran afficherait autre chose que le site.
+ */
+function readExperienceYears(rows: Map<string, unknown>): string {
+  const value = rows.get(SETTING_KEYS.statsExperienceYears);
+  if (typeof value === "number" && Number.isInteger(value) && value > 0) {
+    return String(value);
+  }
+  return typeof value === "string" ? value.trim() : "";
+}
+
 /** Lit une liste de chaînes, mêmes règles de repli que le public (story 6.7). */
 function readStringArray(
   rows: Map<string, unknown>,
@@ -113,6 +136,23 @@ export async function getAdminSettings(): Promise<AdminSettings> {
             SETTING_KEYS.heroRoles,
             SETTING_DEFAULTS.heroRoles,
           ),
+        ),
+        // Chiffres clés (retour Jeevons, 28/07).
+        statsExperienceYears: readExperienceYears(byKey),
+        statsExperienceLabel: readString(
+          byKey,
+          SETTING_KEYS.statsExperienceLabel,
+          SETTING_DEFAULTS.statsExperienceLabel,
+        ),
+        statsProjectsLabel: readString(
+          byKey,
+          SETTING_KEYS.statsProjectsLabel,
+          SETTING_DEFAULTS.statsProjectsLabel,
+        ),
+        statsStacksLabel: readString(
+          byKey,
+          SETTING_KEYS.statsStacksLabel,
+          SETTING_DEFAULTS.statsStacksLabel,
         ),
         socialTwitter: readString(
           byKey,
