@@ -11,12 +11,20 @@ import { hobbiesContent, timelineContent } from "../src/content/timeline";
 // mais dans src/content/*.ts, importées ci-dessus. Le même contenu alimente le
 // seed ET le repli statique servi quand la DB est injoignable → aucune dérive.
 //
-// Idempotence :
+// 🛑 AMORÇAGE, PAS SYNCHRONISATION (retour Jeevons, 28/07). Le contenu
+// éditorial n'est écrit QUE si la table `Project` est vide. Sur une base qui
+// contient déjà des projets, `src/content/*.ts` n'est plus appliqué du tout :
+// la BASE fait foi, puisque l'Epic 5 l'a rendue éditable depuis l'admin.
+// Voir `main()` pour le détail de ce que le rejeu détruisait.
+//
+// Mécanique interne, quand l'amorçage a bien lieu :
 //  - Project : upsert par `slug` (clé naturelle stable, jamais dérivée d'un
 //    champ mutable).
 //  - Stack   : upsert par `name` (unique), partagé entre projets.
-//  - Highlight : PAS de clé naturelle → on REMPLACE (deleteMany par projectId
-//    puis recreate) à chaque seed, sinon relancer le seed les duplique.
+//  - Highlight : PAS de clé naturelle → remplacés intégralement.
+// Ces upserts restent utiles : ils rendent le seed rejouable sans erreur si
+// l'amorçage échoue à mi-parcours (une base partiellement remplie, mais sans
+// projet, est reprise proprement).
 //
 // `published: true` est forcé pour les 6 projets migrés (visibles aujourd'hui) ;
 // le défaut du modèle reste `false` (pour l'admin, Epic 5).
@@ -38,7 +46,11 @@ const timelineEntries = timelineContent;
 const hobbies = hobbiesContent;
 const siteSettings = settingsContent;
 
-async function main() {
+/**
+ * Injecte le contenu éditorial d'origine. N'est appelé QUE sur une base vide
+ * (voir `main`).
+ */
+async function seedEditorialContent() {
   for (const p of projects) {
     // Stacks : upsert par `name` (dédupliqués entre projets). SkillLevel reste
     // null au seed (données d'origine ne le portent pas — piège n°3).
@@ -146,7 +158,53 @@ async function main() {
       update: { value: s.value as Prisma.InputJsonValue },
     });
   }
+}
 
+async function main() {
+  // 🛑 LE CONTENU ÉDITORIAL N'EST SEEDÉ QUE SI LA BASE EST VIERGE (retour
+  // Jeevons, 28/07 : « à chaque fois que je redéploie il y a des anciens projets
+  // qui reviennent »).
+  //
+  // ⚠️ CE SEED EST REJOUÉ À CHAQUE DÉMARRAGE DU CONTENEUR (docker-entrypoint.sh :
+  // migrate deploy → seed → server.js). Tant que la base était en lecture seule
+  // pour Jeevons, réappliquer `src/content/*.ts` était inoffensif — c'était même
+  // l'intérêt de l'idempotence de la story 4.1. Depuis l'Epic 5, la BASE est la
+  // source de vérité éditable, et rejouer le contenu statique par-dessus
+  // DÉTRUISAIT du travail :
+  //   • un projet seedé supprimé en admin était RECRÉÉ par l'upsert ;
+  //   • `title`, `period`, `link`, `sortOrder` et `published: true` étaient
+  //     réécrits — un projet dépublié se retrouvait REPUBLIÉ ;
+  //   • `stacks: { set: … }` remplaçait les technologies associées à la main ;
+  //   • les points forts étaient `deleteMany` + `createMany`, donc PERDUS.
+  //
+  // Le compteur porte sur `Project` : c'est la table que `seedEditorialContent`
+  // peut écraser, et la première que l'admin remplit. ❌ Ne pas se fier à
+  // `SiteSetting` ni à `Stack` : les réglages sont créés par d'autres chemins et
+  // une technologie peut exister sans aucun projet — la base paraîtrait « non
+  // vierge » avant même le premier seed, et un déploiement neuf resterait vide.
+  const existingProjects = await prisma.project.count();
+  if (existingProjects === 0) {
+    await seedEditorialContent();
+  } else {
+    console.log(
+      `Seed — contenu éditorial IGNORÉ : ${existingProjects} projet(s) déjà en base. ` +
+        `Le contenu de src/content/*.ts ne sert qu'à amorcer une base vierge ; ` +
+        `la base fait foi. Pour réamorcer, videz la table Project.`,
+    );
+  }
+
+  // 🛑 LE COMPTE ADMIN RESTE HORS DU GARDE-FOU, DÉLIBÉRÉMENT. C'est le
+  // mécanisme ANTI-LOCK-OUT : il réapplique `ADMIN_PASSWORD` à chaque
+  // démarrage, seul moyen de reprendre la main après un mot de passe perdu
+  // (runbook 5.6). Le placer derrière la condition ci-dessus le neutraliserait
+  // précisément quand la base contient des données, c'est-à-dire toujours en
+  // production. Il n'écrase aucun contenu : il ne touche que `passwordHash`.
+  await seedAdminAccount();
+
+  await logCounts();
+}
+
+async function seedAdminAccount() {
   // Compte admin (Story 5.1, AC2) : UNIQUE et seedé — aucune inscription.
   // Upsert par `email` (clé naturelle) → idempotent, jamais dupliqué.
   // Le mot de passe est haché en argon2id ; on RÉAPPLIQUE le hash en `update`
@@ -168,7 +226,9 @@ async function main() {
     create: { email: adminEmail, passwordHash },
     update: { passwordHash },
   });
+}
 
+async function logCounts() {
   const [
     projectCount,
     highlightCount,

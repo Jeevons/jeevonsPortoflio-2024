@@ -233,12 +233,17 @@ export const ProjectCard = ({
                d'être des colonnes `width`/`height` du modèle `Media`. */
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              /* ⚠️ `object-contain` + `object-left-top` : la colonne texte
-                 grandit avec le nombre de points forts, et `lg:h-full` étirait
-                 alors la couverture (largeur plafonnée à 450px, hauteur imposée
-                 à 100%). L'image conserve désormais son ratio et se cale en haut
-                 de la colonne plutôt que de se déformer. */
-              className="mt-8 -mb-4 object-contain object-left-top md:mb-0 lg:absolute lg:mt-0 lg:h-full lg:w-auto lg:max-w-[450px]"
+              /* 🛑 `lg:h-auto`, PAS `lg:h-full`. La colonne texte grandit avec
+                 le nombre de points forts ; `lg:h-full` imposait cette hauteur
+                 à une image plafonnée à 450px de large, qui s'étirait donc.
+
+                 ⚠️ `object-contain` SEUL NE SUFFIT PAS ET C'EST LE PIÈGE : il
+                 préserve le ratio du CONTENU mais laisse la BOÎTE en pleine
+                 hauteur. Le `blurDataUrl` posé en fond ci-dessous restait alors
+                 visible sous l'image — une grande zone floue jusqu'en bas de la
+                 carte (retour Jeevons, 28/07). La hauteur doit se déduire de la
+                 largeur : la boîte épouse l'image, il n'y a plus de fond nu. */
+              className="mt-8 -mb-4 md:mb-0 lg:absolute lg:mt-0 lg:h-auto lg:w-full lg:max-w-[450px]"
               src={project.cover.url}
               width={project.cover.width}
               height={project.cover.height}
@@ -264,10 +269,10 @@ export const ProjectCard = ({
             // explicite et jetterait à l'exécution — attention si ce repli
             // devenait un jour dynamique.
             <Image
-              /* Même correctif que la couverture administrée ci-dessus : sans
-                 `object-contain`, `lg:h-full` déforme l'image quand la colonne
-                 texte s'allonge. */
-              className="mt-8 -mb-4 object-contain object-left-top md:mb-0 lg:absolute lg:mt-0 lg:h-full lg:w-auto lg:max-w-[450px]"
+              /* Même correctif que la couverture administrée ci-dessus :
+                 `lg:h-full` déformait l'image quand la colonne texte
+                 s'allongeait. La hauteur se déduit ici de la largeur. */
+              className="mt-8 -mb-4 md:mb-0 lg:absolute lg:mt-0 lg:h-auto lg:w-full lg:max-w-[450px]"
               src={project.image}
               alt={`Capture d'écran du projet ${project.title}`}
               sizes="(min-width: 1200px) 450px, 100vw"

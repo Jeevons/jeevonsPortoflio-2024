@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+import { MediaDeleteButton } from "@/components/admin/media-delete-button";
 
 // Story 5.12 (AC1, AC3, AC5) — Sélecteur d'IMAGE, téléversement compris.
 //
@@ -74,6 +76,23 @@ export function MediaSelector({
   // un second aller-retour et, surtout, évite de créer des médias sans
   // description que personne ne reviendra corriger.
   const [altDraft, setAltDraft] = useState("");
+
+  // ⚠️ Extrait de l'effet pour être RAPPELABLE après une suppression d'image
+  // (`MediaDeleteButton`) : cette grille est peuplée par `fetch`, donc un
+  // `router.refresh()` ne la mettrait pas à jour — l'image supprimée resterait
+  // affichée jusqu'au rechargement complet de la page.
+  const reloadLibrary = useCallback(async () => {
+    try {
+      const response = await fetch("/api/admin/media");
+      if (!response.ok) throw new Error(String(response.status));
+      const data = (await response.json()) as { media: MediaOption[] };
+      setLibrary(data.media);
+    } catch {
+      setUploadError("La bibliothèque n'a pas pu être chargée.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   // La bibliothèque est chargée à l'affichage plutôt que passée en props par le
   // serveur : elle évolue à chaque téléversement, y compris depuis cet écran.
@@ -291,48 +310,69 @@ export function MediaSelector({
           {library.map((item) => {
             const isSelected = item.id === value;
             return (
-              <label
-                key={item.id}
-                className={`relative cursor-pointer overflow-hidden rounded-md border-2 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background ${
-                  isSelected ? "border-primary" : "border-transparent"
-                }`}
-              >
-                <input
-                  type="radio"
-                  // Groupe de radios DISTINCT par sélecteur : partager le nom
-                  // entre deux instances les ferait s'exclure mutuellement,
-                  // choisir une illustration désélectionnerait la couverture.
-                  name={`${name}-picker`}
-                  className="sr-only"
-                  checked={isSelected}
-                  onChange={() => onChange(item.id)}
-                />
-                {/* `<img>` et non `next/image` : l'image est DÉJÀ normalisée en
+              /* `group` + `relative` : conteneur du bouton de suppression, posé
+                 en FRÈRE du `<label>`. À l'intérieur, un clic dessus cocherait
+                 aussi le radio (un `<label>` transmet le clic à son contrôle) —
+                 supprimer une image sélectionnerait la voisine au passage. */
+              <div key={item.id} className="group relative">
+                <label
+                  className={`relative block cursor-pointer overflow-hidden rounded-md border-2 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background ${
+                    isSelected ? "border-primary" : "border-transparent"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    // Groupe de radios DISTINCT par sélecteur : partager le nom
+                    // entre deux instances les ferait s'exclure mutuellement,
+                    // choisir une illustration désélectionnerait la couverture.
+                    name={`${name}-picker`}
+                    className="sr-only"
+                    checked={isSelected}
+                    onChange={() => onChange(item.id)}
+                  />
+                  {/* `<img>` et non `next/image` : l'image est DÉJÀ normalisée en
                     WebP et redimensionnée par sharp au téléversement. La
                     repasser dans l'optimiseur de Next la retraiterait sans
                     gain. `width`/`height` explicites suffisent à réserver la
                     place et donc à empêcher la page de sauter (AC2). */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={item.url}
-                  alt={item.alt ?? ""}
-                  width={item.width}
-                  height={item.height}
-                  loading="lazy"
-                  className="aspect-video w-full object-cover"
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={item.url}
+                    alt={item.alt ?? ""}
+                    width={item.width}
+                    height={item.height}
+                    loading="lazy"
+                    className="aspect-video w-full object-cover"
+                  />
+                  {!item.alt ? (
+                    <span
+                      // AC3 — Repère visuel dans la grille, pour repérer d'un
+                      // coup d'œil les images sans texte alternatif.
+                      title="Texte alternatif manquant"
+                      className="absolute right-1 top-1 rounded bg-amber-500 px-1 text-xs text-white"
+                    >
+                      <span aria-hidden="true">⚠</span>
+                      <span className="sr-only">Texte alternatif manquant</span>
+                    </span>
+                  ) : null}
+                </label>
+
+                {/* Supprime le FICHIER de la bibliothèque (retour Jeevons,
+                    28/07). À distinguer du bouton « Retirer », qui ne fait que
+                    désélectionner l'illustration du contenu courant. */}
+                <MediaDeleteButton
+                  mediaId={item.id}
+                  label={item.alt ?? "cette image"}
+                  onDeleted={() => {
+                    // L'image supprimée était peut-être CELLE qui était
+                    // sélectionnée : la laisser en valeur posterait un
+                    // `coverId` pointant vers un média disparu, que le serveur
+                    // rejetterait à l'enregistrement.
+                    if (item.id === value) onChange(null);
+                    void reloadLibrary();
+                  }}
                 />
-                {!item.alt ? (
-                  <span
-                    // AC3 — Repère visuel dans la grille, pour repérer d'un coup
-                    // d'œil les images sans texte alternatif.
-                    title="Texte alternatif manquant"
-                    className="absolute right-1 top-1 rounded bg-amber-500 px-1 text-xs text-white"
-                  >
-                    <span aria-hidden="true">⚠</span>
-                    <span className="sr-only">Texte alternatif manquant</span>
-                  </span>
-                ) : null}
-              </label>
+              </div>
             );
           })}
         </div>
