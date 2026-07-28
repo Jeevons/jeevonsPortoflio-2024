@@ -1,5 +1,6 @@
 import { Reveal } from "@/components/Reveal";
 import { SectionHeader } from "@/components/SectionHeader";
+import { getStatsSettings, type StatsSettings } from "@/lib/settings";
 import { getPortfolioStats } from "@/lib/stats";
 import { StatsClient, type StatItem } from "@/sections/StatsClient";
 
@@ -28,28 +29,67 @@ const plural = (value: number, singular: string, pluralForm: string): string =>
   value > 1 ? pluralForm : singular;
 
 /**
+ * Accorde un libellé ADMINISTRÉ, stocké au pluriel (retour Jeevons, 28/07).
+ *
+ * 🛑 POURQUOI DÉRIVER PLUTÔT QUE DEMANDER DEUX CHAMPS. Faire saisir le singulier
+ * ET le pluriel de trois libellés, c'est six champs pour un cas qui ne se produit
+ * qu'à 1 (« 1 projet livré »). On stocke donc la forme courante — le pluriel — et
+ * on retire les « s » finaux de chaque mot quand la valeur vaut 1.
+ *
+ * ⚠️ HEURISTIQUE ASSUMÉE, ET SES LIMITES SONT CONNUES. Elle est juste pour les
+ * libellés du portfolio (« projets livrés » → « projet livré », « ans
+ * d'expérience » → « an d'expérience », « technologies utilisées » →
+ * « technologie utilisée »). Elle se trompera sur un pluriel irrégulier (« -aux »)
+ * ou sur un mot terminant par « s » au singulier (« un mois »).
+ *
+ * ✅ C'est acceptable ici parce que le dommage est plafonné : un « s » en trop ou
+ * en moins dans une tuile, uniquement quand le compteur vaut exactement 1 — jamais
+ * une donnée fausse. ❌ Ne pas généraliser cette fonction à du contenu libre.
+ */
+const singularize = (label: string): string =>
+  label
+    .split(" ")
+    .map((word) =>
+      word.length > 2 && word.endsWith("s") ? word.slice(0, -1) : word,
+    )
+    .join(" ");
+
+/** Accord d'un libellé administré : le pluriel tel quel, le singulier dérivé. */
+const accord = (value: number, pluralLabel: string): string =>
+  plural(value, singularize(pluralLabel), pluralLabel);
+
+/**
  * Passe des agrégats aux tuiles affichables.
  *
  * 🛑 UNE TUILE VIDE EST RETIRÉE, PAS AFFICHÉE À ZÉRO. « 0 projet » sur un
  * portfolio de recrutement est pire que rien : c'est un chiffre juste qui
  * dessert. Même règle que la section elle-même (« absente plutôt que vide »).
  */
-const buildItems = (stats: {
-  publishedProjects: number;
-  stacks: number;
-  experienceYears: number | null;
-}): StatItem[] => {
+const buildItems = (
+  stats: {
+    publishedProjects: number;
+    stacks: number;
+    experienceYears: number | null;
+  },
+  settings: StatsSettings,
+): StatItem[] => {
   const items: StatItem[] = [];
 
-  if (stats.experienceYears !== null && stats.experienceYears > 0) {
+  // 🛑 LA VALEUR ADMINISTRÉE PRIME SUR LE CALCUL (retour Jeevons, 28/07). Le
+  // chiffre restait autrement dérivé de `année courante − plus ancienne
+  // `startYear` publiée`, sans aucun moyen de le corriger depuis l'admin.
+  //
+  // ⚠️ `?? ` et non `||` : `getStatsSettings` garantit `null` ou un entier > 0,
+  // mais `||` traiterait aussi `0` comme « non renseigné ». L'intention est de
+  // ne basculer sur le calcul QUE lorsque rien n'est saisi.
+  const experienceYears =
+    settings.experienceYears ?? stats.experienceYears ?? null;
+
+  if (experienceYears !== null && experienceYears > 0) {
     items.push({
       key: "experience",
-      value: stats.experienceYears,
-      label: plural(
-        stats.experienceYears,
-        "an d'expérience",
-        "ans d'expérience",
-      ),
+      value: experienceYears,
+      label: accord(experienceYears, settings.experienceLabel),
     });
   }
 
@@ -57,7 +97,7 @@ const buildItems = (stats: {
     items.push({
       key: "projects",
       value: stats.publishedProjects,
-      label: plural(stats.publishedProjects, "projet livré", "projets livrés"),
+      label: accord(stats.publishedProjects, settings.projectsLabel),
     });
   }
 
@@ -65,15 +105,7 @@ const buildItems = (stats: {
     items.push({
       key: "stacks",
       value: stats.stacks,
-      // ⚠️ « utilisée » ET NON « maîtrisée » (décision Jeevons, juillet 2026) :
-      // le compteur mesure ce que le portfolio RECENSE, pas un niveau revendiqué.
-      // Le niveau, lui, se lit techno par techno dans l'administration — le
-      // résumer en un mot sur un agrégat le surinterpréterait.
-      label: plural(
-        stats.stacks,
-        "technologie utilisée",
-        "technologies utilisées",
-      ),
+      label: accord(stats.stacks, settings.stacksLabel),
     });
   }
 
@@ -81,8 +113,17 @@ const buildItems = (stats: {
 };
 
 export const StatsSection = async () => {
-  const stats = await getPortfolioStats();
-  const items = buildItems(stats);
+  // ⚠️ DEUX LECTURES CACHÉES SÉPARÉMENT, et c'est voulu : `getPortfolioStats`
+  // est taguée `projects`+`timeline`, `getStatsSettings` est taguée `settings`.
+  // Enregistrer les réglages invalide donc bien cette section (l'action
+  // `saveSettingsAction` appelle `revalidateTag(settings)`), sans avoir à
+  // élargir les tags de `getPortfolioStats` — ce qui aurait fait recompter la
+  // base à chaque édition de réglage sans rapport.
+  const [stats, statsSettings] = await Promise.all([
+    getPortfolioStats(),
+    getStatsSettings(),
+  ]);
+  const items = buildItems(stats, statsSettings);
 
   // 🛑 AC3 (volet « base vide ») — RIEN DANS LE DOM. Pas `hidden`, pas
   // `display:none` : un lecteur d'écran annoncerait un titre suivi de vide.

@@ -113,6 +113,24 @@ export async function saveSettingsAction(
     // « une ligne = un rôle » a déjà eu lieu dans `rolesSchema` : `values` porte
     // ici la forme stockée, pas la saisie.
     { key: SETTING_KEYS.heroRoles, value: values.heroRoles },
+    // Chiffres clés (retour Jeevons, 28/07).
+    //
+    // ⚠️ `statsExperienceYears` est écrit en CHAÎNE, y compris quand elle est
+    // VIDE — c'est ce qui permet à « aucune valeur » d'être une valeur : le
+    // public (`readOptionalPositiveInt`) la lit comme `null` et retombe sur le
+    // calcul automatique. ❌ Ne pas convertir en nombre ici : `Number("")` vaut
+    // `0`, ce qui figerait le chiffre à zéro et ferait DISPARAÎTRE la tuile
+    // (`buildItems` retire les tuiles à zéro), sans le moindre message.
+    {
+      key: SETTING_KEYS.statsExperienceYears,
+      value: values.statsExperienceYears,
+    },
+    {
+      key: SETTING_KEYS.statsExperienceLabel,
+      value: values.statsExperienceLabel,
+    },
+    { key: SETTING_KEYS.statsProjectsLabel, value: values.statsProjectsLabel },
+    { key: SETTING_KEYS.statsStacksLabel, value: values.statsStacksLabel },
     { key: SETTING_KEYS.socialTwitter, value: values.socialTwitter },
     { key: SETTING_KEYS.socialInstagram, value: values.socialInstagram },
     { key: SETTING_KEYS.socialLinkedin, value: values.socialLinkedin },

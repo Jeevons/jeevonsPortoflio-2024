@@ -34,6 +34,19 @@ export const settingsContent: ContentSetting[] = [
     key: "hero.roles",
     value: ["Développeur Full-Stack", "UI Engineer", "Créatif"],
   },
+  // Retour Jeevons, 28/07 : « il faut changer le "6 ans d'expérience" aussi, ou
+  // au moins que je puisse le modifier ». Les trois chiffres clés (section « En
+  // quelques chiffres ») deviennent administrables.
+  //
+  // ⚠️ `stats.experienceYears` est une CHAÎNE VIDE par défaut, et c'est le cœur
+  // du réglage : vide = on garde le calcul automatique (année courante − plus
+  // ancienne année de début du parcours). Une valeur ne l'écrase que si elle est
+  // saisie. ❌ Surtout pas `0` ni un nombre par défaut : ce serait figer le
+  // chiffre et neutraliser silencieusement la dérivation.
+  { key: "stats.experienceYears", value: "" },
+  { key: "stats.experienceLabel", value: "ans d'expérience" },
+  { key: "stats.projectsLabel", value: "projets livrés" },
+  { key: "stats.stacksLabel", value: "technologies utilisées" },
   { key: "social.twitter", value: "https://x.com/Jeevons__" },
   {
     key: "social.instagram",
