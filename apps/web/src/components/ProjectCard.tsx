@@ -127,8 +127,26 @@ export const ProjectCard = ({
 }: ProjectCardProps) => {
   return (
     <Card className={className} style={style} as={as} {...rest}>
-      <div className="lg:grid lg:grid-cols-2 lg:gap-16">
-        <div className="lg:pb-16">
+      {/* 🛑 MISE EN PAGE VERTICALE, PLUS DE COLONNE LATÉRALE (retour Jeevons,
+          28/07 : « au pire au lieu de réduire la taille de l'image ou la
+          manipuler n'importe comment quand y a beaucoup de points forts, mets
+          l'image avec une bonne taille, au-dessus des points forts bien
+          organisés horizontalement »).
+
+          ❌ NE PAS revenir à `lg:grid lg:grid-cols-2`. C'était la cause racine :
+          l'image était enfermée dans une colonne d'une demi-carte, encore
+          plafonnée à 450px, pendant que les points forts s'entassaient sur une
+          seule colonne étroite à gauche. Plus un projet avait de points forts,
+          plus la colonne texte s'allongeait et plus la colonne image laissait
+          un vide immense sous une vignette minuscule — exactement la capture du
+          28/07. Les correctifs successifs (`lg:h-full` → `lg:h-auto`,
+          `object-contain`) ne soignaient que les symptômes de ce couplage.
+
+          L'ordre du DOM porte maintenant la mise en page : en-tête → image →
+          points forts → actions. La hauteur de l'image ne dépend plus JAMAIS de
+          la quantité de texte, et réciproquement. */}
+      <div>
+        <div>
           <div className="inline-flex items-baseline gap-2 font-bold uppercase tracking-widest text-sm text-gradient-accent">
             <span>{project.company}</span>
             <span>&bull;</span>
@@ -162,19 +180,96 @@ export const ProjectCard = ({
             </p>
           ) : null}
 
+          {/* IMAGE — pleine largeur de la carte, AU-DESSUS des points forts.
+              Voir le commentaire de mise en page en tête de carte. */}
+          {project.cover ? (
+            /* Story 5.12 — `<img>` et NON `next/image` : le fichier est déjà
+               normalisé en WebP et redimensionné par sharp au téléversement, le
+               repasser dans l'optimiseur de Next le retraiterait sans gain.
+
+               ⚠️ `width`/`height` explicites + `blurDataUrl` en fond : le
+               navigateur connaît le ratio AVANT le chargement et réserve la
+               place, ce qui empêche la page de sauter (AC2). C'est la raison
+               d'être des colonnes `width`/`height` du modèle `Media`. */
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              /* 🛑 `h-auto max-h-*` ET `object-contain` ENSEMBLE — les deux sont
+                 nécessaires, pour des raisons différentes (choix Jeevons :
+                 « large mais hauteur plafonnée ») :
+                  • `w-full h-auto` : la boîte épouse le ratio du fichier, donc
+                    aucun fond nu ne dépasse. C'est ce qui a supprimé la bande
+                    floue du 28/07 — `object-contain` SEUL ne suffisait pas, il
+                    préserve le ratio du CONTENU en laissant la BOÎTE étirée.
+                  • `max-h-*` : plafonne une capture très haute (une page
+                    entière en 900×2400) qui repousserait les points forts
+                    hors de l'écran. Dès que ce plafond mord, la boîte n'est
+                    plus au ratio du fichier — d'où `object-contain`, qui
+                    empêche alors l'écrasement.
+                 ⚠️ `bg-white/5` plutôt que le `blurDataUrl` en fond : quand le
+                 plafond mord, la zone laissée libre par `object-contain` doit
+                 être neutre. Un flou étiré y réapparaîtrait, précisément le
+                 défaut corrigé. Le `blurDataUrl` reste utile au chargement, il
+                 est donc porté par un conteneur au ratio exact ci-dessous. */
+              className="rounded-lg mt-6 md:mt-8 w-full h-auto max-h-[420px] object-contain bg-white/5"
+              src={project.cover.url}
+              width={project.cover.width}
+              height={project.cover.height}
+              /* `alt=""` quand le texte manque : une image DÉCORATIVE est
+                 ignorée par les lecteurs d'écran, ce qui vaut mieux qu'un nom
+                 de fichier lu à voix haute. Le défaut est signalé côté
+                 administration (AC3), là où il peut être corrigé. */
+              alt={project.cover.alt ?? ""}
+              loading="lazy"
+            />
+          ) : project.image ? (
+            // Story 6.18 (AC1, AC2) — REPLI sur un asset du dépôt (import
+            // statique), quand le projet n'a pas de couverture administrée.
+            // ✅ `sizes` mis à jour avec la mise en page : l'image occupe
+            // désormais la PLEINE largeur de la carte à toutes les tailles, et
+            // non plus une colonne plafonnée à 450px.
+            // ⚠️ `placeholder="blur"` est sûr ICI parce que la source est un
+            // IMPORT STATIQUE : Next génère le `blurDataURL` au build. ❌ Sur une
+            // source dynamique (chaîne d'URL), il exigerait un `blurDataURL`
+            // explicite et jetterait à l'exécution — attention si ce repli
+            // devenait un jour dynamique.
+            <Image
+              /* Mêmes contraintes que la couverture administrée ci-dessus. */
+              className="rounded-lg mt-6 md:mt-8 w-full h-auto max-h-[420px] object-contain bg-white/5"
+              src={project.image}
+              alt={`Capture d'écran du projet ${project.title}`}
+              sizes="(min-width: 1200px) 900px, 100vw"
+              placeholder="blur"
+            />
+          ) : null}
+
           {/* Même règle pour les points forts : une liste vide ne rend pas de
               `<ul>` vide, que les lecteurs d'écran annonceraient tout de même
               comme « liste, 0 élément ». */}
           {project.results.length > 0 ? (
-            <ul className="flex flex-col gap-4 mt-4 md:mt-5">
+            /* 🛑 POINTS FORTS EN GRILLE HORIZONTALE (choix Jeevons : 2 colonnes,
+               3 sur grand écran). ❌ Plus de `flex flex-col` : en pleine largeur
+               de carte, une colonne unique produisait des lignes de texte
+               démesurément longues, illisibles.
+
+               ⚠️ `items-start` est nécessaire : sans lui, les cellules d'une
+               même rangée s'étirent à la hauteur de la plus haute (`stretch` par
+               défaut en grille), et la puce d'un point fort court se retrouverait
+               centrée verticalement face à un voisin de trois lignes.
+
+               La grille équilibre les rangées d'elle-même quel que soit le
+               nombre de points forts : c'est ce qui rend la carte insensible à
+               cette quantité, l'objet même du retour du 28/07. */
+            <ul className="mt-6 md:mt-8 grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
               {project.results.map((result, resultIndex) => (
                 <li
                   key={resultIndex}
-                  className="flex gap-2 text-sm md:text-base text-white/50"
+                  className="flex items-start gap-2 text-sm md:text-base text-white/50"
                 >
                   <CheckCircleIcon
                     aria-hidden="true"
-                    className="size-5 md:size-6"
+                    /* `shrink-0` : sans lui, la puce est compressée par un
+                       libellé long, l'icône devient un ovale. */
+                    className="size-5 md:size-6 shrink-0"
                   />
                   <span>{result.title}</span>
                 </li>
@@ -219,65 +314,6 @@ export const ProjectCard = ({
               <span>Visiter le site</span>
               <ArrowUpRightIcon aria-hidden="true" className="size-4" />
             </a>
-          ) : null}
-        </div>
-        <div className="relative">
-          {project.cover ? (
-            /* Story 5.12 — `<img>` et NON `next/image` : le fichier est déjà
-               normalisé en WebP et redimensionné par sharp au téléversement, le
-               repasser dans l'optimiseur de Next le retraiterait sans gain.
-
-               ⚠️ `width`/`height` explicites + `blurDataUrl` en fond : le
-               navigateur connaît le ratio AVANT le chargement et réserve la
-               place, ce qui empêche la page de sauter (AC2). C'est la raison
-               d'être des colonnes `width`/`height` du modèle `Media`. */
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              /* 🛑 `lg:h-auto`, PAS `lg:h-full`. La colonne texte grandit avec
-                 le nombre de points forts ; `lg:h-full` imposait cette hauteur
-                 à une image plafonnée à 450px de large, qui s'étirait donc.
-
-                 ⚠️ `object-contain` SEUL NE SUFFIT PAS ET C'EST LE PIÈGE : il
-                 préserve le ratio du CONTENU mais laisse la BOÎTE en pleine
-                 hauteur. Le `blurDataUrl` posé en fond ci-dessous restait alors
-                 visible sous l'image — une grande zone floue jusqu'en bas de la
-                 carte (retour Jeevons, 28/07). La hauteur doit se déduire de la
-                 largeur : la boîte épouse l'image, il n'y a plus de fond nu. */
-              className="mt-8 -mb-4 md:mb-0 lg:absolute lg:mt-0 lg:h-auto lg:w-full lg:max-w-[450px]"
-              src={project.cover.url}
-              width={project.cover.width}
-              height={project.cover.height}
-              /* `alt=""` quand le texte manque : une image DÉCORATIVE est
-                 ignorée par les lecteurs d'écran, ce qui vaut mieux qu'un nom
-                 de fichier lu à voix haute. Le défaut est signalé côté
-                 administration (AC3), là où il peut être corrigé. */
-              alt={project.cover.alt ?? ""}
-              loading="lazy"
-              style={{
-                backgroundImage: `url(${project.cover.blurDataUrl})`,
-                backgroundSize: "cover",
-              }}
-            />
-          ) : project.image ? (
-            // Story 6.18 (AC1, AC2) — REPLI sur un asset du dépôt (import
-            // statique), quand le projet n'a pas de couverture administrée.
-            // ✅ `sizes` justifié : l'image occupe la pleine largeur de la carte
-            // en mobile puis est plafonnée à `max-w-[450px]` en `lg`.
-            // ⚠️ `placeholder="blur"` est sûr ICI parce que la source est un
-            // IMPORT STATIQUE : Next génère le `blurDataURL` au build. ❌ Sur une
-            // source dynamique (chaîne d'URL), il exigerait un `blurDataURL`
-            // explicite et jetterait à l'exécution — attention si ce repli
-            // devenait un jour dynamique.
-            <Image
-              /* Même correctif que la couverture administrée ci-dessus :
-                 `lg:h-full` déformait l'image quand la colonne texte
-                 s'allongeait. La hauteur se déduit ici de la largeur. */
-              className="mt-8 -mb-4 md:mb-0 lg:absolute lg:mt-0 lg:h-auto lg:w-full lg:max-w-[450px]"
-              src={project.image}
-              alt={`Capture d'écran du projet ${project.title}`}
-              sizes="(min-width: 1200px) 450px, 100vw"
-              placeholder="blur"
-            />
           ) : null}
         </div>
       </div>
