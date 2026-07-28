@@ -2,6 +2,8 @@ import ArrowUpRightIcon from "@/assets/icons/arrow-up-right.svg";
 import CheckCircleIcon from "@/assets/icons/check-circle.svg";
 import { Card } from "@/components/Card";
 import { ProjectDetailReveal } from "@/components/ProjectDetailReveal";
+import { ProjectGallery } from "@/components/ProjectGallery";
+import { ProseText } from "@/components/ProseText";
 import { Footer } from "@/sections/Footer";
 import { Header } from "@/sections/Header";
 import {
@@ -116,6 +118,22 @@ const ProjectPage = async ({ params }: ProjectPageProps) => {
 
   const cover = toCardCover(project.cover);
 
+  // GALERIE — on réutilise `toCardCover` pour construire chaque image : c'est
+  // déjà le point unique qui traduit un `Media` en visuel affichable (url,
+  // dimensions, flou). En dupliquer la logique ici risquerait d'oublier
+  // `blurDataUrl` et de réintroduire le saut de page (story 5.12, AC2).
+  //
+  // La légende, elle, vient de la ligne de jointure `ProjectImage` et non du
+  // média : la même image réutilisée ailleurs peut porter une autre légende.
+  // ⚠️ `media` est NON NULLABLE en base (`ProjectImage.mediaId` est requis) : la
+  // relation est toujours résolue. Le `flatMap` traduit néanmoins le `null` que
+  // `toCardCover` peut renvoyer en « pas d'entrée », plutôt que de l'écarter par
+  // un `!` qui mentirait au compilateur.
+  const galleryImages = project.images.flatMap((image) => {
+    const visual = toCardCover(image.media);
+    return visual ? [{ id: image.id, caption: image.caption, ...visual }] : [];
+  });
+
   return (
     <div className="site-public">
       <Header />
@@ -157,9 +175,15 @@ const ProjectPage = async ({ params }: ProjectPageProps) => {
           {project.description ? (
             <div className="mt-10">
               <h2 className="font-serif text-2xl">Contexte et rôle</h2>
-              <p className="mt-4 max-w-3xl text-white/70 md:text-lg">
+              {/* ⚠️ `ProseText` ET NON un `<p>` unique : le champ est un
+                  `<textarea>`, ses sauts de ligne sont écrasés par le HTML et
+                  une description longue devenait un pavé illisible.
+                  `max-w-prose` (~65 caractères) plutôt que `max-w-3xl` : la
+                  ligne était trop longue pour l'œil, et `leading-relaxed`
+                  ouvre l'interligne. */}
+              <ProseText className="mt-4 max-w-prose leading-relaxed text-white/70 md:text-lg">
                 {project.description}
-              </p>
+              </ProseText>
             </div>
           ) : null}
 
@@ -177,10 +201,13 @@ const ProjectPage = async ({ params }: ProjectPageProps) => {
               navigateur connaît le ratio AVANT le chargement et réserve la
               place, donc la page ne saute pas. */}
           {cover ? (
-            <div className="mt-12">
+            /* COUVERTURE MISE EN AVANT : cadre, liseré et ombre portée la
+               distinguent des images de galerie, qui sont de simples vignettes.
+               C'est elle qui porte l'identité visuelle du projet. */
+            <div className="rounded-card mt-12 overflow-hidden border border-white/10 shadow-2xl shadow-black/40">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                className="rounded-card w-full"
+                className="w-full"
                 src={cover.url}
                 width={cover.width}
                 height={cover.height}
@@ -220,6 +247,12 @@ const ProjectPage = async ({ params }: ProjectPageProps) => {
               </ul>
             </div>
           ) : null}
+
+          {/* GALERIE — après les points forts, avant les technologies : le
+              visiteur a lu ce que le projet apporte, il voit ensuite à quoi il
+              ressemble. Le composant se rend lui-même `null` si la liste est
+              vide (même règle que les autres sections : jamais de bloc vide). */}
+          <ProjectGallery images={galleryImages} projectTitle={project.title} />
 
           {project.stacks.length > 0 ? (
             <div className="mt-12">
@@ -281,6 +314,10 @@ const ProjectPage = async ({ params }: ProjectPageProps) => {
           {!project.description &&
           !project.outcome &&
           !cover &&
+          // ⚠️ La galerie compte comme du contenu : un projet illustré
+          // uniquement par elle ne doit PAS afficher « fiche en cours de
+          // rédaction » sous ses images.
+          galleryImages.length === 0 &&
           project.highlights.length === 0 &&
           project.stacks.length === 0 &&
           !project.link &&

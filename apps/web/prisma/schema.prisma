@@ -64,13 +64,59 @@ model Project {
   // suppression passait malgré tout — le projet perd son illustration, pas son
   // existence.
   coverId     String?
-  cover       Media?          @relation(fields: [coverId], references: [id], onDelete: SetNull)
+  // ⚠️ Relation NOMMÉE « ProjectCover » depuis l'ajout de la galerie : dès qu'un
+  // même couple de modèles est relié DEUX fois (ici la couverture et les images
+  // de galerie, via `ProjectImage`), Prisma ne peut plus deviner quelle relation
+  // inverse répond à laquelle et exige un nom explicite des deux côtés.
+  cover       Media?          @relation("ProjectCover", fields: [coverId], references: [id], onDelete: SetNull)
   highlights  Highlight[]
+  // Images SECONDAIRES illustrant le projet, affichées en galerie sur la fiche
+  // détaillée (la couverture, elle, reste `coverId` et garde sa mise en avant).
+  images      ProjectImage[]
   stacks      Stack[]         @relation("ProjectStacks")
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 
   @@index([category, sortOrder])
+}
+
+// GALERIE D'UN PROJET — table de jointure entre `Project` et `Media`.
+//
+// 🛑 POURQUOI UN MODÈLE DÉDIÉ, et non une relation many-to-many implicite
+// `Project.gallery Media[]` : une jointure implicite ne peut porter AUCUNE
+// donnée propre. Or la galerie en porte deux, toutes deux indispensables :
+//  - `sortOrder` : l'ordre d'affichage est choisi en administration (même
+//    exigence que `Highlight`, story 5.9) ; sans colonne, l'ordre serait celui,
+//    arbitraire, que renvoie la base ;
+//  - `caption`  : la légende affichée sous l'image.
+//
+// ⚠️ `caption` est DISTINCTE de `Media.alt`, et ce n'est pas un doublon :
+//  - `alt` décrit l'image pour qui ne la voit pas (accessibilité), appartient au
+//    FICHIER et vaut donc pour tous ses usages ;
+//  - `caption` commente l'image DANS CE PROJET (« Écran de validation des
+//    factures ») et est affichée à tout le monde. La même capture réutilisée
+//    ailleurs peut légitimement porter une autre légende.
+//
+// ⚠️ `onDelete: Cascade` sur `project` (la ligne de galerie n'a pas de sens sans
+// son projet) mais sur `media` AUSSI, contrairement au `SetNull` de `coverId` :
+// une ligne de galerie SANS image ne veut rien dire — elle n'a pas d'autre
+// contenu à préserver — là où un projet privé de sa couverture reste un projet.
+// La garde applicative de la story 5.13 (`findMediaUsages`) continue de toute
+// façon d'interdire la suppression d'un média encore référencé.
+model ProjectImage {
+  id        String  @id @default(cuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  mediaId   String
+  media     Media   @relation("ProjectGallery", fields: [mediaId], references: [id], onDelete: Cascade)
+  caption   String?
+  sortOrder Int     @default(0)
+
+  // Une même image ne peut être ajoutée qu'UNE FOIS à un projet donné : deux
+  // vignettes identiques dans la galerie seraient une erreur de saisie, pas une
+  // intention. Elle reste réutilisable par un AUTRE projet.
+  @@unique([projectId, mediaId])
+  @@index([projectId, sortOrder])
 }
 
 // Story 5.1 — Compte administrateur du back-office. UNIQUE et seedé (aucune
@@ -203,7 +249,14 @@ model Media {
   createdAt   DateTime  @default(now())
   // Story 5.13 : c'est cette relation inverse qui permet de DÉTECTER les usages
   // avant une suppression (garde d'intégrité).
-  projects    Project[]
+  // ⚠️ NOMMÉE depuis l'ajout de la galerie : ce média peut désormais être relié
+  // à un projet de DEUX façons (couverture ou image de galerie), et Prisma exige
+  // alors un nom explicite pour lever l'ambiguïté. Le nom ne change rien aux
+  // données ni à la colonne — c'est `Project.coverId` qui porte la clé.
+  projects    Project[]       @relation("ProjectCover")
+  // Usages de ce média EN GALERIE. Troisième source d'usage à vérifier avant
+  // une suppression (`findMediaUsages`, story 5.13).
+  gallery     ProjectImage[]  @relation("ProjectGallery")
   // Story 5.14 : second usage possible d'un média — l'illustration d'une entrée
   // de parcours. Comme `projects`, cette relation inverse est ce qui permet à la
   // garde de 5.13 de refuser la suppression d'une image encore utilisée.

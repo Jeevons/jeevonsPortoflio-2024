@@ -73,6 +73,16 @@ function queryPublishedProjectBySlug(slug: string) {
     include: {
       highlights: { orderBy: { sortOrder: "asc" } },
       cover: true,
+      // GALERIE — images secondaires, dans l'ordre défini en administration.
+      // ⚠️ `include: { media: true }` est indispensable : la ligne de jointure ne
+      // porte que `mediaId`, pas le fichier (url, dimensions, flou, alt).
+      // ⚠️ Chargée ICI et pas dans la lecture de liste : seule la fiche détaillée
+      // l'affiche. L'inclure côté liste ferait payer la jointure à chaque projet
+      // de la page d'accueil pour rien.
+      images: {
+        orderBy: { sortOrder: "asc" },
+        include: { media: true },
+      },
       stacks: { orderBy: { name: "asc" } },
     },
   });
@@ -96,9 +106,10 @@ const cachedPublishedProjectBySlug = unstable_cache(
  * injoignable, ce chemin ne peut donc pas servir de brouillon.
  * 🛑 SI DES ENTRÉES SONT AJOUTÉES AU REPLI, MAINTENIR CET INVARIANT.
  *
- * ⚠️ Le repli ne porte NI `stacks` (relation, absente du contenu statique) NI
- * `cover` (ligne `Media`, en base par construction). La page doit donc traiter
- * ces deux blocs comme absents — ce qu'AC2 impose déjà pour tout champ vide.
+ * ⚠️ Le repli ne porte NI `stacks` (relation, absente du contenu statique), NI
+ * `cover`, NI `images` (lignes `Media`, en base par construction). La page doit
+ * donc traiter ces blocs comme absents — ce qu'AC2 impose déjà pour tout champ
+ * vide.
  */
 function fallbackProjectBySlug(slug: string): PublishedProjectDetail | null {
   const match = [
@@ -106,7 +117,7 @@ function fallbackProjectBySlug(slug: string): PublishedProjectDetail | null {
     ...fallbackProjects("PERSONAL"),
   ].find((project) => project.slug === slug);
 
-  return match ? { ...match, stacks: [] } : null;
+  return match ? { ...match, stacks: [], images: [] } : null;
 }
 
 /**

@@ -64,7 +64,20 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/admin/audit", label: "Journal", icon: History, ready: true },
 ];
 
-export function AdminNav() {
+type AdminNavProps = {
+  /**
+   * Appelé au clic sur une entrée. Utilisé par le tiroir mobile (retour
+   * Jeevons, 28/07) pour se refermer.
+   *
+   * 🛑 INDISPENSABLE côté tiroir, et pas seulement confortable : dans l'App
+   * Router une navigation ne démonte PAS la coquille — `AdminShell` est
+   * partagée par toutes les pages admin, donc React la réutilise telle quelle.
+   * Le `<dialog>` resterait ouvert par-dessus la page qu'on vient de demander.
+   */
+  onNavigate?: () => void;
+};
+
+export function AdminNav({ onNavigate }: AdminNavProps = {}) {
   const pathname = usePathname();
 
   return (
@@ -101,6 +114,7 @@ export function AdminNav() {
             <li key={href}>
               <Link
                 href={href}
+                onClick={onNavigate}
                 aria-current={current ? "page" : undefined}
                 className={cn(
                   "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",

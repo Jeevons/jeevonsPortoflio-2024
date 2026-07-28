@@ -22,6 +22,11 @@ import {
   type ProjectFormState,
 } from "./actions";
 import {
+  GalleryEditor,
+  toGalleryDrafts,
+  type GalleryDraft,
+} from "./gallery-editor";
+import {
   HighlightsEditor,
   toDrafts,
   type HighlightDraft,
@@ -80,6 +85,8 @@ type ProjectFormProps = {
     stacks: { id: string; name: string }[];
     /** Story 5.12 — image de couverture actuelle, `null` si le projet n'en a pas. */
     coverId: string | null;
+    /** Galerie — images secondaires déjà ordonnées. */
+    images: { id: string; mediaId: string; caption: string | null }[];
   };
   /** Story 5.9 — technologies proposées au sélecteur (AC2). */
   stackOptions: AdminStackOption[];
@@ -126,6 +133,9 @@ export function ProjectForm({ project, stackOptions }: ProjectFormProps) {
       // Story 5.12 — idem : la couverture a son propre état local (ci-dessous),
       // car le sélecteur gère aussi le téléversement.
       coverId: null,
+      // Idem pour la galerie : état local, car l'éditeur gère aussi l'ordre et
+      // le téléversement.
+      images: [],
     },
   });
 
@@ -143,6 +153,11 @@ export function ProjectForm({ project, stackOptions }: ProjectFormProps) {
   // état parfaitement valide.
   const [coverId, setCoverId] = useState<string | null>(
     () => project?.coverId ?? null,
+  );
+  // Galerie — mêmes raisons que les points forts : état local remonté ici, car
+  // l'ordre et les légendes doivent survivre aux rendus du formulaire.
+  const [galleryImages, setGalleryImages] = useState<GalleryDraft[]>(() =>
+    toGalleryDrafts(project?.images ?? []),
   );
 
   // AC3 — Abonnement aux champs qui alimentent l'aperçu : chaque frappe provoque
@@ -373,16 +388,21 @@ export function ProjectForm({ project, stackOptions }: ProjectFormProps) {
             label="Description"
             name="description"
             error={errorFor("description")}
+            hint="Séparez les paragraphes par une ligne vide : la fiche publique les affiche tels quels."
             className="sm:col-span-2"
           >
             <textarea
               id="description"
-              rows={5}
+              /* 10 lignes plutôt que 5 : le champ porte le contexte ET le rôle
+                 (décision 6.10), et il est désormais découpé en paragraphes —
+                 une fenêtre trop courte décourageait d'en écrire. */
+              rows={10}
               className={fieldClass("description")}
               aria-invalid={errorFor("description") ? true : undefined}
-              aria-describedby={
-                errorFor("description") ? "description-error" : undefined
-              }
+              aria-describedby={cn(
+                "description-hint",
+                errorFor("description") ? "description-error" : "",
+              ).trim()}
               {...register("description")}
             />
           </Field>
@@ -452,6 +472,14 @@ export function ProjectForm({ project, stackOptions }: ProjectFormProps) {
           value={coverId}
           onChange={setCoverId}
           error={state.fieldErrors.coverId}
+        />
+
+        {/* GALERIE — images secondaires, placées APRÈS la couverture : c'est
+          l'ordre dans lequel elles apparaissent sur la fiche publique. */}
+        <GalleryEditor
+          initial={galleryImages}
+          onChange={setGalleryImages}
+          error={state.fieldErrors.images}
         />
 
         {/* `published` exposé SIMPLEMENT : la mécanique brouillon / aperçu sur

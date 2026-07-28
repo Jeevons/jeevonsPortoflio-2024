@@ -45,6 +45,7 @@ export default async function AdminStacksPage({
 
   // Retours d'action posés par les redirections des Server Actions : la
   // confirmation survit à la redirection, ce qu'un état React ne ferait pas.
+  const justCreated = params.created === "1";
   const justSaved = params.saved === "1";
   const justDeleted = params.deleted === "1";
 
@@ -65,6 +66,15 @@ export default async function AdminStacksPage({
             Nouvelle technologie
           </Link>
         </header>
+
+        {justCreated ? (
+          <p
+            role="status"
+            className="rounded-lg border border-border bg-card p-4 text-sm"
+          >
+            La technologie a été créée.
+          </p>
+        ) : null}
 
         {justSaved ? (
           <p

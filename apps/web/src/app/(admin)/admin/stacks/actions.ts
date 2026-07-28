@@ -183,7 +183,15 @@ export async function createStackAction(
   // la toolbox publique qu'à l'expiration de l'ISR (1 h).
   revalidateTag(CACHE_TAGS.projects, { expire: 0 });
 
-  redirect(`/admin/stacks/${createdId}`);
+  // 🛑 RETOUR À L'INDEX, et non vers l'éditeur de la technologie créée.
+  // L'éditeur d'une technologie est visuellement IDENTIQUE au formulaire de
+  // création (mêmes champs, même mise en page) : y atterrir donnait
+  // l'impression que rien ne s'était passé, alors que la création avait bien
+  // eu lieu. L'index, lui, montre la nouvelle entrée dans la liste — c'est la
+  // confirmation la plus lisible. (Un projet, lui, garde la redirection vers
+  // son éditeur : sa fiche est bien plus riche que son formulaire de création,
+  // et il reste des relations à y renseigner.)
+  redirect("/admin/stacks?created=1");
 }
 
 /**

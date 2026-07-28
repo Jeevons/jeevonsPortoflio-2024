@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { AdminMobileNav } from "@/components/admin/admin-mobile-nav";
 import { AdminNav } from "@/components/admin/admin-nav";
 
 // Story 5.7 — Coquille visuelle du back-office (Tâche 1).
@@ -29,11 +30,38 @@ type AdminShellProps = {
 export function AdminShell({ children, email }: AdminShellProps) {
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
+      {/* Barre supérieure MOBILE (retour Jeevons, 28/07). Sous `lg`, la barre
+          latérale est masquée et ses liens vivent dans un tiroir : neuf entrées
+          empilées au-dessus du contenu repoussaient la page hors de l'écran.
+          `sticky top-0` : le bouton reste atteignable après avoir défilé une
+          longue liste, sans avoir à remonter. */}
+      <div className="sticky top-0 z-30 flex items-center justify-between gap-4 border-b border-border bg-card/95 p-4 backdrop-blur lg:hidden">
+        <AdminMobileNav />
+        <Link
+          href="/"
+          className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        >
+          Voir le site public
+        </Link>
+      </div>
+
       {/* `<aside>` + `<nav>` : landmarks corrects, navigation clavier directe
-          (AGENTS.md §6). En dessous de `lg` la barre passe au-dessus du contenu
-          plutôt que de disparaître — le back-office reste utilisable au mobile
-          sans introduire un menu burger (hors périmètre de cette story). */}
-      <aside className="flex shrink-0 flex-col gap-6 border-b border-border bg-card/40 p-4 lg:w-64 lg:border-b-0 lg:border-r">
+          (AGENTS.md §6).
+
+          🛑 `lg:sticky lg:top-0 lg:h-screen` — correctif du retour Jeevons du
+          28/07 (« la sidebar scroll en même temps que la page quand le contenu
+          dépasse »). Une colonne flex ordinaire prend la hauteur de la ligne,
+          donc celle du contenu : elle défilait avec lui. Il faut BORNER sa
+          hauteur à celle de la fenêtre pour que `sticky` ait un sens.
+
+          ⚠️ `overflow-y-auto` va avec : une fois la hauteur bornée, une fenêtre
+          basse couperait le pied de la barre (l'e-mail connecté) sans aucun
+          moyen de l'atteindre. La barre défile alors DANS sa colonne, la page
+          gardant son propre défilement.
+
+          ⚠️ Aucun ancêtre ne doit porter `overflow-hidden` : cela neutralise
+          silencieusement `sticky`, sans erreur ni avertissement. */}
+      <aside className="hidden shrink-0 flex-col gap-6 border-border bg-card/40 p-4 lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-64 lg:overflow-y-auto lg:border-r">
         <div className="flex flex-col gap-1">
           <span className="text-sm font-semibold">Administration</span>
           <Link
