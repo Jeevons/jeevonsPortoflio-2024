@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { AdminEditLink } from "@/components/admin/admin-edit-link";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { buttonVariants } from "@/components/ui/button";
 import { listAdminStacks } from "@/lib/admin/stacks";
@@ -125,10 +126,9 @@ export default async function AdminStacksPage({
               Liste des technologies
             </h2>
 
-            {/* `overflow-x-auto` : le tableau défile dans SON conteneur au lieu
-                de faire déborder la page sur petit écran. */}
-            <div className="overflow-x-auto rounded-lg border border-border">
-              <table className="w-full min-w-[42rem] border-collapse text-sm">
+            {/* Desktop — tableau compact (actions en icônes). */}
+            <div className="hidden overflow-x-auto rounded-lg border border-border md:block">
+              <table className="w-full border-collapse text-sm">
                 <caption className="sr-only">
                   {list.rows.length} technologie(s), par ordre alphabétique.
                 </caption>
@@ -160,9 +160,6 @@ export default async function AdminStacksPage({
                       key={row.id}
                       className="border-b border-border last:border-b-0"
                     >
-                      {/* `<th scope="row">` : le nom IDENTIFIE la ligne. Les
-                          lecteurs d'écran annoncent alors « Nom — Niveau »
-                          plutôt qu'une cellule isolée. */}
                       <th
                         scope="row"
                         className="px-4 py-3 text-left font-normal"
@@ -189,18 +186,11 @@ export default async function AdminStacksPage({
                         {row.projectCount}
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex justify-end gap-2">
-                          <Link
+                        <div className="flex justify-end gap-1.5">
+                          <AdminEditLink
                             href={`/admin/stacks/${row.id}`}
-                            className={cn(
-                              buttonVariants({
-                                variant: "outline",
-                                size: "sm",
-                              }),
-                            )}
-                          >
-                            Modifier
-                          </Link>
+                            label={`Modifier la technologie ${row.name}`}
+                          />
                           {/* `projectTitles` vide ici volontairement : la liste
                               ne charge que le NOMBRE (`_count`), qui suffit à
                               l'avertissement. Les titres, eux, sont chargés par
@@ -210,6 +200,7 @@ export default async function AdminStacksPage({
                             stackName={row.name}
                             projectCount={row.projectCount}
                             projectTitles={[]}
+                            instanceKey="desktop"
                           />
                         </div>
                       </td>
@@ -218,6 +209,62 @@ export default async function AdminStacksPage({
                 </tbody>
               </table>
             </div>
+
+            {/* Mobile — cartes empilées. */}
+            <ul className="flex flex-col gap-3 md:hidden">
+              {list.rows.map((row) => (
+                <li
+                  key={row.id}
+                  className="rounded-lg border border-border bg-card p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <Link
+                        href={`/admin/stacks/${row.id}`}
+                        className="font-medium underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                      >
+                        {row.name}
+                      </Link>
+                    </div>
+                    <div className="flex shrink-0 gap-1.5">
+                      <AdminEditLink
+                        href={`/admin/stacks/${row.id}`}
+                        label={`Modifier la technologie ${row.name}`}
+                      />
+                      <DeleteStackDialog
+                        stackId={row.id}
+                        stackName={row.name}
+                        projectCount={row.projectCount}
+                        projectTitles={[]}
+                        instanceKey="mobile"
+                      />
+                    </div>
+                  </div>
+                  <dl className="mt-3 grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
+                    <div>
+                      <dt className="text-xs text-muted-foreground">Icône</dt>
+                      <dd className="mt-0.5 text-muted-foreground">
+                        {iconLabel(row.iconKey)}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-muted-foreground">Niveau</dt>
+                      <dd className="mt-0.5 text-muted-foreground">
+                        {row.level === null
+                          ? "Non précisé"
+                          : SKILL_LEVEL_LABELS[row.level]}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-muted-foreground">Projets</dt>
+                      <dd className="mt-0.5 text-muted-foreground">
+                        {row.projectCount}
+                      </dd>
+                    </div>
+                  </dl>
+                </li>
+              ))}
+            </ul>
 
             <p className="text-xs text-muted-foreground">
               {list.rows.length} technologie(s). Sur le site public, elles sont

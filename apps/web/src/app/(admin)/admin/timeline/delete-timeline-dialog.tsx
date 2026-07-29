@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect } from "react";
+import { Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useConfirmDialog } from "@/components/admin/use-confirm-dialog";
@@ -28,11 +29,20 @@ type DeleteTimelineDialogProps = {
   entryId: string;
   /** Intitulé affiché dans la confirmation — évite de supprimer la mauvaise. */
   entryTitle: string;
+  /**
+   * Libellé visible du déclencheur. Absent = bouton icône (listes).
+   * Présent = bouton texte (zone danger des écrans d'édition).
+   */
+  triggerLabel?: string;
+  /** Suffixe d'id DOM quand le dialogue est monté deux fois (tableau + cartes). */
+  instanceKey?: string;
 };
 
 export function DeleteTimelineDialog({
   entryId,
   entryTitle,
+  triggerLabel,
+  instanceKey = "default",
 }: DeleteTimelineDialogProps) {
   const { dialogRef, open, close } = useConfirmDialog();
   const [state, formAction, pending] = useActionState(
@@ -49,18 +59,35 @@ export function DeleteTimelineDialog({
     }
   }, [state, dialogRef]);
 
+  const iconLabel = `Supprimer l'entrée ${entryTitle}`;
+  const titleId = `delete-timeline-title-${entryId}-${instanceKey}`;
+
   return (
     <>
-      <Button type="button" variant="destructive" size="sm" onClick={open}>
-        Supprimer
-      </Button>
+      {triggerLabel ? (
+        <Button type="button" variant="destructive" size="sm" onClick={open}>
+          {triggerLabel}
+        </Button>
+      ) : (
+        <Button
+          type="button"
+          variant="destructive"
+          size="icon"
+          className="size-8"
+          onClick={open}
+          aria-label={iconLabel}
+          title={iconLabel}
+        >
+          <Trash2 aria-hidden className="size-4" />
+        </Button>
+      )}
 
       <dialog
         ref={dialogRef}
-        aria-labelledby="delete-timeline-dialog-title"
+        aria-labelledby={titleId}
         className="max-w-md rounded-lg border border-border bg-card p-6 text-card-foreground backdrop:bg-black/50"
       >
-        <h2 id="delete-timeline-dialog-title" className="text-lg font-semibold">
+        <h2 id={titleId} className="text-lg font-semibold">
           Supprimer cette entrée ?
         </h2>
 

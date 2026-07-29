@@ -1,5 +1,4 @@
-import Link from "next/link";
-
+import { AdminBackLink } from "@/components/admin/admin-back-link";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { auth } from "@/lib/auth";
 
@@ -29,12 +28,9 @@ export default async function NewStackPage() {
     <AdminShell email={email}>
       <div className="mx-auto flex max-w-3xl flex-col gap-8">
         <header className="flex flex-col gap-1">
-          <Link
-            href="/admin/stacks"
-            className="w-fit text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-          >
-            ← Retour aux technologies
-          </Link>
+          <AdminBackLink href="/admin/stacks">
+            Retour aux technologies
+          </AdminBackLink>
           <h1 className="text-2xl font-semibold">Nouvelle technologie</h1>
           <p className="text-sm text-muted-foreground">
             Seul le nom est obligatoire, et il doit être unique. Le niveau

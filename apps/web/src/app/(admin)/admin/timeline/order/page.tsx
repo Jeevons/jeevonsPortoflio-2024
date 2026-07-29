@@ -1,5 +1,4 @@
-import Link from "next/link";
-
+import { AdminBackLink } from "@/components/admin/admin-back-link";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { auth } from "@/lib/auth";
 import { listTimelineForReorder } from "@/lib/admin/timeline";
@@ -32,18 +31,13 @@ export default async function AdminTimelineOrderPage() {
     <AdminShell email={email}>
       <div className="mx-auto flex max-w-3xl flex-col gap-8">
         <header className="flex flex-col gap-1">
+          <AdminBackLink href="/admin/timeline">
+            Retour à la liste du parcours
+          </AdminBackLink>
           <h1 className="text-2xl font-semibold">Ordre du parcours</h1>
           <p className="text-sm text-muted-foreground">
             Réordonnez les étapes de votre parcours. L&apos;ordre défini ici est
             celui du site public.
-          </p>
-          <p className="mt-2">
-            <Link
-              href="/admin/timeline"
-              className="text-sm underline underline-offset-4"
-            >
-              Retour à la liste du parcours
-            </Link>
           </p>
         </header>
 

@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { AdminBackLink } from "@/components/admin/admin-back-link";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { auth } from "@/lib/auth";
 import { getAdminProject, listStackOptions } from "@/lib/admin/projects";
@@ -44,12 +44,9 @@ export default async function EditProjectPage({
           seconde colonne (AC3), qui ne tiendrait pas dans la largeur d'origine. */}
       <div className="mx-auto flex max-w-6xl flex-col gap-8">
         <header className="flex flex-col gap-1">
-          <Link
-            href="/admin/projects"
-            className="w-fit text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-          >
-            ← Retour aux projets
-          </Link>
+          <AdminBackLink href="/admin/projects">
+            Retour aux projets
+          </AdminBackLink>
           <h1 className="text-2xl font-semibold">{project.title}</h1>
           <p className="text-sm text-muted-foreground">
             {project.published
@@ -80,6 +77,7 @@ export default async function EditProjectPage({
           <DeleteProjectDialog
             projectId={project.id}
             projectTitle={project.title}
+            triggerLabel="Supprimer"
           />
         </section>
       </div>

@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { AdminBackLink } from "@/components/admin/admin-back-link";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { getAdminMessage } from "@/lib/admin/messages";
 import { auth } from "@/lib/auth";
@@ -42,12 +42,9 @@ export default async function AdminMessagePage({
             écran est réellement affiché (piège n°3). */}
         <MarkReadOnOpen messageId={message.id} alreadyRead={message.read} />
 
-        <Link
-          href="/admin/messages"
-          className="text-sm text-muted-foreground underline-offset-4 hover:underline"
-        >
-          ← Retour aux messages
-        </Link>
+        <AdminBackLink href="/admin/messages">
+          Retour aux messages
+        </AdminBackLink>
 
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex flex-col gap-1">
@@ -76,6 +73,7 @@ export default async function AdminMessagePage({
             <DeleteMessageDialog
               messageId={message.id}
               senderName={message.name}
+              triggerLabel="Supprimer"
             />
           </div>
         </header>

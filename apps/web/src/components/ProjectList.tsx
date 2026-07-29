@@ -93,7 +93,7 @@ export const ProjectList = ({
               key={project.title}
               project={project}
               detailLink
-              className="project-card-highlight px-8 pt-8 pb-0  md:pt-12 m:px-10 lg:pt-16 lg:px-20 sticky"
+              className="project-card-highlight px-8 pt-8 pb-8 md:pt-12 md:pb-12 m:px-10 lg:pt-16 lg:pb-16 lg:px-20 sticky"
               // Décalage croissant : les cartes s'empilent en défilant.
               style={{
                 top: `calc(64px + ${projectIndex * 40}px)`,
