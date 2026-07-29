@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect } from "react";
+import { Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useConfirmDialog } from "@/components/admin/use-confirm-dialog";
@@ -31,11 +32,23 @@ type DeleteProjectDialogProps = {
   projectId: string;
   /** Titre affiché dans la confirmation — évite de supprimer le mauvais projet. */
   projectTitle: string;
+  /**
+   * Libellé visible du déclencheur. Absent = bouton icône (listes).
+   * Présent = bouton texte (zone danger des écrans d'édition).
+   */
+  triggerLabel?: string;
+  /**
+   * Suffixe d'id DOM quand le dialogue est monté deux fois (tableau + cartes).
+   * Sans lui, deux nœuds partageraient le même `id` d'étiquette.
+   */
+  instanceKey?: string;
 };
 
 export function DeleteProjectDialog({
   projectId,
   projectTitle,
+  triggerLabel,
+  instanceKey = "default",
 }: DeleteProjectDialogProps) {
   const { dialogRef, open, close } = useConfirmDialog();
   const [state, formAction, pending] = useActionState(
@@ -53,21 +66,38 @@ export function DeleteProjectDialog({
     }
   }, [state, dialogRef]);
 
+  const iconLabel = `Supprimer le projet ${projectTitle}`;
+  const titleId = `delete-project-title-${projectId}-${instanceKey}`;
+
   return (
     <>
-      <Button type="button" variant="destructive" size="sm" onClick={open}>
-        Supprimer
-      </Button>
+      {triggerLabel ? (
+        <Button type="button" variant="destructive" size="sm" onClick={open}>
+          {triggerLabel}
+        </Button>
+      ) : (
+        <Button
+          type="button"
+          variant="destructive"
+          size="icon"
+          className="size-8"
+          onClick={open}
+          aria-label={iconLabel}
+          title={iconLabel}
+        >
+          <Trash2 aria-hidden className="size-4" />
+        </Button>
+      )}
 
       {/* `closedby="any"` n'est pas encore universel : on s'appuie sur le
           comportement garanti de `showModal()` (Échap ferme, le fond est
           inerte). Le bouton « Annuler » ferme explicitement. */}
       <dialog
         ref={dialogRef}
-        aria-labelledby="delete-dialog-title"
+        aria-labelledby={titleId}
         className="max-w-md rounded-lg border border-border bg-card p-6 text-card-foreground backdrop:bg-black/50"
       >
-        <h2 id="delete-dialog-title" className="text-lg font-semibold">
+        <h2 id={titleId} className="text-lg font-semibold">
           Supprimer ce projet ?
         </h2>
 

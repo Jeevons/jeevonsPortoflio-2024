@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { AdminEditLink } from "@/components/admin/admin-edit-link";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { buttonVariants } from "@/components/ui/button";
 import { auth } from "@/lib/auth";
@@ -172,10 +173,9 @@ export default async function AdminProjectsPage({
                   Liste des projets
                 </h2>
 
-                {/* `overflow-x-auto` : le tableau défile dans SON conteneur au
-                    lieu de faire déborder la page sur petit écran. */}
-                <div className="overflow-x-auto rounded-lg border border-border">
-                  <table className="w-full min-w-[44rem] border-collapse text-sm">
+                {/* Desktop — tableau compact (actions en icônes). */}
+                <div className="hidden overflow-x-auto rounded-lg border border-border md:block">
+                  <table className="w-full border-collapse text-sm">
                     <caption className="sr-only">
                       {list.rows.length} projet(s) affiché(s) sur {list.total}.
                     </caption>
@@ -207,9 +207,6 @@ export default async function AdminProjectsPage({
                           key={row.id}
                           className="border-b border-border last:border-b-0"
                         >
-                          {/* `<th scope="row">` : le titre IDENTIFIE la ligne. Les
-                              lecteurs d'écran annoncent alors « Titre — Statut »
-                              plutôt qu'une cellule isolée. */}
                           <th
                             scope="row"
                             className="px-4 py-3 text-left font-normal"
@@ -243,21 +240,15 @@ export default async function AdminProjectsPage({
                             {DATE_FORMAT.format(row.updatedAt)}
                           </td>
                           <td className="px-4 py-3">
-                            <div className="flex justify-end gap-2">
-                              <Link
+                            <div className="flex justify-end gap-1.5">
+                              <AdminEditLink
                                 href={`/admin/projects/${row.id}`}
-                                className={cn(
-                                  buttonVariants({
-                                    variant: "outline",
-                                    size: "sm",
-                                  }),
-                                )}
-                              >
-                                Modifier
-                              </Link>
+                                label={`Modifier le projet ${row.title}`}
+                              />
                               <DeleteProjectDialog
                                 projectId={row.id}
                                 projectTitle={row.title}
+                                instanceKey="desktop"
                               />
                             </div>
                           </td>
@@ -266,6 +257,76 @@ export default async function AdminProjectsPage({
                     </tbody>
                   </table>
                 </div>
+
+                {/* Mobile — cartes empilées, sans défilement horizontal. */}
+                <ul className="flex flex-col gap-3 md:hidden">
+                  {list.rows.map((row) => (
+                    <li
+                      key={row.id}
+                      className="rounded-lg border border-border bg-card p-4"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <Link
+                            href={`/admin/projects/${row.id}`}
+                            className="font-medium underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                          >
+                            {row.title}
+                          </Link>
+                          <p className="mt-0.5 text-xs text-muted-foreground">
+                            {row.company} · /{row.slug}
+                          </p>
+                        </div>
+                        <div className="flex shrink-0 gap-1.5">
+                          <AdminEditLink
+                            href={`/admin/projects/${row.id}`}
+                            label={`Modifier le projet ${row.title}`}
+                          />
+                          <DeleteProjectDialog
+                            projectId={row.id}
+                            projectTitle={row.title}
+                            instanceKey="mobile"
+                          />
+                        </div>
+                      </div>
+                      <dl className="mt-3 grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <dt className="text-xs text-muted-foreground">
+                            Catégorie
+                          </dt>
+                          <dd className="mt-0.5">
+                            {CATEGORY_LABELS[row.category]}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt className="text-xs text-muted-foreground">
+                            Statut
+                          </dt>
+                          <dd className="mt-0.5">
+                            <span
+                              className={cn(
+                                "inline-flex items-center rounded-full px-2 py-0.5 text-xs",
+                                row.published
+                                  ? "bg-primary/15 text-foreground"
+                                  : "bg-muted text-muted-foreground",
+                              )}
+                            >
+                              {row.published ? "Publié" : "Brouillon"}
+                            </span>
+                          </dd>
+                        </div>
+                        <div className="col-span-2">
+                          <dt className="text-xs text-muted-foreground">
+                            Modifié le
+                          </dt>
+                          <dd className="mt-0.5 text-muted-foreground">
+                            {DATE_FORMAT.format(row.updatedAt)}
+                          </dd>
+                        </div>
+                      </dl>
+                    </li>
+                  ))}
+                </ul>
 
                 <p className="text-xs text-muted-foreground">
                   {list.rows.length} projet(s) affiché(s) sur {list.total} au

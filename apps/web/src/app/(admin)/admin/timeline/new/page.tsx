@@ -1,5 +1,4 @@
-import Link from "next/link";
-
+import { AdminBackLink } from "@/components/admin/admin-back-link";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { auth } from "@/lib/auth";
 
@@ -29,12 +28,9 @@ export default async function NewTimelineEntryPage() {
     <AdminShell email={email}>
       <div className="mx-auto flex max-w-3xl flex-col gap-8">
         <header className="flex flex-col gap-1">
-          <Link
-            href="/admin/timeline"
-            className="w-fit text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-          >
-            ← Retour au parcours
-          </Link>
+          <AdminBackLink href="/admin/timeline">
+            Retour au parcours
+          </AdminBackLink>
           <h1 className="text-2xl font-semibold">
             Nouvelle entrée de parcours
           </h1>

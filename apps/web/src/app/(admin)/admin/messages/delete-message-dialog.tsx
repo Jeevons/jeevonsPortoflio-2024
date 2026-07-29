@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect } from "react";
+import { Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useConfirmDialog } from "@/components/admin/use-confirm-dialog";
@@ -20,11 +21,17 @@ type DeleteMessageDialogProps = {
   messageId: string;
   /** Nom de l'expéditeur — affiché dans la confirmation. */
   senderName: string;
+  /**
+   * Libellé visible du déclencheur. Absent = bouton icône.
+   * Présent = bouton texte (écran de lecture d'un message).
+   */
+  triggerLabel?: string;
 };
 
 export function DeleteMessageDialog({
   messageId,
   senderName,
+  triggerLabel,
 }: DeleteMessageDialogProps) {
   const { dialogRef, open, close } = useConfirmDialog();
   const [state, formAction, pending] = useActionState(
@@ -38,18 +45,37 @@ export function DeleteMessageDialog({
     }
   }, [state, dialogRef]);
 
+  const iconLabel = `Supprimer le message de ${senderName}`;
+
   return (
     <>
-      <Button type="button" variant="destructive" size="sm" onClick={open}>
-        Supprimer
-      </Button>
+      {triggerLabel ? (
+        <Button type="button" variant="destructive" size="sm" onClick={open}>
+          {triggerLabel}
+        </Button>
+      ) : (
+        <Button
+          type="button"
+          variant="destructive"
+          size="icon"
+          className="size-8"
+          onClick={open}
+          aria-label={iconLabel}
+          title={iconLabel}
+        >
+          <Trash2 aria-hidden className="size-4" />
+        </Button>
+      )}
 
       <dialog
         ref={dialogRef}
-        aria-labelledby="delete-message-dialog-title"
+        aria-labelledby={`delete-message-title-${messageId}`}
         className="max-w-md rounded-lg border border-border bg-card p-6 text-card-foreground backdrop:bg-black/50"
       >
-        <h2 id="delete-message-dialog-title" className="text-lg font-semibold">
+        <h2
+          id={`delete-message-title-${messageId}`}
+          className="text-lg font-semibold"
+        >
           Supprimer ce message ?
         </h2>
 
