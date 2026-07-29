@@ -207,12 +207,11 @@ export const ProjectGallery = ({
                 </button>
               ) : null}
 
-              {/* Conteneur qui borne l'image au viewport dans les DEUX axes.
-                  🛑 Pas de `height: 100%` forcé : ça zoomait les captures
-                  portrait (vues mobiles iPhone) en les étirant à la hauteur
-                  du viewport. `max-h-full max-w-full` + `object-contain`
-                  laisse le ratio naturel décider, quel que soit le format. */}
-              <div className="relative flex min-h-0 min-w-0 flex-1 items-center justify-center overflow-hidden">
+              {/* Conteneur borné. `max-h/max-w` en unités viewport : plus
+                  fiable que `%` dans un flex (évite le cas où max-h-full
+                  n'a pas de hauteur de référence et l'image disparaît).
+                  Le ratio naturel est respecté (paysage OU portrait). */}
+              <div className="flex min-h-0 min-w-0 flex-1 items-center justify-center overflow-hidden">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   key={current.url}
@@ -221,8 +220,13 @@ export const ProjectGallery = ({
                   height={current.height}
                   alt={current.alt ?? ""}
                   onLoad={() => setLoaded(true)}
+                  // Images en cache : `onLoad` peut ne pas refirer ; on
+                  // force l'opacité si le fichier est déjà décodé.
+                  ref={(el) => {
+                    if (el?.complete) setLoaded(true);
+                  }}
                   className={[
-                    "absolute inset-0 m-auto max-h-full max-w-full object-contain",
+                    "h-auto w-auto max-h-[calc(100dvh-8rem)] max-w-[calc(100vw-6rem)] object-contain",
                     shouldReduceMotion
                       ? ""
                       : `transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`,
