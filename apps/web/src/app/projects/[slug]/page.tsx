@@ -140,14 +140,7 @@ const ProjectPage = async ({ params }: ProjectPageProps) => {
 
       <main className="container py-24 lg:py-32">
         <ProjectDetailReveal>
-          {/* Chemin de retour, en plus du menu : on arrive souvent ici depuis
-              un moteur de recherche, sans être passé par l'accueil.
-
-              🛑 `flex` ET NON `inline-flex` : en inline, ce lien partageait la
-              ligne du bloc société • période qui le suit, les deux textes se
-              touchaient et la marge de l'eyebrow restait sans effet (une marge
-              verticale ne pousse pas un élément inline). `w-fit` évite que la
-              zone cliquable ne s'étende sur toute la largeur du conteneur. */}
+          {/* ── RETOUR ─────────────────────────────────────────────────── */}
           <Link
             href="/#projects"
             className="rounded-control focus-visible:outline-accent-from flex w-fit items-center gap-2 border border-white/15 px-4 py-2 text-sm text-white/70 transition-colors hover:border-white/30 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4"
@@ -156,55 +149,57 @@ const ProjectPage = async ({ params }: ProjectPageProps) => {
             <span>Retour aux projets</span>
           </Link>
 
-          <p className="text-gradient-accent mt-10 flex flex-wrap items-baseline gap-2 text-sm font-bold uppercase tracking-widest">
-            <span>{project.company}</span>
-            <span aria-hidden="true">&bull;</span>
-            <span>{project.period}</span>
-          </p>
-
-          <h1 className="font-serif text-display-1 mt-4">{project.title}</h1>
-
-          {/* AC1 — LE « RÔLE TENU » ET LE CONTEXTE PASSENT PAR `description`.
-              🛑 DÉCISION DOCUMENTÉE : aucun champ ne porte le rôle, et la story
-              interdit d'en ajouter un. `description` est un texte libre
-              `@db.Text` déjà administrable (story 5.9) : contexte et rôle s'y
-              écrivent ensemble. ❌ Pas de colonne `role`, donc pas de migration,
-              pas de second champ à remplir en administration.
-              ⚠️ AC2 — vide, la section est ABSENTE (c'est aujourd'hui le cas de
-              tous les projets en base : le champ n'a jamais été rempli). */}
-          {project.description ? (
-            <div className="mt-10">
-              <h2 className="font-serif text-2xl">Contexte et rôle</h2>
-              {/* ⚠️ `ProseText` ET NON un `<p>` unique : le champ est un
-                  `<textarea>`, ses sauts de ligne sont écrasés par le HTML et
-                  une description longue devenait un pavé illisible.
-                  `max-w-prose` (~65 caractères) plutôt que `max-w-3xl` : la
-                  ligne était trop longue pour l'œil, et `leading-relaxed`
-                  ouvre l'interligne. */}
-              <ProseText className="mt-4 max-w-prose leading-relaxed text-white/70 md:text-lg">
-                {project.description}
-              </ProseText>
-            </div>
-          ) : null}
-
-          {/* AC2 — le résultat chiffré est optionnel par nature (story 5.9). */}
-          {project.outcome ? (
-            <p className="text-gradient-accent mt-10 text-xl font-bold md:text-2xl">
-              {project.outcome}
+          {/* ── EN-TÊTE ─────────────────────────────────────────────────── */}
+          <div className="mt-10">
+            <p className="text-gradient-accent flex flex-wrap items-baseline gap-2 text-sm font-bold uppercase tracking-widest">
+              <span>{project.company}</span>
+              <span aria-hidden="true">&bull;</span>
+              <span>{project.period}</span>
             </p>
-          ) : null}
 
-          {/* Illustration. Même pattern que `ProjectCard` : `<img>` natif et NON
-              `next/image` — le fichier est déjà normalisé en WebP et
-              redimensionné par sharp au téléversement (story 5.12).
-              ⚠️ `width`/`height` explicites + `blurDataUrl` en fond : le
-              navigateur connaît le ratio AVANT le chargement et réserve la
-              place, donc la page ne saute pas. */}
+            <h1 className="font-serif text-display-1 mt-3">{project.title}</h1>
+
+            {/* Résultat chiffré mis en avant juste sous le titre */}
+            {project.outcome ? (
+              <p className="text-gradient-accent mt-4 text-xl font-bold md:text-2xl">
+                {project.outcome}
+              </p>
+            ) : null}
+
+            {/* Liens d'action en ligne avec l'en-tête */}
+            {project.link || project.repoUrl ? (
+              <div className="mt-6 flex flex-wrap gap-3">
+                {project.link ? (
+                  <a
+                    href={project.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Visiter le site du projet ${project.title} (nouvel onglet)`}
+                    className="text-surface-sunken rounded-control inline-flex h-11 items-center justify-center gap-2 bg-white px-6 text-sm font-semibold"
+                  >
+                    <span>Visiter le site</span>
+                    <ArrowUpRightIcon aria-hidden="true" className="size-4" />
+                  </a>
+                ) : null}
+                {project.repoUrl ? (
+                  <a
+                    href={project.repoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Voir le dépôt de code du projet ${project.title} (nouvel onglet)`}
+                    className="rounded-control inline-flex h-11 items-center justify-center gap-2 border border-white/20 px-6 text-sm font-semibold hover:border-white/40"
+                  >
+                    <span>Voir le dépôt</span>
+                    <ArrowUpRightIcon aria-hidden="true" className="size-4" />
+                  </a>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+
+          {/* ── IMAGE DE COUVERTURE ──────────────────────────────────────── */}
           {cover ? (
-            /* COUVERTURE MISE EN AVANT : cadre, liseré et ombre portée la
-               distinguent des images de galerie, qui sont de simples vignettes.
-               C'est elle qui porte l'identité visuelle du projet. */
-            <div className="rounded-card mt-12 overflow-hidden border border-white/10 shadow-2xl shadow-black/40">
+            <div className="rounded-card mt-10 overflow-hidden border border-white/10 shadow-2xl shadow-black/50">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 className="w-full"
@@ -212,11 +207,7 @@ const ProjectPage = async ({ params }: ProjectPageProps) => {
                 width={cover.width}
                 height={cover.height}
                 alt={cover.alt ?? ""}
-                /* Story 6.18 (AC3) — `loading="lazy"`, aligné sur
-                   `ProjectCard`. L'illustration est SOUS le titre et le
-                   résumé : elle n'est pas garantie visible à l'ouverture, et
-                   la charger d'emblée disputerait la bande passante au LCP. */
-                loading="lazy"
+                loading="eager"
                 style={{
                   backgroundImage: `url(${cover.blurDataUrl})`,
                   backgroundSize: "cover",
@@ -225,11 +216,19 @@ const ProjectPage = async ({ params }: ProjectPageProps) => {
             </div>
           ) : null}
 
-          {/* AC2 — une liste vide ne rend AUCUN `<ul>` : les lecteurs d'écran
-              annonceraient tout de même « liste, 0 élément ». Standard repris
-              de `ProjectCard`. */}
+          {/* ── CONTEXTE ────────────────────────────────────────────────── */}
+          {project.description ? (
+            <div className="mt-14 border-l-2 border-white/10 pl-6">
+              <h2 className="font-serif text-2xl">Contexte &amp; rôle</h2>
+              <ProseText className="mt-4 max-w-prose leading-relaxed text-white/60 md:text-lg">
+                {project.description}
+              </ProseText>
+            </div>
+          ) : null}
+
+          {/* ── CE QUE J'EN RETIENS ─────────────────────────────────────── */}
           {project.highlights.length > 0 ? (
-            <div className="mt-12">
+            <div className="mt-14">
               <h2 className="font-serif text-2xl">Ce que j&apos;en retiens</h2>
               <ul className="mt-4 flex flex-col gap-4">
                 {project.highlights.map((highlight) => (
@@ -248,20 +247,15 @@ const ProjectPage = async ({ params }: ProjectPageProps) => {
             </div>
           ) : null}
 
-          {/* GALERIE — après les points forts, avant les technologies : le
-              visiteur a lu ce que le projet apporte, il voit ensuite à quoi il
-              ressemble. Le composant se rend lui-même `null` si la liste est
-              vide (même règle que les autres sections : jamais de bloc vide). */}
-          <ProjectGallery images={galleryImages} projectTitle={project.title} />
-
+          {/* ── TECHNOLOGIES ────────────────────────────────────────────── */}
           {project.stacks.length > 0 ? (
-            <div className="mt-12">
-              <h2 className="font-serif text-2xl">Technologies employées</h2>
-              <ul className="mt-4 flex flex-wrap gap-3">
+            <div className="mt-14">
+              <h2 className="font-serif text-2xl">Technologies</h2>
+              <ul className="mt-4 flex flex-wrap gap-2">
                 {project.stacks.map((stack) => (
                   <li
                     key={stack.id}
-                    className="bg-surface-raised rounded-badge border border-white/10 px-4 py-2 text-sm"
+                    className="bg-surface-raised rounded-badge border border-white/10 px-4 py-1.5 text-sm text-white/70"
                   >
                     {stack.name}
                   </li>
@@ -270,53 +264,13 @@ const ProjectPage = async ({ params }: ProjectPageProps) => {
             </div>
           ) : null}
 
-          {/* AC2 — les deux liens sont optionnels et indépendants. Aucun des
-              deux : aucun bloc, pas même un conteneur vide. */}
-          {project.link || project.repoUrl ? (
-            <div className="mt-12 flex flex-col gap-4 md:flex-row">
-              {project.link ? (
-                <a
-                  href={project.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={`Visiter le site du projet ${project.title} (nouvel onglet)`}
-                  className="text-surface-sunken rounded-control inline-flex h-12 items-center justify-center gap-2 bg-white px-6 font-semibold"
-                >
-                  <span>Visiter le site</span>
-                  <ArrowUpRightIcon aria-hidden="true" className="size-4" />
-                </a>
-              ) : null}
+          {/* ── GALERIE ─────────────────────────────────────────────────── */}
+          <ProjectGallery images={galleryImages} projectTitle={project.title} />
 
-              {/* ⚠️ Lien SORTANT : `target="_blank"` impose
-                  `rel="noopener noreferrer"` (AGENTS.md §6, story 1.3), et
-                  l'`aria-label` mentionne explicitement le nouvel onglet. */}
-              {project.repoUrl ? (
-                <a
-                  href={project.repoUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={`Voir le dépôt de code du projet ${project.title} (nouvel onglet)`}
-                  className="rounded-control inline-flex h-12 items-center justify-center gap-2 border border-white/20 px-6 font-semibold hover:border-white/40"
-                >
-                  <span>Voir le dépôt</span>
-                  <ArrowUpRightIcon aria-hidden="true" className="size-4" />
-                </a>
-              ) : null}
-            </div>
-          ) : null}
-
-          {/* ⚠️ FILET DE SÉCURITÉ D'AC2 — « la page doit rester présentable, pas
-              un titre isolé sur fond vide ».
-              🛑 CE N'EST PAS UN CAS THÉORIQUE : en base, les 6 projets publiés
-              ont `description`, `outcome` et `repoUrl` à `null`. Un projet sans
-              highlights, sans stacks, sans couverture et sans lien afficherait
-              donc son seul titre. Ce bloc n'est rendu QUE dans ce cas. */}
+          {/* Filet de sécurité : page sans aucun contenu rempli */}
           {!project.description &&
           !project.outcome &&
           !cover &&
-          // ⚠️ La galerie compte comme du contenu : un projet illustré
-          // uniquement par elle ne doit PAS afficher « fiche en cours de
-          // rédaction » sous ses images.
           galleryImages.length === 0 &&
           project.highlights.length === 0 &&
           project.stacks.length === 0 &&
