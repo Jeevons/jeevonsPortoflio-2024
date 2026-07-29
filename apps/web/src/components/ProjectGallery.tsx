@@ -186,9 +186,7 @@ export const ProjectGallery = ({
               </button>
             </div>
 
-            <div className="flex min-h-0 flex-1 items-center gap-2 px-2 sm:gap-4 sm:px-6">
-              {/* Les flèches ne sont rendues qu'à partir de deux images : un
-                  bouton de navigation inopérant serait un piège au clavier. */}
+            <div className="flex min-h-0 flex-1 items-center gap-2 overflow-hidden px-2 sm:gap-4 sm:px-6">
               {images.length > 1 ? (
                 <button
                   type="button"
@@ -200,21 +198,28 @@ export const ProjectGallery = ({
                 </button>
               ) : null}
 
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                key={current.url}
-                src={current.url}
-                width={current.width}
-                height={current.height}
-                alt={current.alt ?? ""}
-                onLoad={() => setLoaded(true)}
-                className={[
-                  "min-h-0 max-h-full max-w-full flex-1 object-contain",
-                  shouldReduceMotion
-                    ? ""
-                    : `transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`,
-                ].join(" ")}
-              />
+              {/* Conteneur centré qui contraint l'image à ne jamais dépasser
+                  la zone disponible : `min-w-0 min-h-0` empêche flex de
+                  l'étirer au-delà du viewport. L'image elle-même est limitée
+                  à 100 % de ce conteneur dans les deux axes. */}
+              <div className="flex min-h-0 min-w-0 flex-1 items-center justify-center overflow-hidden">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  key={current.url}
+                  src={current.url}
+                  width={current.width}
+                  height={current.height}
+                  alt={current.alt ?? ""}
+                  onLoad={() => setLoaded(true)}
+                  className={[
+                    "max-h-full max-w-full object-contain",
+                    shouldReduceMotion
+                      ? ""
+                      : `transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`,
+                  ].join(" ")}
+                  style={{ height: "100%", width: "auto" }}
+                />
+              </div>
 
               {images.length > 1 ? (
                 <button
