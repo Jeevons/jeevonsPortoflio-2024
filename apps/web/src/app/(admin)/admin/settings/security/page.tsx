@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import QRCode from "qrcode";
 
+import { AdminBackLink } from "@/components/admin/admin-back-link";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getRecoveryCodesStatus } from "@/lib/auth/recovery-codes";
@@ -84,9 +84,12 @@ export default async function SecurityPage() {
 
         <RegenerateForm remaining={remaining} />
 
-        <Link href="/admin" className="text-sm text-white/60 underline">
+        <AdminBackLink
+          href="/admin"
+          className="border-white/20 bg-transparent text-white/70 hover:bg-white/10 hover:text-white"
+        >
           Retour à l&apos;administration
-        </Link>
+        </AdminBackLink>
       </main>
     );
   }

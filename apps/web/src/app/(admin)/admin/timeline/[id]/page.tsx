@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { AdminBackLink } from "@/components/admin/admin-back-link";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { auth } from "@/lib/auth";
 import { getAdminTimelineEntry } from "@/lib/admin/timeline";
@@ -37,12 +37,9 @@ export default async function EditTimelineEntryPage({
     <AdminShell email={email}>
       <div className="mx-auto flex max-w-3xl flex-col gap-8">
         <header className="flex flex-col gap-1">
-          <Link
-            href="/admin/timeline"
-            className="w-fit text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-          >
-            ← Retour au parcours
-          </Link>
+          <AdminBackLink href="/admin/timeline">
+            Retour au parcours
+          </AdminBackLink>
           <h1 className="text-2xl font-semibold">{entry.title}</h1>
           <p className="text-sm text-muted-foreground">
             {entry.published
@@ -71,7 +68,11 @@ export default async function EditTimelineEntryPage({
               action est irréversible.
             </p>
           </div>
-          <DeleteTimelineDialog entryId={entry.id} entryTitle={entry.title} />
+          <DeleteTimelineDialog
+            entryId={entry.id}
+            entryTitle={entry.title}
+            triggerLabel="Supprimer"
+          />
         </section>
       </div>
     </AdminShell>

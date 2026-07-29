@@ -1,5 +1,4 @@
-import Link from "next/link";
-
+import { AdminBackLink } from "@/components/admin/admin-back-link";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { auth } from "@/lib/auth";
 import { listProjectsForReorder } from "@/lib/admin/projects";
@@ -35,18 +34,13 @@ export default async function AdminProjectsOrderPage() {
     <AdminShell email={email}>
       <div className="mx-auto flex max-w-3xl flex-col gap-8">
         <header className="flex flex-col gap-1">
+          <AdminBackLink href="/admin/projects">
+            Retour à la liste des projets
+          </AdminBackLink>
           <h1 className="text-2xl font-semibold">Ordre des projets</h1>
           <p className="text-sm text-muted-foreground">
             Réordonnez vos projets au sein de chaque catégorie. L&apos;ordre
             défini ici est celui du site public.
-          </p>
-          <p className="mt-2">
-            <Link
-              href="/admin/projects"
-              className="text-sm underline underline-offset-4"
-            >
-              Retour à la liste des projets
-            </Link>
           </p>
         </header>
 
