@@ -61,8 +61,13 @@ export const ProjectGallery = ({
     const dialog = dialogRef.current;
     if (!dialog) return;
 
-    if (isOpen && !dialog.open) dialog.showModal();
-    else if (!isOpen && dialog.open) dialog.close();
+    if (isOpen && !dialog.open) {
+      dialog.showModal();
+      document.documentElement.style.overflow = "hidden";
+    } else if (!isOpen && dialog.open) {
+      dialog.close();
+      document.documentElement.style.overflow = "";
+    }
   }, [isOpen]);
 
   const close = useCallback(() => setOpenIndex(null), []);
@@ -167,7 +172,7 @@ export const ProjectGallery = ({
         onClick={(event) => {
           if (event.target === dialogRef.current) close();
         }}
-        className="bg-surface-sunken/95 fixed inset-0 m-0 h-full max-h-none w-full max-w-none p-0 text-white backdrop:bg-black/80"
+        className="bg-surface-sunken/95 fixed inset-0 m-0 h-full max-h-none w-full max-w-none overflow-hidden p-0 text-white backdrop:bg-black/80"
       >
         {current ? (
           <div className="flex h-full flex-col">
