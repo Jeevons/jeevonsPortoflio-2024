@@ -121,7 +121,7 @@ export const ProjectGallery = ({
           en plein écran, où elle n'est jamais rognée. */}
       <ul className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {images.map((image, index) => (
-          <li key={image.id}>
+          <li key={image.id} className="flex">
             <button
               type="button"
               onClick={() => show(index)}
@@ -129,12 +129,8 @@ export const ProjectGallery = ({
                 image.caption ? ` : ${image.caption}` : ""
               }`}
               className={[
-                "group rounded-card focus-visible:outline-accent-from block w-full overflow-hidden border border-white/10",
+                "group rounded-card focus-visible:outline-accent-from flex w-full flex-col overflow-hidden border border-white/10",
                 "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4",
-                // ⚠️ Le zoom au survol est porté par l'IMAGE, pas par le bouton :
-                // agrandir le conteneur décalerait la grille entière.
-                // `motion-safe:` neutralise l'effet sous mouvement réduit — le
-                // pendant CSS du socle de la story 6.2.
                 "transition-colors hover:border-white/25",
               ].join(" ")}
             >
@@ -151,11 +147,9 @@ export const ProjectGallery = ({
                   backgroundSize: "cover",
                 }}
               />
-              {image.caption ? (
-                <span className="block px-4 py-3 text-left text-sm text-white/60">
-                  {image.caption}
-                </span>
-              ) : null}
+              <span className="block flex-1 px-4 py-3 text-left text-sm text-white/60">
+                {image.caption ?? "\u00A0"}
+              </span>
             </button>
           </li>
         ))}
@@ -208,24 +202,14 @@ export const ProjectGallery = ({
 
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                // ⚠️ `key` sur l'URL : sans elle, React réutiliserait le même
-                // nœud `<img>` d'une image à l'autre et l'ancienne resterait
-                // affichée le temps du chargement de la nouvelle.
                 key={current.url}
                 src={current.url}
                 width={current.width}
                 height={current.height}
                 alt={current.alt ?? ""}
-                // ⚠️ `object-contain` : en plein écran l'image doit être vue
-                // ENTIÈRE, jamais rognée — c'est tout l'intérêt d'agrandir une
-                // capture d'interface.
-                // Fondu au changement d'image : l'opacité part à 0 puis passe à
-                // 1 une fois le fichier décodé (`onLoad`).
-                // ⚠️ Sous mouvement réduit, l'image est rendue directement
-                // opaque — l'état final, jamais un contenu masqué (socle 6.2).
                 onLoad={() => setLoaded(true)}
                 className={[
-                  "min-h-0 flex-1 object-contain",
+                  "min-h-0 max-h-full max-w-full flex-1 object-contain",
                   shouldReduceMotion
                     ? ""
                     : `transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`,
