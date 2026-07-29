@@ -93,14 +93,9 @@ export const ProjectList = ({
               key={project.title}
               project={project}
               detailLink
-              className="project-card-highlight px-8 pt-8 pb-8 md:pt-12 md:pb-12 m:px-10 lg:pt-16 lg:pb-16 lg:px-20 sticky flex flex-col"
-              // Décalage croissant : les cartes s'empilent en défilant.
-              // `maxHeight` : la carte ne dépasse JAMAIS sous le viewport une
-              // fois collée (retour Jeevons 29/07). L'image absorbe le surplus
-              // via flex — pas de scroll interne sur la carte.
+              className="project-card-highlight px-8 pt-8 pb-8 md:pt-12 md:pb-12 m:px-10 lg:pt-16 lg:pb-16 lg:px-20 sticky"
               style={{
                 top: `calc(64px + ${projectIndex * 40}px)`,
-                maxHeight: `calc(100dvh - 64px - ${projectIndex * 40}px - 2rem)`,
               }}
             />
           ))}

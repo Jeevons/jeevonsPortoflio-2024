@@ -145,10 +145,9 @@ export const ProjectCard = ({
           L'ordre du DOM porte maintenant la mise en page : en-tête → image →
           points forts → actions. La hauteur de l'image ne dépend plus JAMAIS de
           la quantité de texte, et réciproquement. */}
-      <div className="flex min-h-0 flex-1 flex-col">
-        {/* En-tête + résultat chiffré : hauteur fixe du contenu, ne doit pas
-            être compressée au profit de l'image. */}
-        <div className="shrink-0">
+      <div>
+        {/* En-tête + résultat chiffré. */}
+        <div>
           {/* Ligne supérieure : bandeau company à gauche, boutons à droite. */}
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
@@ -209,51 +208,26 @@ export const ProjectCard = ({
           ) : null}
         </div>
 
-        {/* IMAGE — pleine largeur, AU-DESSUS des points forts.
-            `min-h-0 flex-1` : quand la carte sticky a un `maxHeight` (liste
-            publique), l'image RÉTRÉCIT pour laisser titre + boutons visibles.
-            Sans `maxHeight` (aperçu admin), elle reste plafonnée à 420px. */}
+        {/* IMAGE — hauteur fixe, rognée sans déformation (`object-cover`).
+            La boîte est toujours la même quelle que soit la taille du viewport
+            ou l'empilement sticky — l'image ne rétrécit jamais à l'infini. */}
         {project.cover ? (
-          /* Story 5.12 — `<img>` et NON `next/image` : le fichier est déjà
-             normalisé en WebP et redimensionné par sharp au téléversement, le
-             repasser dans l'optimiseur de Next le retraiterait sans gain.
-
-             ⚠️ `width`/`height` explicites + `blurDataUrl` en fond : le
-             navigateur connaît le ratio AVANT le chargement et réserve la
-             place, ce qui empêche la page de sauter (AC2). C'est la raison
-             d'être des colonnes `width`/`height` du modèle `Media`. */
-          <div className="mt-6 md:mt-8 flex min-h-0 max-h-[420px] flex-1 items-center justify-center overflow-hidden">
+          <div className="mt-6 md:mt-8 h-48 md:h-56 lg:h-64 w-full overflow-hidden rounded-lg">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              /* 🛑 `max-h-full` + `object-contain` : la boîte parent plafonne
-                 (420px ou, en sticky, l'espace restant). Le ratio du fichier
-                 est préservé ; `bg-white/5` couvre la zone libre si besoin. */
-              className="h-auto max-h-full w-full rounded-lg object-contain bg-white/5"
+              className="h-full w-full object-cover"
               src={project.cover.url}
               width={project.cover.width}
               height={project.cover.height}
-              /* `alt=""` quand le texte manque : une image DÉCORATIVE est
-                 ignorée par les lecteurs d'écran, ce qui vaut mieux qu'un nom
-                 de fichier lu à voix haute. Le défaut est signalé côté
-                 administration (AC3), là où il peut être corrigé. */
               alt={project.cover.alt ?? ""}
               loading="lazy"
             />
           </div>
         ) : project.image ? (
-          // Story 6.18 (AC1, AC2) — REPLI sur un asset du dépôt (import
-          // statique), quand le projet n'a pas de couverture administrée.
-          // ✅ `sizes` mis à jour avec la mise en page : l'image occupe
-          // désormais la PLEINE largeur de la carte à toutes les tailles, et
-          // non plus une colonne plafonnée à 450px.
-          // ⚠️ `placeholder="blur"` est sûr ICI parce que la source est un
-          // IMPORT STATIQUE : Next génère le `blurDataURL` au build. ❌ Sur une
-          // source dynamique (chaîne d'URL), il exigerait un `blurDataURL`
-          // explicite et jetterait à l'exécution — attention si ce repli
-          // devenait un jour dynamique.
-          <div className="mt-6 md:mt-8 flex min-h-0 max-h-[420px] flex-1 items-center justify-center overflow-hidden">
+          // Story 6.18 — REPLI sur un asset statique du dépôt.
+          <div className="mt-6 md:mt-8 h-48 md:h-56 lg:h-64 w-full overflow-hidden rounded-lg">
             <Image
-              className="h-auto max-h-full w-full rounded-lg object-contain bg-white/5"
+              className="h-full w-full object-cover"
               src={project.image}
               alt={`Capture d'écran du projet ${project.title}`}
               sizes="(min-width: 1200px) 900px, 100vw"
@@ -262,9 +236,8 @@ export const ProjectCard = ({
           </div>
         ) : null}
 
-        {/* Pied : points forts + actions — `shrink-0` pour rester toujours
-            visibles sous une image qui se comprime. */}
-        <div className="shrink-0">
+        {/* Pied : points forts. */}
+        <div>
           {/* Même règle pour les points forts : une liste vide ne rend pas de
               `<ul>` vide, que les lecteurs d'écran annonceraient tout de même
               comme « liste, 0 élément ». */}
