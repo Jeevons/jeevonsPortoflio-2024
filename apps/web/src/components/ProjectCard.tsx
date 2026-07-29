@@ -145,8 +145,10 @@ export const ProjectCard = ({
           L'ordre du DOM porte maintenant la mise en page : en-tête → image →
           points forts → actions. La hauteur de l'image ne dépend plus JAMAIS de
           la quantité de texte, et réciproquement. */}
-      <div>
-        <div>
+      <div className="flex min-h-0 flex-1 flex-col">
+        {/* En-tête + résultat chiffré : hauteur fixe du contenu, ne doit pas
+            être compressée au profit de l'image. */}
+        <div className="shrink-0">
           <div className="inline-flex items-baseline gap-2 font-bold uppercase tracking-widest text-sm text-gradient-accent">
             <span>{project.company}</span>
             <span>&bull;</span>
@@ -179,38 +181,28 @@ export const ProjectCard = ({
               {project.outcome}
             </p>
           ) : null}
+        </div>
 
-          {/* IMAGE — pleine largeur de la carte, AU-DESSUS des points forts.
-              Voir le commentaire de mise en page en tête de carte. */}
-          {project.cover ? (
-            /* Story 5.12 — `<img>` et NON `next/image` : le fichier est déjà
-               normalisé en WebP et redimensionné par sharp au téléversement, le
-               repasser dans l'optimiseur de Next le retraiterait sans gain.
+        {/* IMAGE — pleine largeur, AU-DESSUS des points forts.
+            `min-h-0 flex-1` : quand la carte sticky a un `maxHeight` (liste
+            publique), l'image RÉTRÉCIT pour laisser titre + boutons visibles.
+            Sans `maxHeight` (aperçu admin), elle reste plafonnée à 420px. */}
+        {project.cover ? (
+          /* Story 5.12 — `<img>` et NON `next/image` : le fichier est déjà
+             normalisé en WebP et redimensionné par sharp au téléversement, le
+             repasser dans l'optimiseur de Next le retraiterait sans gain.
 
-               ⚠️ `width`/`height` explicites + `blurDataUrl` en fond : le
-               navigateur connaît le ratio AVANT le chargement et réserve la
-               place, ce qui empêche la page de sauter (AC2). C'est la raison
-               d'être des colonnes `width`/`height` du modèle `Media`. */
-            // eslint-disable-next-line @next/next/no-img-element
+             ⚠️ `width`/`height` explicites + `blurDataUrl` en fond : le
+             navigateur connaît le ratio AVANT le chargement et réserve la
+             place, ce qui empêche la page de sauter (AC2). C'est la raison
+             d'être des colonnes `width`/`height` du modèle `Media`. */
+          <div className="mt-6 md:mt-8 flex min-h-0 max-h-[420px] flex-1 items-center justify-center overflow-hidden">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              /* 🛑 `h-auto max-h-*` ET `object-contain` ENSEMBLE — les deux sont
-                 nécessaires, pour des raisons différentes (choix Jeevons :
-                 « large mais hauteur plafonnée ») :
-                  • `w-full h-auto` : la boîte épouse le ratio du fichier, donc
-                    aucun fond nu ne dépasse. C'est ce qui a supprimé la bande
-                    floue du 28/07 — `object-contain` SEUL ne suffisait pas, il
-                    préserve le ratio du CONTENU en laissant la BOÎTE étirée.
-                  • `max-h-*` : plafonne une capture très haute (une page
-                    entière en 900×2400) qui repousserait les points forts
-                    hors de l'écran. Dès que ce plafond mord, la boîte n'est
-                    plus au ratio du fichier — d'où `object-contain`, qui
-                    empêche alors l'écrasement.
-                 ⚠️ `bg-white/5` plutôt que le `blurDataUrl` en fond : quand le
-                 plafond mord, la zone laissée libre par `object-contain` doit
-                 être neutre. Un flou étiré y réapparaîtrait, précisément le
-                 défaut corrigé. Le `blurDataUrl` reste utile au chargement, il
-                 est donc porté par un conteneur au ratio exact ci-dessous. */
-              className="rounded-lg mt-6 md:mt-8 w-full h-auto max-h-[420px] object-contain bg-white/5"
+              /* 🛑 `max-h-full` + `object-contain` : la boîte parent plafonne
+                 (420px ou, en sticky, l'espace restant). Le ratio du fichier
+                 est préservé ; `bg-white/5` couvre la zone libre si besoin. */
+              className="h-auto max-h-full w-full rounded-lg object-contain bg-white/5"
               src={project.cover.url}
               width={project.cover.width}
               height={project.cover.height}
@@ -221,27 +213,32 @@ export const ProjectCard = ({
               alt={project.cover.alt ?? ""}
               loading="lazy"
             />
-          ) : project.image ? (
-            // Story 6.18 (AC1, AC2) — REPLI sur un asset du dépôt (import
-            // statique), quand le projet n'a pas de couverture administrée.
-            // ✅ `sizes` mis à jour avec la mise en page : l'image occupe
-            // désormais la PLEINE largeur de la carte à toutes les tailles, et
-            // non plus une colonne plafonnée à 450px.
-            // ⚠️ `placeholder="blur"` est sûr ICI parce que la source est un
-            // IMPORT STATIQUE : Next génère le `blurDataURL` au build. ❌ Sur une
-            // source dynamique (chaîne d'URL), il exigerait un `blurDataURL`
-            // explicite et jetterait à l'exécution — attention si ce repli
-            // devenait un jour dynamique.
+          </div>
+        ) : project.image ? (
+          // Story 6.18 (AC1, AC2) — REPLI sur un asset du dépôt (import
+          // statique), quand le projet n'a pas de couverture administrée.
+          // ✅ `sizes` mis à jour avec la mise en page : l'image occupe
+          // désormais la PLEINE largeur de la carte à toutes les tailles, et
+          // non plus une colonne plafonnée à 450px.
+          // ⚠️ `placeholder="blur"` est sûr ICI parce que la source est un
+          // IMPORT STATIQUE : Next génère le `blurDataURL` au build. ❌ Sur une
+          // source dynamique (chaîne d'URL), il exigerait un `blurDataURL`
+          // explicite et jetterait à l'exécution — attention si ce repli
+          // devenait un jour dynamique.
+          <div className="mt-6 md:mt-8 flex min-h-0 max-h-[420px] flex-1 items-center justify-center overflow-hidden">
             <Image
-              /* Mêmes contraintes que la couverture administrée ci-dessus. */
-              className="rounded-lg mt-6 md:mt-8 w-full h-auto max-h-[420px] object-contain bg-white/5"
+              className="h-auto max-h-full w-full rounded-lg object-contain bg-white/5"
               src={project.image}
               alt={`Capture d'écran du projet ${project.title}`}
               sizes="(min-width: 1200px) 900px, 100vw"
               placeholder="blur"
             />
-          ) : null}
+          </div>
+        ) : null}
 
+        {/* Pied : points forts + actions — `shrink-0` pour rester toujours
+            visibles sous une image qui se comprime. */}
+        <div className="shrink-0">
           {/* Même règle pour les points forts : une liste vide ne rend pas de
               `<ul>` vide, que les lecteurs d'écran annonceraient tout de même
               comme « liste, 0 élément ». */}
