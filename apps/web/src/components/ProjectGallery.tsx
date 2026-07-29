@@ -61,13 +61,17 @@ export const ProjectGallery = ({
     const dialog = dialogRef.current;
     if (!dialog) return;
 
-    if (isOpen && !dialog.open) {
-      dialog.showModal();
-      document.documentElement.style.overflow = "hidden";
-    } else if (!isOpen && dialog.open) {
-      dialog.close();
-      document.documentElement.style.overflow = "";
-    }
+if (isOpen && !dialog.open) {
+  dialog.showModal();
+} else if (!isOpen && dialog.open) {
+  dialog.close();
+}
+
+document.documentElement.style.overflow = isOpen ? "hidden" : "";
+
+return () => {
+  document.documentElement.style.overflow = "";
+};
   }, [isOpen]);
 
   const close = useCallback(() => setOpenIndex(null), []);
