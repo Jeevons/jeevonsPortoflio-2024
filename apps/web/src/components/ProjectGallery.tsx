@@ -61,17 +61,17 @@ export const ProjectGallery = ({
     const dialog = dialogRef.current;
     if (!dialog) return;
 
-if (isOpen && !dialog.open) {
-  dialog.showModal();
-} else if (!isOpen && dialog.open) {
-  dialog.close();
-}
+    if (isOpen && !dialog.open) {
+      dialog.showModal();
+    } else if (!isOpen && dialog.open) {
+      dialog.close();
+    }
 
-document.documentElement.style.overflow = isOpen ? "hidden" : "";
+    document.documentElement.style.overflow = isOpen ? "hidden" : "";
 
-return () => {
-  document.documentElement.style.overflow = "";
-};
+    return () => {
+      document.documentElement.style.overflow = "";
+    };
   }, [isOpen]);
 
   const close = useCallback(() => setOpenIndex(null), []);
@@ -207,11 +207,12 @@ return () => {
                 </button>
               ) : null}
 
-              {/* Conteneur centré qui contraint l'image à ne jamais dépasser
-                  la zone disponible : `min-w-0 min-h-0` empêche flex de
-                  l'étirer au-delà du viewport. L'image elle-même est limitée
-                  à 100 % de ce conteneur dans les deux axes. */}
-              <div className="flex min-h-0 min-w-0 flex-1 items-center justify-center overflow-hidden">
+              {/* Conteneur qui borne l'image au viewport dans les DEUX axes.
+                  🛑 Pas de `height: 100%` forcé : ça zoomait les captures
+                  portrait (vues mobiles iPhone) en les étirant à la hauteur
+                  du viewport. `max-h-full max-w-full` + `object-contain`
+                  laisse le ratio naturel décider, quel que soit le format. */}
+              <div className="relative flex min-h-0 min-w-0 flex-1 items-center justify-center overflow-hidden">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   key={current.url}
@@ -221,12 +222,11 @@ return () => {
                   alt={current.alt ?? ""}
                   onLoad={() => setLoaded(true)}
                   className={[
-                    "max-h-full max-w-full object-contain",
+                    "absolute inset-0 m-auto max-h-full max-w-full object-contain",
                     shouldReduceMotion
                       ? ""
                       : `transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`,
                   ].join(" ")}
-                  style={{ height: "100%", width: "auto" }}
                 />
               </div>
 
