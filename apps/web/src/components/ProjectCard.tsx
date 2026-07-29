@@ -149,33 +149,59 @@ export const ProjectCard = ({
         {/* En-tête + résultat chiffré : hauteur fixe du contenu, ne doit pas
             être compressée au profit de l'image. */}
         <div className="shrink-0">
-          <div className="inline-flex items-baseline gap-2 font-bold uppercase tracking-widest text-sm text-gradient-accent">
-            <span>{project.company}</span>
-            <span>&bull;</span>
-            <span className="text-3xs md:text-sm">{project.year}</span>
+          {/* Ligne supérieure : bandeau company à gauche, boutons à droite. */}
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <div className="inline-flex items-baseline gap-2 font-bold uppercase tracking-widest text-sm text-gradient-accent">
+                <span>{project.company}</span>
+                <span>&bull;</span>
+                <span className="text-3xs md:text-sm">{project.year}</span>
+              </div>
+
+              {/* Story 5.11 (AC2) — étiquette « Brouillon » */}
+              {project.draft ? (
+                <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-amber-300/40 bg-amber-500/15 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-amber-200">
+                  Brouillon — non publié
+                </p>
+              ) : null}
+            </div>
+
+            {/* Boutons d'action — haut droite de la carte. */}
+            {(detailLink && project.slug) || project.link ? (
+              <div className="flex shrink-0 flex-wrap gap-2">
+                {detailLink && project.slug ? (
+                  <Link
+                    href={`/projects/${project.slug}`}
+                    aria-label={`Voir le détail du projet ${project.title}`}
+                    className="rounded-control focus-visible:outline-accent-from inline-flex h-10 items-center justify-center gap-2 border border-white/20 px-4 text-sm font-semibold hover:border-white/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4"
+                  >
+                    <span>Voir le projet</span>
+                    <span aria-hidden="true">&rarr;</span>
+                  </Link>
+                ) : null}
+                {project.link ? (
+                  <a
+                    href={project.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Visiter le site du projet ${project.title} (nouvel onglet)`}
+                    className="bg-white text-surface-sunken rounded-control inline-flex h-10 items-center justify-center gap-2 px-4 text-sm font-semibold"
+                  >
+                    <span>Visiter le site</span>
+                    <ArrowUpRightIcon aria-hidden="true" className="size-4" />
+                  </a>
+                ) : null}
+              </div>
+            ) : null}
           </div>
 
-          {/* Story 5.11 (AC2) — étiquette « Brouillon » sur les cartes non
-              publiées, visibles uniquement en mode aperçu. Contraste AA sur le
-              fond sombre des cartes (ambre 200 sur ambre 500/15) et texte réel
-              plutôt qu'une pastille de couleur seule : l'information ne repose
-              pas sur la couleur (AGENTS.md §6). */}
-          {project.draft ? (
-            <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-amber-300/40 bg-amber-500/15 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-amber-200">
-              Brouillon — non publié
-            </p>
-          ) : null}
-
-          {/* Story 6.3 (AC1) — échelle fluide 2xl→4xl. Les marges restent par
-              palier : la story ne porte que sur la typographie. */}
+          {/* Story 6.3 (AC1) — échelle fluide 2xl→4xl. */}
           <h3 className="font-serif text-display-3 mt-2 md:mt-5">
             {project.title}
           </h3>
           <hr className="border-t-2 border-white/5 mt-4 md:mt-5" />
 
-          {/* AC4 — « la page publique masque simplement la section
-              correspondante ». Un résultat absent ne rend donc AUCUN élément :
-              ni bloc vide, ni libellé orphelin. */}
+          {/* AC4 — résultat chiffré optionnel. */}
           {project.outcome ? (
             <p className="mt-4 md:mt-5 font-bold text-lg md:text-xl text-gradient-accent">
               {project.outcome}
@@ -274,44 +300,7 @@ export const ProjectCard = ({
             </ul>
           ) : null}
 
-          {/* AC4 — le lien est optionnel : sans URL, on ne rend pas un bouton
-              qui pointerait vers la page courante (`href=""`), ce qui était le
-              comportement du code d'origine quand `project.link` valait `""`. */}
-          {/* Story 6.10 (AC6) — LIEN VERS LA FICHE DÉTAILLÉE.
-              🛑 Un lien DISTINCT, placé à côté du bouton externe et jamais
-              autour de lui : imbriquer un lien dans un lien est du HTML
-              invalide (AGENTS.md §6). Rendu uniquement quand `detailLink` est
-              demandé ET que le slug est connu — l'aperçu admin ne passe ni
-              l'un ni l'autre. */}
-          {detailLink && project.slug ? (
-            <Link
-              href={`/projects/${project.slug}`}
-              aria-label={`Voir le détail du projet ${project.title}`}
-              className="rounded-control focus-visible:outline-accent-from mt-8 inline-flex h-12 w-full items-center justify-center gap-2 border border-white/20 px-6 font-semibold hover:border-white/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 md:mr-4 md:w-auto"
-            >
-              <span>Voir le projet</span>
-              <span aria-hidden="true">&rarr;</span>
-            </Link>
-          ) : null}
-
-          {project.link ? (
-            <a
-              href={project.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`Visiter le site du projet ${project.title} (nouvel onglet)`}
-              /* Story 6.8 (AC1) — L'AGRANDISSEMENT AU SURVOL A ÉTÉ RETIRÉ :
-                 l'inclinaison 3D et le halo de la carte le remplacent. C'était
-                 le seul `hover:scale` du périmètre carte projet.
-
-                 ❌ `href`, `target`, `rel` et `aria-label` sont INTOUCHÉS : ils
-                 sont le résultat de la story 1.4, les modifier l'annulerait. */
-              className="bg-white text-surface-sunken h-12 w-full md:w-auto px-6 rounded-control font-semibold inline-flex items-center justify-center gap-2 mt-8"
-            >
-              <span>Visiter le site</span>
-              <ArrowUpRightIcon aria-hidden="true" className="size-4" />
-            </a>
-          ) : null}
+          {/* Les boutons sont maintenant dans l'en-tête en haut à droite. */}
         </div>
       </div>
     </Card>
