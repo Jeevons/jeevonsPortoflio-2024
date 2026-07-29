@@ -220,7 +220,7 @@ const ProjectPage = async ({ params }: ProjectPageProps) => {
           {project.description ? (
             <div className="mt-14 border-l-2 border-white/10 pl-6">
               <h2 className="font-serif text-2xl">Contexte &amp; rôle</h2>
-              <ProseText className="mt-4 max-w-prose leading-relaxed text-white/60 md:text-lg">
+              <ProseText className="mt-4 leading-relaxed text-white/60 md:text-lg">
                 {project.description}
               </ProseText>
             </div>
